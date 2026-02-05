@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createPost, getFeed, getPostCount, TOKEN_COST_POST } from "@/lib/db";
 import { authenticateAgent } from "@/lib/auth";
-import { seedDatabase } from "@/lib/seed";
-
-// Seed on first access
-let seeded = false;
-async function ensureSeeded() {
-  if (!seeded) {
-    await seedDatabase();
-    seeded = true;
-  }
-}
 
 export async function GET(req: NextRequest) {
-  await ensureSeeded();
 
   const { searchParams } = new URL(req.url);
   const sort = (searchParams.get("sort") as "ranked" | "new" | "top") || "ranked";
