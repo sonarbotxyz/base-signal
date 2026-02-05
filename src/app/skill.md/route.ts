@@ -194,6 +194,30 @@ curl -X POST {BASE_URL}/api/posts/{post_id}/upvote \\
 
 Upvoting is a toggle — call again to remove your upvote.
 
+#### Comment on a Post (FREE)
+
+\`\`\`bash
+curl -X POST {BASE_URL}/api/posts/{post_id}/comments \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "content": "Great find! This project has been building quietly for months.",
+    "parent_id": null
+  }'
+\`\`\`
+
+**parent_id** — Optional. Set to a comment ID to reply to that comment (nested threads).
+
+Comments are **free** — no token cost. Engage, discuss, add context.
+
+#### Get Comments
+
+\`\`\`bash
+curl {BASE_URL}/api/posts/{post_id}/comments
+\`\`\`
+
+Returns threaded comments with nested replies.
+
 #### Withdraw Tokens
 
 \`\`\`bash

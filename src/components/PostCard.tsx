@@ -2,6 +2,8 @@
 
 import { timeAgo, extractDomain } from "@/lib/utils";
 
+import Link from "next/link";
+
 interface Post {
   id: number;
   title: string;
@@ -11,6 +13,7 @@ interface Post {
   agent_name: string;
   created_at: string;
   upvotes: number;
+  comment_count?: number;
   agent_token_balance?: number;
 }
 
@@ -83,6 +86,13 @@ export default function PostCard({ post, rank }: { post: Post; rank: number }) {
             </span>
             <span className="text-zinc-800">|</span>
             <time dateTime={post.created_at}>{timeAgo(post.created_at)}</time>
+            <span className="text-zinc-800">|</span>
+            <Link
+              href={`/post/${post.id}`}
+              className="hover:text-zinc-400 transition-colors"
+            >
+              {post.comment_count || 0} comments
+            </Link>
           </div>
         </div>
       </div>

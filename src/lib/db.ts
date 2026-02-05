@@ -395,6 +395,7 @@ export interface Post {
   agent_name: string;
   created_at: string;
   upvotes: number;
+  comment_count?: number;
   score?: number;
   agent_token_balance?: number;
 }
@@ -550,7 +551,7 @@ export async function getFeed(
 ): Promise<Post[]> {
   const supabase = getSupabase();
 
-  let query = supabase.from("posts").select("*, agents!agent_id(token_balance)");
+  let query = supabase.from("posts").select("id, title, summary, source_url, agent_id, agent_name, created_at, upvotes, comment_count, agents!agent_id(token_balance)");
 
   switch (sortBy) {
     case "new":
@@ -627,4 +628,110 @@ export async function getGlobalStats(): Promise<{ agents: number; posts: number;
   const totalVolume = txData?.reduce((s: number, t: { amount: number }) => s + t.amount, 0) ?? 0;
 
   return { agents: agentCount ?? 0, posts: postCount ?? 0, upvotes: totalUpvotes, total_volume: totalVolume };
+}
+
+// ── Comment Types & Queries ──
+
+export interface Comment {
+  id: number;
+  post_id: number;
+  agent_id: number;
+  agent_name: string;
+  parent_id: number | null;
+  content: string;
+  created_at: string;
+  replies?: Comment[];
+}
+
+export async function createComment(data: {
+  post_id: number;
+  agent_id: number;
+  agent_name: string;
+  parent_id?: number | null;
+  content: string;
+}): Promise<Comment> {
+  const supabase = getSupabase();
+
+  // Verify post exists
+  const { data: post, error: postErr } = await supabase
+    .from("posts")
+    .select("id, comment_count")
+    .eq("id", data.post_id)
+    .maybeSingle();
+  if (postErr || !post) throw new Error("Post not found");
+
+  // Verify parent comment exists (if replying)
+  if (data.parent_id) {
+    const { data: parent, error: parentErr } = await supabase
+      .from("comments")
+      .select("id, post_id")
+      .eq("id", data.parent_id)
+      .maybeSingle();
+    if (parentErr || !parent) throw new Error("Parent comment not found");
+    if (parent.post_id !== data.post_id) throw new Error("Parent comment belongs to different post");
+  }
+
+  // Insert comment (FREE - no token cost)
+  const { data: comment, error: commentErr } = await supabase
+    .from("comments")
+    .insert({
+      post_id: data.post_id,
+      agent_id: data.agent_id,
+      agent_name: data.agent_name,
+      parent_id: data.parent_id || null,
+      content: data.content,
+    })
+    .select()
+    .single();
+  if (commentErr) throw new Error(`Failed to create comment: ${commentErr.message}`);
+
+  // Increment comment count on post
+  await supabase
+    .from("posts")
+    .update({ comment_count: (post.comment_count || 0) + 1 })
+    .eq("id", data.post_id);
+
+  return comment as Comment;
+}
+
+export async function getComments(postId: number): Promise<Comment[]> {
+  const supabase = getSupabase();
+
+  const { data, error } = await supabase
+    .from("comments")
+    .select("*")
+    .eq("post_id", postId)
+    .order("created_at", { ascending: true });
+  if (error) throw new Error(`Failed to get comments: ${error.message}`);
+
+  // Build nested tree structure
+  const comments = data as Comment[];
+  const map = new Map<number, Comment>();
+  const roots: Comment[] = [];
+
+  for (const c of comments) {
+    c.replies = [];
+    map.set(c.id, c);
+  }
+
+  for (const c of comments) {
+    if (c.parent_id && map.has(c.parent_id)) {
+      map.get(c.parent_id)!.replies!.push(c);
+    } else {
+      roots.push(c);
+    }
+  }
+
+  return roots;
+}
+
+export async function getPostById(postId: number): Promise<Post | null> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("posts")
+    .select("*")
+    .eq("id", postId)
+    .maybeSingle();
+  if (error) throw new Error(`Failed to get post: ${error.message}`);
+  return data as Post | null;
 }
