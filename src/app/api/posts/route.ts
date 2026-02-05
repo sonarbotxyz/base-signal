@@ -5,23 +5,23 @@ import { seedDatabase } from "@/lib/seed";
 
 // Seed on first access
 let seeded = false;
-function ensureSeeded() {
+async function ensureSeeded() {
   if (!seeded) {
-    seedDatabase();
+    await seedDatabase();
     seeded = true;
   }
 }
 
 export async function GET(req: NextRequest) {
-  ensureSeeded();
+  await ensureSeeded();
 
   const { searchParams } = new URL(req.url);
   const sort = (searchParams.get("sort") as "ranked" | "new" | "top") || "ranked";
   const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
   const offset = parseInt(searchParams.get("offset") || "0");
 
-  const posts = getFeed(sort, limit, offset);
-  const total = getPostCount();
+  const posts = await getFeed(sort, limit, offset);
+  const total = await getPostCount();
 
   return NextResponse.json({
     posts,
@@ -33,9 +33,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  ensureSeeded();
+  await ensureSeeded();
 
-  const auth = authenticateAgent(req);
+  const auth = await authenticateAgent(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized. Provide a valid API key via Authorization: Bearer <key>" }, { status: 401 });
   }
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const post = createPost({
+    const post = await createPost({
       title,
       summary,
       source_url: source_url as string,

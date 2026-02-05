@@ -1,62 +1,22 @@
-import Database from "better-sqlite3";
-import path from "path";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import crypto from "crypto";
 
-const DB_PATH = path.join(process.cwd(), "base-signal.db");
+// ── Supabase Client ──
 
-let _db: Database.Database | null = null;
+let _supabase: SupabaseClient | null = null;
 
-export function getDb(): Database.Database {
-  if (!_db) {
-    _db = new Database(DB_PATH);
-    _db.pragma("journal_mode = WAL");
-    _db.pragma("foreign_keys = ON");
-    migrate(_db);
+export function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) {
+      throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
+    }
+    _supabase = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
   }
-  return _db;
-}
-
-function migrate(db: Database.Database) {
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS agents (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      description TEXT NOT NULL DEFAULT '',
-      api_key TEXT NOT NULL UNIQUE,
-      token_balance INTEGER NOT NULL DEFAULT 100,
-      created_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_agents_api_key ON agents(api_key);
-    CREATE INDEX IF NOT EXISTS idx_agents_tokens ON agents(token_balance DESC);
-
-    CREATE TABLE IF NOT EXISTS posts (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      summary TEXT NOT NULL,
-      source_url TEXT NOT NULL,
-      agent_id INTEGER NOT NULL,
-      agent_name TEXT NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      upvotes INTEGER NOT NULL DEFAULT 0,
-      FOREIGN KEY (agent_id) REFERENCES agents(id)
-    );
-
-    CREATE TABLE IF NOT EXISTS upvotes (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      post_id INTEGER NOT NULL,
-      agent_id INTEGER NOT NULL,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
-      FOREIGN KEY (agent_id) REFERENCES agents(id),
-      UNIQUE(post_id, agent_id)
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
-    CREATE INDEX IF NOT EXISTS idx_posts_agent_id ON posts(agent_id);
-    CREATE INDEX IF NOT EXISTS idx_upvotes_post_id ON upvotes(post_id);
-    CREATE INDEX IF NOT EXISTS idx_upvotes_agent_id ON upvotes(agent_id);
-  `);
+  return _supabase;
 }
 
 // ── Token Economy Constants ──
@@ -93,55 +53,119 @@ export function generateApiKey(): string {
   return `bsig_${crypto.randomBytes(24).toString("hex")}`;
 }
 
-export function registerAgent(name: string, description: string): Agent {
-  const db = getDb();
+export async function registerAgent(name: string, description: string): Promise<Agent> {
+  const supabase = getSupabase();
   const apiKey = generateApiKey();
-  const stmt = db.prepare(`
-    INSERT INTO agents (name, description, api_key)
-    VALUES (?, ?, ?)
-  `);
-  const result = stmt.run(name, description, apiKey);
-  return db.prepare("SELECT * FROM agents WHERE id = ?").get(result.lastInsertRowid) as Agent;
+  const { data, error } = await supabase
+    .from("agents")
+    .insert({ name, description, api_key: apiKey })
+    .select()
+    .single();
+  if (error) throw new Error(`Failed to register agent: ${error.message}`);
+  return data as Agent;
 }
 
-export function getAgentByApiKey(apiKey: string): Agent | undefined {
-  const db = getDb();
-  return db.prepare("SELECT * FROM agents WHERE api_key = ?").get(apiKey) as Agent | undefined;
+export async function getAgentByApiKey(apiKey: string): Promise<Agent | undefined> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("agents")
+    .select("*")
+    .eq("api_key", apiKey)
+    .maybeSingle();
+  if (error) throw new Error(`Failed to get agent: ${error.message}`);
+  return (data as Agent) ?? undefined;
 }
 
-export function getAgentById(id: number): Agent | undefined {
-  const db = getDb();
-  return db.prepare("SELECT * FROM agents WHERE id = ?").get(id) as Agent | undefined;
+export async function getAgentById(id: number): Promise<Agent | undefined> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("agents")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw new Error(`Failed to get agent: ${error.message}`);
+  return (data as Agent) ?? undefined;
 }
 
-export function getAgentStats(agentId: number): { post_count: number; upvotes_received: number } {
-  const db = getDb();
-  const postCount = (db.prepare("SELECT COUNT(*) as c FROM posts WHERE agent_id = ?").get(agentId) as { c: number }).c;
-  const upvotesReceived = (db.prepare("SELECT COALESCE(SUM(upvotes), 0) as c FROM posts WHERE agent_id = ?").get(agentId) as { c: number }).c;
-  return { post_count: postCount, upvotes_received: upvotesReceived };
+export async function getAgentStats(agentId: number): Promise<{ post_count: number; upvotes_received: number }> {
+  const supabase = getSupabase();
+
+  const { count: postCount, error: e1 } = await supabase
+    .from("posts")
+    .select("*", { count: "exact", head: true })
+    .eq("agent_id", agentId);
+  if (e1) throw new Error(`Failed to get post count: ${e1.message}`);
+
+  const { data: posts, error: e2 } = await supabase
+    .from("posts")
+    .select("upvotes")
+    .eq("agent_id", agentId);
+  if (e2) throw new Error(`Failed to get upvotes: ${e2.message}`);
+
+  const upvotesReceived = posts?.reduce((sum: number, p: { upvotes: number }) => sum + (p.upvotes || 0), 0) ?? 0;
+
+  return { post_count: postCount ?? 0, upvotes_received: upvotesReceived };
 }
 
-export function adjustTokenBalance(agentId: number, amount: number): number {
-  const db = getDb();
-  db.prepare("UPDATE agents SET token_balance = token_balance + ? WHERE id = ?").run(amount, agentId);
-  const agent = db.prepare("SELECT token_balance FROM agents WHERE id = ?").get(agentId) as { token_balance: number };
-  return agent.token_balance;
+export async function adjustTokenBalance(agentId: number, amount: number): Promise<number> {
+  const supabase = getSupabase();
+
+  // Try RPC first (atomic), fall back to read-modify-write
+  const { data: rpcResult, error: rpcError } = await supabase.rpc("adjust_token_balance", {
+    p_agent_id: agentId,
+    p_amount: amount,
+  });
+
+  if (!rpcError && rpcResult !== null) {
+    return rpcResult as number;
+  }
+
+  // Fallback: read + update
+  const { data: agent, error: readErr } = await supabase
+    .from("agents")
+    .select("token_balance")
+    .eq("id", agentId)
+    .single();
+  if (readErr || !agent) throw new Error("Agent not found");
+
+  const newBalance = agent.token_balance + amount;
+  const { error: updateErr } = await supabase
+    .from("agents")
+    .update({ token_balance: newBalance })
+    .eq("id", agentId);
+  if (updateErr) throw new Error(`Failed to update balance: ${updateErr.message}`);
+
+  return newBalance;
 }
 
-export function getLeaderboard(limit = 20): AgentPublic[] {
-  const db = getDb();
-  const agents = db.prepare(`
-    SELECT
-      a.id, a.name, a.description, a.token_balance, a.created_at,
-      COUNT(DISTINCT p.id) as post_count,
-      COALESCE(SUM(p.upvotes), 0) as upvotes_received
-    FROM agents a
-    LEFT JOIN posts p ON p.agent_id = a.id
-    GROUP BY a.id
-    ORDER BY a.token_balance DESC
-    LIMIT ?
-  `).all(limit) as AgentPublic[];
-  return agents;
+export async function getLeaderboard(limit = 20): Promise<AgentPublic[]> {
+  const supabase = getSupabase();
+
+  const { data: agents, error: agentErr } = await supabase
+    .from("agents")
+    .select("id, name, description, token_balance, created_at")
+    .order("token_balance", { ascending: false })
+    .limit(limit);
+  if (agentErr) throw new Error(`Failed to get leaderboard: ${agentErr.message}`);
+  if (!agents || agents.length === 0) return [];
+
+  const { data: posts, error: postErr } = await supabase
+    .from("posts")
+    .select("agent_id, upvotes");
+  if (postErr) throw new Error(`Failed to get posts: ${postErr.message}`);
+
+  const statsMap: Record<number, { post_count: number; upvotes_received: number }> = {};
+  for (const p of posts ?? []) {
+    if (!statsMap[p.agent_id]) statsMap[p.agent_id] = { post_count: 0, upvotes_received: 0 };
+    statsMap[p.agent_id].post_count++;
+    statsMap[p.agent_id].upvotes_received += p.upvotes || 0;
+  }
+
+  return agents.map((a) => ({
+    ...a,
+    post_count: statsMap[a.id]?.post_count ?? 0,
+    upvotes_received: statsMap[a.id]?.upvotes_received ?? 0,
+  }));
 }
 
 // ── Post Types & Queries ──
@@ -159,61 +183,95 @@ export interface Post {
   agent_token_balance?: number;
 }
 
-export function createPost(data: {
+export async function createPost(data: {
   title: string;
   summary: string;
   source_url: string;
   agent_id: number;
   agent_name: string;
-}): Post {
-  const db = getDb();
+}): Promise<Post> {
+  const supabase = getSupabase();
 
   // Check balance
-  const agent = db.prepare("SELECT token_balance FROM agents WHERE id = ?").get(data.agent_id) as { token_balance: number } | undefined;
-  if (!agent || agent.token_balance < TOKEN_COST_POST) {
-    throw new Error(`Insufficient tokens. Need ${TOKEN_COST_POST}, have ${agent?.token_balance ?? 0}`);
+  const { data: agent, error: agentErr } = await supabase
+    .from("agents")
+    .select("token_balance")
+    .eq("id", data.agent_id)
+    .single();
+  if (agentErr || !agent) throw new Error("Agent not found");
+  if (agent.token_balance < TOKEN_COST_POST) {
+    throw new Error(`Insufficient tokens. Need ${TOKEN_COST_POST}, have ${agent.token_balance}`);
   }
 
-  // Deduct tokens and insert post
-  const tx = db.transaction(() => {
-    db.prepare("UPDATE agents SET token_balance = token_balance - ? WHERE id = ?").run(TOKEN_COST_POST, data.agent_id);
+  // Deduct tokens
+  await adjustTokenBalance(data.agent_id, -TOKEN_COST_POST);
 
-    const stmt = db.prepare(`
-      INSERT INTO posts (title, summary, source_url, agent_id, agent_name)
-      VALUES (@title, @summary, @source_url, @agent_id, @agent_name)
-    `);
-    return stmt.run(data);
-  });
+  // Insert post
+  const { data: post, error: postErr } = await supabase
+    .from("posts")
+    .insert({
+      title: data.title,
+      summary: data.summary,
+      source_url: data.source_url,
+      agent_id: data.agent_id,
+      agent_name: data.agent_name,
+    })
+    .select()
+    .single();
+  if (postErr) {
+    // Refund tokens on failure
+    await adjustTokenBalance(data.agent_id, TOKEN_COST_POST);
+    throw new Error(`Failed to create post: ${postErr.message}`);
+  }
 
-  const result = tx();
-  return db.prepare("SELECT * FROM posts WHERE id = ?").get(result.lastInsertRowid) as Post;
+  return post as Post;
 }
 
-export function upvotePost(postId: number, votingAgentId: number): { success: boolean; upvotes: number; toggled: "added" | "removed" } {
-  const db = getDb();
-  const post = db.prepare("SELECT id, agent_id, upvotes FROM posts WHERE id = ?").get(postId) as { id: number; agent_id: number; upvotes: number } | undefined;
-  if (!post) throw new Error("Post not found");
+export async function upvotePost(
+  postId: number,
+  votingAgentId: number
+): Promise<{ success: boolean; upvotes: number; toggled: "added" | "removed" }> {
+  const supabase = getSupabase();
+
+  // Get post
+  const { data: post, error: postErr } = await supabase
+    .from("posts")
+    .select("id, agent_id, upvotes")
+    .eq("id", postId)
+    .maybeSingle();
+  if (postErr || !post) throw new Error("Post not found");
 
   // Check if already upvoted
-  const existingVote = db.prepare("SELECT id FROM upvotes WHERE post_id = ? AND agent_id = ?").get(postId, votingAgentId);
+  const { data: existingVote } = await supabase
+    .from("upvotes")
+    .select("id")
+    .eq("post_id", postId)
+    .eq("agent_id", votingAgentId)
+    .maybeSingle();
 
   if (existingVote) {
-    // Toggle off — refund 1 token to voter, remove 2 from post author
-    const tx = db.transaction(() => {
-      db.prepare("DELETE FROM upvotes WHERE post_id = ? AND agent_id = ?").run(postId, votingAgentId);
-      db.prepare("UPDATE posts SET upvotes = MAX(0, upvotes - 1) WHERE id = ?").run(postId);
-      // Refund voter
-      db.prepare("UPDATE agents SET token_balance = token_balance + ? WHERE id = ?").run(TOKEN_COST_UPVOTE, votingAgentId);
-      // Remove reward from post author
-      db.prepare("UPDATE agents SET token_balance = MAX(0, token_balance - ?) WHERE id = ?").run(TOKEN_REWARD_RECEIVE_UPVOTE, post.agent_id);
-    });
-    tx();
-    const updated = db.prepare("SELECT upvotes FROM posts WHERE id = ?").get(postId) as { upvotes: number };
-    return { success: true, upvotes: updated.upvotes, toggled: "removed" };
+    // Toggle off — remove upvote
+    await supabase.from("upvotes").delete().eq("post_id", postId).eq("agent_id", votingAgentId);
+
+    // Decrement post upvotes
+    const newUpvotes = Math.max(0, post.upvotes - 1);
+    await supabase.from("posts").update({ upvotes: newUpvotes }).eq("id", postId);
+
+    // Refund voter
+    await adjustTokenBalance(votingAgentId, TOKEN_COST_UPVOTE);
+
+    // Remove reward from post author
+    await adjustTokenBalance(post.agent_id, -TOKEN_REWARD_RECEIVE_UPVOTE);
+
+    return { success: true, upvotes: newUpvotes, toggled: "removed" };
   }
 
   // Adding upvote — check balance
-  const voter = db.prepare("SELECT token_balance FROM agents WHERE id = ?").get(votingAgentId) as { token_balance: number } | undefined;
+  const { data: voter } = await supabase
+    .from("agents")
+    .select("token_balance")
+    .eq("id", votingAgentId)
+    .single();
   if (!voter || voter.token_balance < TOKEN_COST_UPVOTE) {
     throw new Error(`Insufficient tokens. Need ${TOKEN_COST_UPVOTE}, have ${voter?.token_balance ?? 0}`);
   }
@@ -223,73 +281,81 @@ export function upvotePost(postId: number, votingAgentId: number): { success: bo
     throw new Error("Cannot upvote your own post");
   }
 
-  const tx = db.transaction(() => {
-    // Insert upvote
-    db.prepare("INSERT INTO upvotes (post_id, agent_id) VALUES (?, ?)").run(postId, votingAgentId);
-    db.prepare("UPDATE posts SET upvotes = upvotes + 1 WHERE id = ?").run(postId);
+  // Insert upvote
+  const { error: insertErr } = await supabase
+    .from("upvotes")
+    .insert({ post_id: postId, agent_id: votingAgentId });
+  if (insertErr) throw new Error(`Failed to upvote: ${insertErr.message}`);
 
-    // Deduct from voter
-    db.prepare("UPDATE agents SET token_balance = token_balance - ? WHERE id = ?").run(TOKEN_COST_UPVOTE, votingAgentId);
+  // Increment post upvotes
+  const newUpvotes = post.upvotes + 1;
+  await supabase.from("posts").update({ upvotes: newUpvotes }).eq("id", postId);
 
-    // Reward post author
-    db.prepare("UPDATE agents SET token_balance = token_balance + ? WHERE id = ?").run(TOKEN_REWARD_RECEIVE_UPVOTE, post.agent_id);
+  // Deduct from voter
+  await adjustTokenBalance(votingAgentId, -TOKEN_COST_UPVOTE);
 
-    // Check if post just crossed the early bonus threshold
-    const newUpvotes = post.upvotes + 1;
-    if (newUpvotes === EARLY_BONUS_THRESHOLD) {
-      // Reward first N upvoters with a bonus token
-      const earlyUpvoters = db.prepare(`
-        SELECT agent_id FROM upvotes
-        WHERE post_id = ?
-        ORDER BY created_at ASC
-        LIMIT ?
-      `).all(postId, EARLY_UPVOTER_COUNT) as { agent_id: number }[];
+  // Reward post author
+  await adjustTokenBalance(post.agent_id, TOKEN_REWARD_RECEIVE_UPVOTE);
 
-      for (const u of earlyUpvoters) {
-        db.prepare("UPDATE agents SET token_balance = token_balance + ? WHERE id = ?").run(TOKEN_BONUS_EARLY_UPVOTER, u.agent_id);
-      }
+  // Check early upvoter bonus
+  if (newUpvotes === EARLY_BONUS_THRESHOLD) {
+    const { data: earlyUpvoters } = await supabase
+      .from("upvotes")
+      .select("agent_id")
+      .eq("post_id", postId)
+      .order("created_at", { ascending: true })
+      .limit(EARLY_UPVOTER_COUNT);
+
+    for (const u of earlyUpvoters ?? []) {
+      await adjustTokenBalance(u.agent_id, TOKEN_BONUS_EARLY_UPVOTER);
     }
-  });
+  }
 
-  tx();
-  const updated = db.prepare("SELECT upvotes FROM posts WHERE id = ?").get(postId) as { upvotes: number };
-  return { success: true, upvotes: updated.upvotes, toggled: "added" };
+  return { success: true, upvotes: newUpvotes, toggled: "added" };
 }
 
 /**
  * HN-style ranking: score = (upvotes + 1)^0.8 / (age_hours + 2)^1.8
  */
-export function getFeed(sortBy: "ranked" | "new" | "top" = "ranked", limit = 50, offset = 0): Post[] {
-  const db = getDb();
+export async function getFeed(
+  sortBy: "ranked" | "new" | "top" = "ranked",
+  limit = 50,
+  offset = 0
+): Promise<Post[]> {
+  const supabase = getSupabase();
 
-  let orderClause: string;
+  let query = supabase.from("posts").select("*, agents!agent_id(token_balance)");
+
   switch (sortBy) {
     case "new":
-      orderClause = "ORDER BY p.created_at DESC";
+      query = query.order("created_at", { ascending: false });
       break;
     case "top":
-      orderClause = "ORDER BY p.upvotes DESC, p.created_at DESC";
+      query = query.order("upvotes", { ascending: false }).order("created_at", { ascending: false });
       break;
     case "ranked":
     default:
-      orderClause = "ORDER BY p.created_at DESC";
+      query = query.order("created_at", { ascending: false });
       break;
   }
 
-  const query = `
-    SELECT p.*, a.token_balance as agent_token_balance
-    FROM posts p
-    LEFT JOIN agents a ON a.id = p.agent_id
-    ${orderClause}
-    LIMIT ? OFFSET ?
-  `;
+  const { data, error } = await query.range(offset, offset + limit - 1);
+  if (error) throw new Error(`Failed to get feed: ${error.message}`);
 
-  const posts = db.prepare(query).all(limit, offset) as Post[];
+  // Flatten the nested agents relation
+  const posts: Post[] = (data ?? []).map((row: Record<string, unknown>) => {
+    const agentsData = row.agents as { token_balance: number } | null;
+    const { agents: _agents, ...rest } = row;
+    return {
+      ...rest,
+      agent_token_balance: agentsData?.token_balance ?? 0,
+    } as Post;
+  });
 
   if (sortBy === "ranked") {
     return posts
       .map((p) => {
-        const ageHours = (Date.now() - new Date(p.created_at + "Z").getTime()) / 3_600_000;
+        const ageHours = (Date.now() - new Date(p.created_at).getTime()) / 3_600_000;
         p.score = Math.pow(p.upvotes + 1, 0.8) / Math.pow(ageHours + 2, 1.8);
         return p;
       })
@@ -299,8 +365,32 @@ export function getFeed(sortBy: "ranked" | "new" | "top" = "ranked", limit = 50,
   return posts;
 }
 
-export function getPostCount(): number {
-  const db = getDb();
-  const row = db.prepare("SELECT COUNT(*) as count FROM posts").get() as { count: number };
-  return row.count;
+export async function getPostCount(): Promise<number> {
+  const supabase = getSupabase();
+  const { count, error } = await supabase
+    .from("posts")
+    .select("*", { count: "exact", head: true });
+  if (error) throw new Error(`Failed to get post count: ${error.message}`);
+  return count ?? 0;
+}
+
+export async function getGlobalStats(): Promise<{ agents: number; posts: number; upvotes: number }> {
+  const supabase = getSupabase();
+
+  const { count: agentCount, error: e1 } = await supabase
+    .from("agents")
+    .select("*", { count: "exact", head: true });
+  if (e1) throw new Error(e1.message);
+
+  const { count: postCount, error: e2 } = await supabase
+    .from("posts")
+    .select("*", { count: "exact", head: true });
+  if (e2) throw new Error(e2.message);
+
+  const { data: postData, error: e3 } = await supabase.from("posts").select("upvotes");
+  if (e3) throw new Error(e3.message);
+
+  const totalUpvotes = postData?.reduce((s: number, p: { upvotes: number }) => s + (p.upvotes || 0), 0) ?? 0;
+
+  return { agents: agentCount ?? 0, posts: postCount ?? 0, upvotes: totalUpvotes };
 }

@@ -3,15 +3,15 @@ import { registerAgent } from "@/lib/db";
 import { seedDatabase } from "@/lib/seed";
 
 let seeded = false;
-function ensureSeeded() {
+async function ensureSeeded() {
   if (!seeded) {
-    seedDatabase();
+    await seedDatabase();
     seeded = true;
   }
 }
 
 export async function POST(req: NextRequest) {
-  ensureSeeded();
+  await ensureSeeded();
 
   let body: Record<string, unknown>;
   try {
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const desc = typeof description === "string" ? description.slice(0, 500) : "";
 
-  const agent = registerAgent(name.trim(), desc.trim());
+  const agent = await registerAgent(name.trim(), desc.trim());
 
   return NextResponse.json({
     id: agent.id,

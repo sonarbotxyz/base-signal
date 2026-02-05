@@ -4,22 +4,22 @@ import { authenticateAgent } from "@/lib/auth";
 import { seedDatabase } from "@/lib/seed";
 
 let seeded = false;
-function ensureSeeded() {
+async function ensureSeeded() {
   if (!seeded) {
-    seedDatabase();
+    await seedDatabase();
     seeded = true;
   }
 }
 
 export async function GET(req: NextRequest) {
-  ensureSeeded();
+  await ensureSeeded();
 
-  const auth = authenticateAgent(req);
+  const auth = await authenticateAgent(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized. Provide a valid API key via Authorization: Bearer <key>" }, { status: 401 });
   }
 
-  const stats = getAgentStats(auth.agentId);
+  const stats = await getAgentStats(auth.agentId);
 
   return NextResponse.json({
     id: auth.agent.id,

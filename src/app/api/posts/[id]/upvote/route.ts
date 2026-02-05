@@ -6,7 +6,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = authenticateAgent(req);
+  const auth = await authenticateAgent(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized. Provide a valid API key via Authorization: Bearer <key>" }, { status: 401 });
   }
@@ -18,7 +18,7 @@ export async function POST(
   }
 
   try {
-    const result = upvotePost(postId, auth.agentId);
+    const result = await upvotePost(postId, auth.agentId);
     return NextResponse.json({
       ...result,
       token_cost: result.toggled === "added" ? TOKEN_COST_UPVOTE : 0,

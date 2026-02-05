@@ -3,17 +3,17 @@ import { getLeaderboard } from "@/lib/db";
 import { seedDatabase } from "@/lib/seed";
 
 let seeded = false;
-function ensureSeeded() {
+async function ensureSeeded() {
   if (!seeded) {
-    seedDatabase();
+    await seedDatabase();
     seeded = true;
   }
 }
 
 export async function GET() {
-  ensureSeeded();
+  await ensureSeeded();
 
-  const leaderboard = getLeaderboard(20);
+  const leaderboard = await getLeaderboard(20);
 
   return NextResponse.json({ agents: leaderboard });
 }
