@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAgentByApiKey, recordDeposit, getAgentDeposits, VAULT_CONTRACT_ADDRESS, TOKEN_CONTRACT_ADDRESS, BASE_CHAIN_ID } from "@/lib/db";
 import { createPublicClient, http, parseAbiItem } from "viem";
-import { base } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 
-// Viem client for Base
+// Viem client for Base (auto-detect testnet vs mainnet)
+const isTestnet = process.env.BASE_RPC_URL?.includes("sepolia");
 const publicClient = createPublicClient({
-  chain: base,
+  chain: isTestnet ? baseSepolia : base,
   transport: http(process.env.BASE_RPC_URL || "https://mainnet.base.org"),
 });
 

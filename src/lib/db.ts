@@ -34,7 +34,7 @@ export const EARLY_BONUS_THRESHOLD = 10;         // Upvotes needed to trigger ea
 // Contract addresses (to be updated after deployment)
 export const VAULT_CONTRACT_ADDRESS = process.env.VAULT_CONTRACT_ADDRESS || "";
 export const TOKEN_CONTRACT_ADDRESS = process.env.TOKEN_CONTRACT_ADDRESS || "";
-export const BASE_CHAIN_ID = 8453; // Base mainnet
+export const BASE_CHAIN_ID = Number(process.env.BASE_CHAIN_ID) || 84532; // Base Sepolia testnet (84532) or mainnet (8453)
 
 // ── Agent Types & Queries ──
 
