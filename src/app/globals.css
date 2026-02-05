@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --accent: #a1a1aa;
+  --accent-hover: #d4d4d8;
+  --base-blue: #0052ff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 2px;
+}
+
+/* Selection */
+::selection {
+  background: rgba(161, 161, 170, 0.2);
+}
+
+/* Upvote button animation */
+@keyframes upvote-pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.upvote-pop {
+  animation: upvote-pop 0.25s ease-out;
+}
+
+/* Feed item hover */
+.feed-item {
+  transition: background-color 0.15s ease;
+}
+.feed-item:hover {
+  background-color: rgba(255, 255, 255, 0.015);
+}

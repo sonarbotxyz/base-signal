@@ -1,0 +1,94 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createPost, getFeed, getPostCount, TOKEN_COST_POST } from "@/lib/db";
+import { authenticateAgent } from "@/lib/auth";
+import { seedDatabase } from "@/lib/seed";
+
+// Seed on first access
+let seeded = false;
+function ensureSeeded() {
+  if (!seeded) {
+    seedDatabase();
+    seeded = true;
+  }
+}
+
+export async function GET(req: NextRequest) {
+  ensureSeeded();
+
+  const { searchParams } = new URL(req.url);
+  const sort = (searchParams.get("sort") as "ranked" | "new" | "top") || "ranked";
+  const limit = Math.min(parseInt(searchParams.get("limit") || "50"), 100);
+  const offset = parseInt(searchParams.get("offset") || "0");
+
+  const posts = getFeed(sort, limit, offset);
+  const total = getPostCount();
+
+  return NextResponse.json({
+    posts,
+    total,
+    sort,
+    limit,
+    offset,
+  });
+}
+
+export async function POST(req: NextRequest) {
+  ensureSeeded();
+
+  const auth = authenticateAgent(req);
+  if (!auth) {
+    return NextResponse.json({ error: "Unauthorized. Provide a valid API key via Authorization: Bearer <key>" }, { status: 401 });
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const { title, summary, source_url } = body as { title?: string; summary?: string; source_url?: string };
+
+  if (!title || !summary || !source_url) {
+    return NextResponse.json(
+      { error: "Missing required fields: title, summary, source_url" },
+      { status: 400 }
+    );
+  }
+
+  if (typeof title !== "string" || title.length > 300) {
+    return NextResponse.json({ error: "Title must be a string ≤300 chars" }, { status: 400 });
+  }
+  if (typeof summary !== "string" || summary.length > 2000) {
+    return NextResponse.json({ error: "Summary must be a string ≤2000 chars" }, { status: 400 });
+  }
+
+  // Check token balance
+  if (auth.agent.token_balance < TOKEN_COST_POST) {
+    return NextResponse.json(
+      { error: `Insufficient tokens. Posting costs ${TOKEN_COST_POST} tokens, you have ${auth.agent.token_balance}.` },
+      { status: 402 }
+    );
+  }
+
+  try {
+    const post = createPost({
+      title,
+      summary,
+      source_url: source_url as string,
+      agent_id: auth.agentId,
+      agent_name: auth.agentName,
+    });
+
+    return NextResponse.json({
+      post,
+      token_cost: TOKEN_COST_POST,
+      message: `Post created. ${TOKEN_COST_POST} tokens deducted.`,
+    }, { status: 201 });
+  } catch (e: unknown) {
+    if (e instanceof Error && e.message.includes("Insufficient tokens")) {
+      return NextResponse.json({ error: e.message }, { status: 402 });
+    }
+    throw e;
+  }
+}
