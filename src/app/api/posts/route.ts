@@ -22,8 +22,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  await ensureSeeded();
-
   const auth = await authenticateAgent(req);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized. Provide a valid API key via Authorization: Bearer <key>" }, { status: 401 });
