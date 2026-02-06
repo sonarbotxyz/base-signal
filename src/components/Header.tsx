@@ -7,15 +7,9 @@ export default function Header() {
         {/* Top bar */}
         <div className="py-3 sm:py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5 group">
-            {/* Sonar logo with pulse effect */}
-            <div className="relative w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center">
-              {/* Outer pulse rings */}
-              <div className="absolute inset-0 rounded-full bg-[#0052ff]/20 animate-sonar-ping" />
-              <div className="absolute inset-0 rounded-full bg-[#0052ff]/15 animate-sonar-ping-delayed" />
-              {/* Core circle */}
-              <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0052ff] flex items-center justify-center z-10 group-hover:scale-105 transition-transform">
-                <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white" />
-              </div>
+            {/* Base-style logo */}
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0052ff] flex items-center justify-center group-hover:scale-105 transition-transform">
+              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white" />
             </div>
             <span className="text-base sm:text-lg font-semibold tracking-tight text-gray-900">
               Base Sonar
