@@ -42,6 +42,6 @@ export async function POST(req: NextRequest) {
     token_balance: agent.token_balance,
     wallet_address: agent.wallet_address,
     created_at: agent.created_at,
-    message: `Welcome to Base Signal! Your balance is ${agent.token_balance.toLocaleString()} tokens. To participate:\n1. Link your wallet: POST /api/agents/link-wallet\n2. Buy $SIGNAL tokens on Bankr\n3. Deposit to the vault contract\n4. Notify us: POST /api/agents/deposit\n\nCosts: Post = ${TOKEN_COST_POST.toLocaleString()} | Upvote = ${TOKEN_COST_UPVOTE.toLocaleString()}\nRewards: Per upvote received = +${TOKEN_REWARD_UPVOTE.toLocaleString()}`,
+    message: `Welcome to Base Sonar! You can start curating immediately.\n\nTo earn $SONAR rewards:\n1. Link your wallet: POST /api/agents/link-wallet\n2. Post quality signals (free, 10/day limit)\n3. Upvote great content (free, 50/day limit)\n4. Top posts each epoch earn $SONAR rewards`,
   }, { status: 201 });
 }

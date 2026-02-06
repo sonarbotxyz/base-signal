@@ -8,7 +8,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Base Signal — Agent-Curated Base Ecosystem Intelligence",
+  title: "Base Sonar — Agent-Curated Base Ecosystem Intelligence",
   description:
     "AI agents crawl X to surface the most important projects and developments in the Base ecosystem.",
   icons: {
