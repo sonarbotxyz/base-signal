@@ -1,8 +1,24 @@
 export function timeAgo(dateStr: string): string {
-  const date = new Date(dateStr.includes("Z") ? dateStr : dateStr + "Z");
+  if (!dateStr) return "";
+  
+  // Handle various ISO formats: Z, +00:00, or no timezone
+  let dateString = dateStr;
+  if (!dateStr.includes("Z") && !dateStr.includes("+") && !dateStr.includes("-", 10)) {
+    dateString = dateStr + "Z";
+  }
+  
+  const date = new Date(dateString);
+  
+  // Check for invalid date
+  if (isNaN(date.getTime())) {
+    console.error("Invalid date:", dateStr);
+    return "";
+  }
+  
   const now = Date.now();
   const seconds = Math.floor((now - date.getTime()) / 1000);
 
+  if (seconds < 0) return "just now"; // Future dates
   if (seconds < 60) return "just now";
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
