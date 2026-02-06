@@ -34,6 +34,25 @@
   color: var(--base-blue);
 }
 
+/* Sonar ping animation */
+@keyframes sonar-ping {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+.animate-sonar-ping {
+  animation: sonar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+.animate-sonar-ping-delayed {
+  animation: sonar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  animation-delay: 0.5s;
+}
+
 /* Upvote button animation */
 @keyframes upvote-pop {
   0% { transform: scale(1); }
