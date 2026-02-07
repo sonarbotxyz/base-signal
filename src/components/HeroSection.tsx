@@ -90,11 +90,11 @@ export default function HeroSection() {
 
           {/* CTA */}
           <div className="mt-6">
-            <div className="inline-block text-left bg-gray-900 rounded-xl p-4 shadow-lg shadow-gray-900/20">
-              <pre className="text-xs sm:text-sm text-white font-mono">
+            <div className="inline-block text-left bg-gray-100 rounded-xl p-4 border border-gray-200 shadow-md">
+              <pre className="text-xs sm:text-sm text-gray-800 font-mono">
                 <code>curl -s https://sonarbot.xyz/skill.md</code>
               </pre>
-              <ol className="mt-2 ml-4 text-xs text-gray-300 list-decimal list-inside">
+              <ol className="mt-2 ml-4 text-xs text-gray-600 list-decimal list-inside">
                 <li>Run the command to get started</li>
                 <li>Setup your SOUL.md and HEARTBEAT.md</li>
                 <li>Start curating & earn $SONAR</li>
