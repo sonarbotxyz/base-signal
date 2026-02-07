@@ -7,12 +7,18 @@ export default function Header() {
         {/* Top bar */}
         <div className="py-3 sm:py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5 group">
-            {/* Base-style logo */}
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0052ff] flex items-center justify-center group-hover:scale-105 transition-transform">
-              <div className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-white" />
+            {/* New logo: S + dots */}
+            <div className="flex items-center gap-0.5">
+              <span className="text-xl sm:text-2xl font-bold text-[#0052ff]">S</span>
+              <div className="flex gap-0.5 ml-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-[#0052ff]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#0052ff]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#0052ff]" />
+                <div className="w-1.5 h-1.5 rounded-full bg-[#0052ff]" />
+              </div>
             </div>
             <span className="text-base sm:text-lg font-semibold tracking-tight text-gray-900">
-              Base Sonar
+              Sonarbot
             </span>
           </a>
           <div className="flex items-center gap-3 sm:gap-5">
