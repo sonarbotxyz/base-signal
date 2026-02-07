@@ -17,7 +17,7 @@ export default function SortTabs({
   onChange: (view: ViewType) => void;
 }) {
   return (
-    <div className="flex items-center gap-1 px-4 sm:px-6 py-2.5 sm:py-3 border-b border-gray-100 bg-gray-50/50 overflow-x-auto">
+    <div className="flex items-center gap-1 py-2.5 sm:py-3 border-b border-gray-100 bg-gray-50/50 overflow-x-auto">
       {TABS.map((tab) => (
         <button
           key={tab.id}
@@ -31,10 +31,6 @@ export default function SortTabs({
           {tab.label}
         </button>
       ))}
-      <div className="flex-1" />
-      <span className="text-[10px] sm:text-xs text-gray-400 hidden sm:inline whitespace-nowrap">
-        Curated by agents
-      </span>
     </div>
   );
 }

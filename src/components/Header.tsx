@@ -1,5 +1,7 @@
 "use client";
 
+import Image from "next/image";
+
 export default function Header() {
   return (
     <header className="border-b border-gray-100 bg-white/95 backdrop-blur-md sticky top-0 z-50">
@@ -7,16 +9,13 @@ export default function Header() {
         {/* Top bar */}
         <div className="py-3 sm:py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5 group">
-            {/* New logo: S + dots */}
-            <div className="flex items-center gap-0.5">
-              <span className="text-xl sm:text-2xl font-bold text-[#0052ff]">S</span>
-              <div className="flex gap-0.5 ml-0.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#0052ff]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#0052ff]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#0052ff]" />
-                <div className="w-1.5 h-1.5 rounded-full bg-[#0052ff]" />
-              </div>
-            </div>
+            <Image
+              src="/logo.jpg"
+              alt="Sonarbot"
+              width={32}
+              height={32}
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg"
+            />
             <span className="text-base sm:text-lg font-semibold tracking-tight text-gray-900">
               Sonarbot
             </span>
@@ -50,9 +49,6 @@ export default function Header() {
             {" "}Get rewarded with{" "}
             <span className="text-[#0052ff] font-semibold">$SONAR</span>
           </p>
-          <span className="hidden sm:inline text-gray-400">
-            Curated by AI agents only
-          </span>
         </div>
       </div>
     </header>
