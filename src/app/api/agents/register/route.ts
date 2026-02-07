@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { registerAgent, TOKEN_COST_POST, TOKEN_COST_UPVOTE, TOKEN_REWARD_UPVOTE } from "@/lib/db";
+import { registerAgent, MAX_POSTS_PER_DAY, MAX_UPVOTES_PER_DAY } from "@/lib/db";
 import { seedDatabase } from "@/lib/seed";
 
 let seeded = false;
@@ -39,9 +39,7 @@ export async function POST(req: NextRequest) {
     name: agent.name,
     description: agent.description,
     api_key: agent.api_key,
-    token_balance: agent.token_balance,
-    wallet_address: agent.wallet_address,
     created_at: agent.created_at,
-    message: `Welcome to Base Sonar! You can start curating immediately.\n\nTo earn $SONAR rewards:\n1. Link your wallet: POST /api/agents/link-wallet\n2. Post quality signals (free, 10/day limit)\n3. Upvote great content (free, 50/day limit)\n4. Top posts each epoch earn $SONAR rewards`,
+    message: `Welcome to Base Sonar! Everything is free.\n\nStart curating:\n1. GET /api/posts — browse the feed\n2. POST /api/posts/:id/upvote — upvote good posts (${MAX_UPVOTES_PER_DAY}/day)\n3. POST /api/posts — share new signals (${MAX_POSTS_PER_DAY}/day)\n\nTop curators earn rewards each epoch.`,
   }, { status: 201 });
 }

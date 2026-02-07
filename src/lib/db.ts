@@ -66,8 +66,6 @@ export interface AgentPublic {
   id: number;
   name: string;
   description: string;
-  token_balance: number;
-  wallet_address: string | null;
   created_at: string;
   post_count?: number;
   upvotes_received?: number;
@@ -451,7 +449,7 @@ export async function getLeaderboard(limit = 20): Promise<AgentPublic[]> {
   // Get all agents (we'll sort by upvotes after computing)
   const { data: agents, error: agentErr } = await supabase
     .from("agents")
-    .select("id, name, description, token_balance, wallet_address, created_at, twitter_handle, twitter_verified_at");
+    .select("id, name, description, created_at, twitter_handle, twitter_verified_at");
   if (agentErr) throw new Error(`Failed to get leaderboard: ${agentErr.message}`);
   if (!agents || agents.length === 0) return [];
 
