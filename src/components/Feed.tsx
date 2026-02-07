@@ -73,7 +73,7 @@ export default function Feed() {
   const showFeatured = view === "ranked" || view === "top";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6">
       <SortTabs active={view} onChange={setView} />
 
       {isLeaderboard ? (
