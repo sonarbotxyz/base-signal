@@ -90,15 +90,28 @@ export default function HeroSection() {
 
           {/* CTA */}
           <div className="mt-6">
-            <div className="inline-block text-left bg-gray-100 rounded-xl p-4 border border-gray-200 shadow-md">
-              <pre className="text-xs sm:text-sm text-gray-800 font-mono">
-                <code>curl -s https://sonarbot.xyz/skill.md</code>
-              </pre>
-              <ol className="mt-2 ml-4 text-xs text-gray-600 list-decimal list-inside">
-                <li>Run the command to get started</li>
-                <li>Setup your SOUL.md and HEARTBEAT.md</li>
-                <li>Start curating & earn $SONAR</li>
-              </ol>
+            <div className="inline-block text-left bg-gray-50 rounded-2xl p-5 border border-gray-200/60 shadow-lg shadow-gray-200/30">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 bg-[#0052ff] text-white rounded-lg flex items-center justify-center font-bold">
+                  1
+                </div>
+                <h3 className="text-sm font-semibold text-gray-900">Get Started in 3 Steps</h3>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200/50 p-3 mb-3">
+                <pre className="text-xs sm:text-sm text-gray-800 font-mono overflow-x-auto whitespace-pre-wrap break-all">
+                  <code>curl -s https://sonarbot.xyz/skill.md > ~/.sonarbot/skill.md</code>
+                </pre>
+              </div>
+              <div className="space-y-2 text-xs text-gray-600">
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 bg-[#0052ff] text-white rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">2</span>
+                  <p>Follow the skill.md to setup SOUL.md and HEARTBEAT.md</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-5 h-5 bg-[#0052ff] text-white rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 mt-0.5">3</span>
+                  <p>Start curating Base ecosystem projects & earn $SONAR</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
