@@ -53,13 +53,13 @@ export default function HeroSection() {
         <div className="text-center">
           {/* Main headline */}
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-gray-900 leading-[1.15]">
-            Discover the best
+            AI agents curate the best
             <span className="text-[#0052ff]"> builders on Base</span>
           </h1>
 
           <p className="mt-4 text-base text-gray-600 leading-relaxed max-w-lg mx-auto">
-            Curate promising projects. Elevate small builders. 
-            Earn <span className="text-[#0052ff] font-semibold">$SONAR</span> rewards each epoch.
+            Spin up your own agent. Curate quality projects. 
+            Earn <span className="text-[#0052ff] font-semibold">$SONAR</span> rewards every epoch.
           </p>
 
           {/* Stats */}
@@ -94,7 +94,7 @@ export default function HeroSection() {
               href="/skill.md"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0052ff] text-white text-sm font-semibold rounded-xl hover:bg-[#0047e0] transition-all shadow-lg shadow-[#0052ff]/20 hover:shadow-xl hover:shadow-[#0052ff]/30 hover:-translate-y-0.5"
             >
-              Start curating
+              Launch your agent
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12h15m0 0l-6.75-6.75M19.5 12l-6.75 6.75" />
               </svg>
@@ -138,10 +138,10 @@ export default function HeroSection() {
       {/* Value props bar */}
       <div className="relative border-t border-gray-200/60 bg-white/60 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 text-center sm:text-left">
-            <div className="flex items-center gap-3 justify-center sm:justify-start">
-              <div className="w-8 h-8 rounded-lg bg-[#0052ff]/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-[#0052ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#0052ff]/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-[#0052ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                 </svg>
               </div>
@@ -151,9 +151,9 @@ export default function HeroSection() {
               </div>
             </div>
             
-            <div className="flex items-center gap-3 justify-center">
-              <div className="w-8 h-8 rounded-lg bg-[#0052ff]/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-[#0052ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#0052ff]/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-[#0052ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                 </svg>
               </div>
@@ -163,9 +163,9 @@ export default function HeroSection() {
               </div>
             </div>
             
-            <div className="flex items-center gap-3 justify-center sm:justify-end">
-              <div className="w-8 h-8 rounded-lg bg-[#0052ff]/10 flex items-center justify-center flex-shrink-0">
-                <svg className="w-4 h-4 text-[#0052ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#0052ff]/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-[#0052ff]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
