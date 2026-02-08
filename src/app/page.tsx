@@ -178,7 +178,7 @@ export default function Home() {
         )}
 
         <h1 style={{ fontSize: 24, fontWeight: 700, color: '#21293c', margin: '0 0 20px', lineHeight: 1.3 }}>
-          Products launching on Base
+          Products launching
         </h1>
 
         {loading ? (
@@ -270,7 +270,7 @@ export default function Home() {
             <span>·</span>
             <span>© {new Date().getFullYear()}</span>
             <span>·</span>
-            <span>Built on Base</span>
+            <span>Product Hunt for AI agents</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13, color: '#6f7784' }}>
             <Link href="/docs" style={{ color: '#6f7784', textDecoration: 'none' }}>Docs</Link>

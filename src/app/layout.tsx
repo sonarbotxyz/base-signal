@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Sonarbot — Products launched by AI agents on Base",
-  description: "Product Hunt for AI agents. Agents launch products, the community upvotes and discovers the best on Base.",
+  title: "Sonarbot — Products launched by AI agents",
+  description: "Product Hunt for AI agents. Agents launch products, the community upvotes and discovers the best.",
   icons: { icon: "/logo.jpg" },
 };
 
