@@ -126,9 +126,7 @@ export default function Home() {
 
           {/* Logo */}
           <Link href="/" style={{ flexShrink: 0 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ff6154', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, lineHeight: 1 }}>S</span>
-            </div>
+            <span style={{ fontWeight: 800, fontSize: 18, color: "#0000FF", lineHeight: 1, whiteSpace: "nowrap" }}>sonarbot :</span>
           </Link>
 
           <div style={{ flex: 1 }} />
@@ -146,7 +144,7 @@ export default function Home() {
           {/* Sign in */}
           <button
             onClick={() => setShowAuth(true)}
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 16px', borderRadius: 20, background: '#ff6154', border: 'none', fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', gap: 6 }}>
+            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 16px', borderRadius: 20, background: '#0000FF', border: 'none', fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', gap: 6 }}>
             {verified ? (
               `@${userHandle}`
             ) : (
@@ -188,7 +186,7 @@ export default function Home() {
             <p style={{ fontSize: 17, fontWeight: 600, color: '#21293c', marginBottom: 4 }}>No products yet</p>
             <p style={{ fontSize: 14, color: '#6f7784', marginBottom: 16 }}>Be the first to launch a product</p>
             <button onClick={() => verified ? setShowSubmit(true) : setShowAuth(true)}
-              style={{ fontSize: 14, fontWeight: 600, color: '#ff6154', background: 'none', border: 'none', cursor: 'pointer' }}>
+              style={{ fontSize: 14, fontWeight: 600, color: '#0000FF', background: 'none', border: 'none', cursor: 'pointer' }}>
               Launch a product →
             </button>
           </div>
@@ -237,9 +235,9 @@ export default function Home() {
                       width: 48,
                       height: 56,
                       borderRadius: 10,
-                      border: `1px solid ${isVoted ? '#ff6154' : '#e8e8e8'}`,
-                      background: isVoted ? '#fff3f2' : '#ffffff',
-                      color: isVoted ? '#ff6154' : '#4b587c',
+                      border: `1px solid ${isVoted ? '#0000FF' : '#e8e8e8'}`,
+                      background: isVoted ? '#eeeeff' : '#ffffff',
+                      color: isVoted ? '#0000FF' : '#4b587c',
                       cursor: 'pointer',
                       padding: 0,
                       gap: 2,
@@ -289,7 +287,7 @@ export default function Home() {
               {authError && <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>{authError}</p>}
               <button onClick={() => { const i = document.getElementById('auth-input') as HTMLInputElement; if (i) verifyHandle(i.value); }}
                 disabled={verifying}
-                style={{ width: '100%', height: 46, borderRadius: 12, border: 'none', background: '#ff6154', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: verifying ? 0.6 : 1 }}>
+                style={{ width: '100%', height: 46, borderRadius: 12, border: 'none', background: '#0000FF', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: verifying ? 0.6 : 1 }}>
                 {verifying ? 'Verifying...' : 'Continue'}
               </button>
             </div>
@@ -318,7 +316,7 @@ export default function Home() {
                 value={submitForm.website_url} onChange={e => setSubmitForm({...submitForm, website_url: e.target.value})}
                 style={{ width: '100%', height: 46, padding: '0 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               <button type="submit" disabled={submitting || !submitForm.name || !submitForm.tagline}
-                style={{ width: '100%', height: 46, borderRadius: 12, border: 'none', background: '#ff6154', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: (submitting || !submitForm.name || !submitForm.tagline) ? 0.5 : 1 }}>
+                style={{ width: '100%', height: 46, borderRadius: 12, border: 'none', background: '#0000FF', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: (submitting || !submitForm.name || !submitForm.tagline) ? 0.5 : 1 }}>
                 {submitting ? 'Launching...' : 'Launch'}
               </button>
             </form>

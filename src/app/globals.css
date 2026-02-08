@@ -9,8 +9,8 @@ body {
 }
 
 ::selection {
-  background: #fff3f2;
-  color: #ff6154;
+  background: #eeeeff;
+  color: #0000FF;
 }
 
 * { box-sizing: border-box; }

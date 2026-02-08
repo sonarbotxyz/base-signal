@@ -102,7 +102,7 @@ function RichDescription({ text }: { text: string }) {
         if (part.type === 'url') {
           return (
             <a key={i} href={part.value} target="_blank" rel="noopener noreferrer"
-              style={{ color: '#ff6154', fontWeight: 500, textDecoration: 'none', wordBreak: 'break-all' }}>
+              style={{ color: '#0000FF', fontWeight: 500, textDecoration: 'none', wordBreak: 'break-all' }}>
               {part.value}
             </a>
           );
@@ -227,7 +227,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff' }}>
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
           <circle cx="12" cy="12" r="10" stroke="#f0f0f0" strokeWidth="3" />
-          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="#ff6154" />
+          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="#0000FF" />
         </svg>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
@@ -238,7 +238,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#fff', gap: 8 }}>
         <p style={{ fontSize: 17, fontWeight: 600, color: '#21293c' }}>Project not found</p>
-        <Link href="/" style={{ fontSize: 14, fontWeight: 600, color: '#ff6154', textDecoration: 'none' }}>← Back to home</Link>
+        <Link href="/" style={{ fontSize: 14, fontWeight: 600, color: '#0000FF', textDecoration: 'none' }}>← Back to home</Link>
       </div>
     );
   }
@@ -257,13 +257,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             </svg>
           </button>
           <Link href="/" style={{ flexShrink: 0 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ff6154', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#fff', fontWeight: 800, fontSize: 18, lineHeight: 1 }}>S</span>
-            </div>
+            <span style={{ fontWeight: 800, fontSize: 18, color: "#0000FF", lineHeight: 1, whiteSpace: "nowrap" }}>sonarbot :</span>
           </Link>
           <div style={{ flex: 1 }} />
           <button onClick={() => setShowAuth(true)}
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 16px', borderRadius: 20, background: '#ff6154', border: 'none', fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', gap: 6 }}>
+            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 16px', borderRadius: 20, background: '#0000FF', border: 'none', fontSize: 14, fontWeight: 600, color: '#fff', cursor: 'pointer', gap: 6 }}>
             {verified ? `@${userHandle}` : (
               <>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -281,7 +279,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
         {/* Launching today badge */}
         <div style={{ marginBottom: 16 }}>
-          <span style={{ display: 'inline-block', padding: '5px 12px', borderRadius: 6, background: '#ff6154', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: 0.3 }}>
+          <span style={{ display: 'inline-block', padding: '5px 12px', borderRadius: 6, background: '#0000FF', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: 0.3 }}>
             Launching today
           </span>
         </div>
@@ -372,11 +370,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             <div style={{ padding: 16, borderRadius: 12, background: '#f9f9f9', border: '1px solid #f0f0f0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 14, color: '#6f7784', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff6154" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0000FF" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
                   <span><strong style={{ color: '#21293c' }}>{upvotes}</strong> upvotes</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff6154" strokeWidth="1.5">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0000FF" strokeWidth="1.5">
                     <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   <span><strong style={{ color: '#21293c' }}>{comments.length}</strong> comments</span>
@@ -409,7 +407,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           {verified ? (
             <form onSubmit={handleComment} style={{ marginBottom: 24 }}>
               <div style={{ display: 'flex', gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#fff0ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#ff6154' }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#eeeeff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 13, fontWeight: 600, color: '#0000FF' }}>
                   {userHandle[0]?.toUpperCase()}
                 </div>
                 <div style={{ flex: 1 }}>
@@ -419,7 +417,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                     style={{ width: '100%', padding: '12px 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, resize: 'none', outline: 'none', lineHeight: 1.5, boxSizing: 'border-box' }} />
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8 }}>
                     <button type="submit" disabled={!newComment.trim() || submitting}
-                      style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#ff6154', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (!newComment.trim() || submitting) ? 0.5 : 1 }}>
+                      style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#0000FF', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', opacity: (!newComment.trim() || submitting) ? 0.5 : 1 }}>
                       {submitting ? 'Posting...' : 'Comment'}
                     </button>
                   </div>
@@ -429,7 +427,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           ) : (
             <div style={{ padding: 16, borderRadius: 12, background: '#f5f5f5', marginBottom: 24 }}>
               <p style={{ fontSize: 14, color: '#6f7784', margin: 0 }}>
-                <button onClick={() => setShowAuth(true)} style={{ fontWeight: 600, color: '#ff6154', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Sign in</button>
+                <button onClick={() => setShowAuth(true)} style={{ fontWeight: 600, color: '#0000FF', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Sign in</button>
                 {' '}to join the discussion
               </p>
             </div>
@@ -512,7 +510,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               width: '100%', height: 48, borderRadius: 24,
-              background: voted ? '#e8554a' : '#ff6154',
+              background: voted ? '#0000cc' : '#0000FF',
               border: 'none', cursor: 'pointer',
               fontSize: 16, fontWeight: 700, color: '#fff',
             }}>
@@ -540,7 +538,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               {authError && <p style={{ fontSize: 13, color: '#ef4444', margin: 0 }}>{authError}</p>}
               <button onClick={() => { const i = document.getElementById('auth-input-detail') as HTMLInputElement; if (i) verifyHandle(i.value); }}
                 disabled={verifying}
-                style={{ width: '100%', height: 46, borderRadius: 12, border: 'none', background: '#ff6154', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: verifying ? 0.6 : 1 }}>
+                style={{ width: '100%', height: 46, borderRadius: 12, border: 'none', background: '#0000FF', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: verifying ? 0.6 : 1 }}>
                 {verifying ? 'Verifying...' : 'Continue'}
               </button>
             </div>
