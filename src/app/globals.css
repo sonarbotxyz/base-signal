@@ -1,132 +1,40 @@
 @import "tailwindcss";
 
 :root {
-  --base-blue: #0052ff;
-  --base-blue-hover: #0047e0;
-  --base-blue-light: #e8f0ff;
-  --text-primary: #1a1a1a;
-  --text-secondary: #525252;
-  --text-muted: #8c8c8c;
-  --border-color: #e5e5e5;
-  --border-light: #f0f0f0;
-  --bg-white: #ffffff;
-  --bg-gray: #fafafa;
+  --ph-orange: #ff6154;
+  --ph-orange-hover: #e8554a;
+  --ph-orange-light: #fff3f2;
+  --ph-text: #21293c;
+  --ph-text-secondary: #6f7784;
+  --ph-text-muted: #9b9b9b;
+  --ph-border: #e8e8e8;
+  --ph-border-light: #f0f0ef;
+  --ph-bg: #ffffff;
+  --ph-bg-page: #f5f5f4;
+  --ph-bg-secondary: #f7f7f7;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: var(--bg-gray);
-}
-::-webkit-scrollbar-thumb {
-  background: #d4d4d4;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #b3b3b3;
+body {
+  background: var(--ph-bg-page);
+  color: var(--ph-text);
 }
 
-/* Selection */
 ::selection {
-  background: var(--base-blue-light);
-  color: var(--base-blue);
+  background: var(--ph-orange-light);
+  color: var(--ph-orange);
 }
 
-/* Sonar ping animation */
-@keyframes sonar-ping {
-  0% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(2.5);
-    opacity: 0;
-  }
-}
-.animate-sonar-ping {
-  animation: sonar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-}
-.animate-sonar-ping-delayed {
-  animation: sonar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
-  animation-delay: 0.5s;
-}
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #b3b3b3; }
 
-/* Orbiting animation */
-@keyframes orbit {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Upvote button animation */
+/* PH upvote pop */
 @keyframes upvote-pop {
   0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+  50% { transform: scale(1.15); }
   100% { transform: scale(1); }
 }
-.upvote-pop {
-  animation: upvote-pop 0.25s ease-out;
-}
+.upvote-pop { animation: upvote-pop 0.2s ease-out; }
 
-/* Feed item hover */
-.feed-item {
-  transition: background-color 0.15s ease;
-}
-.feed-item:hover {
-  background-color: var(--bg-gray);
-}
-
-/* Links */
-a {
-  transition: color 0.15s ease;
-}
-
-/* Base blue accent utilities */
-.text-base-blue {
-  color: var(--base-blue);
-}
-.bg-base-blue {
-  background-color: var(--base-blue);
-}
-.border-base-blue {
-  border-color: var(--base-blue);
-}
-.hover\:text-base-blue:hover {
-  color: var(--base-blue);
-}
-.hover\:bg-base-blue:hover {
-  background-color: var(--base-blue);
-}
-
-/* Button styles */
-.btn-primary {
-  background-color: var(--base-blue);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: background-color 0.15s ease;
-}
-.btn-primary:hover {
-  background-color: var(--base-blue-hover);
-}
-
-.btn-outline {
-  border: 1px solid var(--base-blue);
-  color: var(--base-blue);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.15s ease;
-}
-.btn-outline:hover {
-  background-color: var(--base-blue);
-  color: white;
-}
+a { transition: color 0.15s ease; }
