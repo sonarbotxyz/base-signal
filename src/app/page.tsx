@@ -20,6 +20,11 @@ interface UserInfo {
   avatar: string | null;
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
+  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
+};
+
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +32,7 @@ export default function Home() {
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
   const [voting, setVoting] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState(false);
+  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { ready, authenticated, logout, getAccessToken } = usePrivy();
@@ -34,7 +40,6 @@ export default function Home() {
 
   useEffect(() => { fetchProjects(); }, []);
 
-  // Close menu on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
@@ -48,9 +53,7 @@ export default function Home() {
     try {
       const token = await getAccessToken();
       if (!token) return;
-      const res = await fetch('/api/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) setUserInfo(await res.json());
     } catch (e) { console.error(e); }
   }, [authenticated, getAccessToken]);
@@ -61,7 +64,14 @@ export default function Home() {
     try {
       const res = await fetch('/api/projects?sort=upvotes&limit=30');
       const data = await res.json();
-      setProjects(data.projects || []);
+      const projs = data.projects || [];
+      setProjects(projs);
+      // Fetch comment counts for all projects
+      for (const p of projs) {
+        fetch(`/api/projects/${p.id}/comments`).then(r => r.json()).then(d => {
+          setCommentCounts(prev => ({ ...prev, [p.id]: (d.comments || []).length }));
+        }).catch(() => {});
+      }
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -73,14 +83,11 @@ export default function Home() {
     try {
       const token = await getAccessToken();
       const res = await fetch(`/api/projects/${projectId}/upvote`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
+        method: 'POST', headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
         const data = await res.json();
-        setProjects(prev => prev.map(p =>
-          p.id === projectId ? { ...p, upvotes: data.upvotes } : p
-        ));
+        setProjects(prev => prev.map(p => p.id === projectId ? { ...p, upvotes: data.upvotes } : p));
         setUpvoted(prev => {
           const next = new Set(prev);
           if (data.action === 'added') next.add(projectId); else next.delete(projectId);
@@ -120,15 +127,11 @@ export default function Home() {
                       {userInfo.twitter_handle[0]?.toUpperCase()}
                     </div>
                   )}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6f7784" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6f7784" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
                 </button>
                 {menuOpen && (
                   <div style={{ position: 'absolute', right: 0, top: 40, background: '#fff', border: '1px solid #e8e8e8', borderRadius: 12, padding: 4, minWidth: 160, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', zIndex: 100 }}>
-                    <div style={{ padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#21293c', borderBottom: '1px solid #f0f0f0' }}>
-                      @{userInfo.twitter_handle}
-                    </div>
+                    <div style={{ padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#21293c', borderBottom: '1px solid #f0f0f0' }}>@{userInfo.twitter_handle}</div>
                     <button onClick={() => { logout(); setMenuOpen(false); }}
                       style={{ width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500, color: '#e53e3e', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', borderRadius: 8 }}>
                       Sign out
@@ -139,9 +142,7 @@ export default function Home() {
             ) : (
               <button onClick={() => initOAuth({ provider: 'twitter' })}
                 style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 20, background: '#0000FF', border: 'none', fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
                 Sign in
               </button>
             )
@@ -191,9 +192,10 @@ export default function Home() {
             {projects.map((p, i) => {
               const hue = hueFrom(p.name);
               const isUpvoted = upvoted.has(p.id);
+              const cc = commentCounts[p.id] || 0;
               return (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0', borderBottom: '1px solid #f0f0f0' }}>
-                  <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
+                <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '16px 0', borderBottom: '1px solid #f0f0f0' }}>
+                  <Link href={`/project/${p.id}`} style={{ flexShrink: 0, marginTop: 2 }}>
                     {p.logo_url ? (
                       <img src={p.logo_url} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover' }} />
                     ) : (
@@ -207,21 +209,39 @@ export default function Home() {
                       <h2 style={{ fontSize: 15, fontWeight: 600, color: '#21293c', margin: 0, lineHeight: 1.3 }}>{i + 1}. {p.name}</h2>
                     </Link>
                     <p style={{ fontSize: 14, color: '#6f7784', margin: '2px 0 0', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                    {/* Category pills */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 12, color: '#9b9b9b', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#c4c4c4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>
+                        {CATEGORY_LABELS[p.category] || p.category}
+                      </span>
+                    </div>
                   </div>
-                  <button onClick={() => handleUpvote(p.id)}
-                    style={{
-                      flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                      width: 48, height: 56, borderRadius: 10,
-                      border: isUpvoted ? '2px solid #0000FF' : '1px solid #e8e8e8',
-                      background: isUpvoted ? '#f0f0ff' : '#ffffff',
-                      color: isUpvoted ? '#0000FF' : '#4b587c',
-                      padding: 0, gap: 2, cursor: 'pointer', transition: 'all 0.15s ease',
-                    }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="18 15 12 9 6 15" />
-                    </svg>
-                    <span style={{ fontSize: 12, fontWeight: 700, lineHeight: 1 }}>{p.upvotes}</span>
-                  </button>
+                  {/* Upvote + Comments side by side */}
+                  <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                    {/* Comments count */}
+                    <Link href={`/project/${p.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: 42, height: 52, color: '#9b9b9b', textDecoration: 'none', gap: 2 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                      <span style={{ fontSize: 11, fontWeight: 600, lineHeight: 1 }}>{cc}</span>
+                    </Link>
+                    {/* Upvote button */}
+                    <button onClick={() => handleUpvote(p.id)}
+                      style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        width: 42, height: 52, borderRadius: 8,
+                        border: isUpvoted ? '2px solid #0000FF' : '1px solid #e8e8e8',
+                        background: isUpvoted ? '#f0f0ff' : '#ffffff',
+                        color: isUpvoted ? '#0000FF' : '#4b587c',
+                        padding: 0, gap: 2, cursor: 'pointer', transition: 'all 0.15s ease',
+                      }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="18 15 12 9 6 15" />
+                      </svg>
+                      <span style={{ fontSize: 11, fontWeight: 700, lineHeight: 1 }}>{p.upvotes}</span>
+                    </button>
+                  </div>
                 </div>
               );
             })}
