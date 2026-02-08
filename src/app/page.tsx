@@ -133,14 +133,14 @@ export default function Home() {
 
           <div style={{ flex: 1 }} />
 
-          {/* Submit button */}
+          {/* Launch button */}
           <button
             onClick={() => verified ? setShowSubmit(true) : setShowAuth(true)}
             style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 14, fontWeight: 600, color: '#21293c', cursor: 'pointer', gap: 6 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Submit
+            Launch
           </button>
 
           {/* Sign in */}
@@ -166,7 +166,7 @@ export default function Home() {
 
         {/* Section title */}
         <h1 style={{ fontSize: 24, fontWeight: 700, color: '#21293c', margin: '0 0 20px', lineHeight: 1.3 }}>
-          Top Products Launching Today
+          Top Agents Launching Today
         </h1>
 
         {/* Product list */}
@@ -185,11 +185,11 @@ export default function Home() {
           </div>
         ) : projects.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ fontSize: 17, fontWeight: 600, color: '#21293c', marginBottom: 4 }}>No products yet</p>
-            <p style={{ fontSize: 14, color: '#6f7784', marginBottom: 16 }}>Be the first to submit a project</p>
+            <p style={{ fontSize: 17, fontWeight: 600, color: '#21293c', marginBottom: 4 }}>No agents yet</p>
+            <p style={{ fontSize: 14, color: '#6f7784', marginBottom: 16 }}>Be the first to launch your agent</p>
             <button onClick={() => verified ? setShowSubmit(true) : setShowAuth(true)}
               style={{ fontSize: 14, fontWeight: 600, color: '#ff6154', background: 'none', border: 'none', cursor: 'pointer' }}>
-              Submit a project →
+              Launch your agent →
             </button>
           </div>
         ) : (
@@ -301,25 +301,25 @@ export default function Home() {
       {showSubmit && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 20 }} onClick={() => setShowSubmit(false)}>
           <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, padding: 24, maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#21293c', margin: '0 0 4px' }}>Submit a project</h2>
-            <p style={{ fontSize: 14, color: '#6f7784', margin: '0 0 20px' }}>as @{userHandle}</p>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#21293c', margin: '0 0 4px' }}>Launch your agent</h2>
+            <p style={{ fontSize: 14, color: '#6f7784', margin: '0 0 20px' }}>launching as @{userHandle}</p>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input type="text" placeholder="Project name" required
+              <input type="text" placeholder="Agent name" required
                 value={submitForm.name} onChange={e => setSubmitForm({...submitForm, name: e.target.value})}
                 style={{ width: '100%', height: 46, padding: '0 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
-              <input type="text" placeholder="Tagline" required maxLength={100}
+              <input type="text" placeholder="What does your agent do?" required maxLength={100}
                 value={submitForm.tagline} onChange={e => setSubmitForm({...submitForm, tagline: e.target.value})}
                 style={{ width: '100%', height: 46, padding: '0 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               <select value={submitForm.category} onChange={e => setSubmitForm({...submitForm, category: e.target.value})}
                 style={{ width: '100%', height: 46, padding: '0 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#21293c' }}>
                 {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
-              <input type="url" placeholder="Website (optional)"
+              <input type="url" placeholder="Agent website (optional)"
                 value={submitForm.website_url} onChange={e => setSubmitForm({...submitForm, website_url: e.target.value})}
                 style={{ width: '100%', height: 46, padding: '0 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               <button type="submit" disabled={submitting || !submitForm.name || !submitForm.tagline}
                 style={{ width: '100%', height: 46, borderRadius: 12, border: 'none', background: '#ff6154', color: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', opacity: (submitting || !submitForm.name || !submitForm.tagline) ? 0.5 : 1 }}>
-                {submitting ? 'Submitting...' : 'Submit'}
+                {submitting ? 'Launching...' : 'Launch'}
               </button>
             </form>
           </div>

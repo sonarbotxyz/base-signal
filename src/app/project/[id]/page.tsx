@@ -282,7 +282,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         {/* Launching today badge */}
         <div style={{ marginBottom: 16 }}>
           <span style={{ display: 'inline-block', padding: '5px 12px', borderRadius: 6, background: '#ff6154', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: 0.3 }}>
-            Launching today
+            Launched on Sonarbot
           </span>
         </div>
 
@@ -301,9 +301,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         {/* Tagline */}
         <p style={{ fontSize: 17, color: '#6f7784', margin: '0 0 4px', lineHeight: 1.4 }}>{project.tagline}</p>
 
-        {/* Submitted by */}
+        {/* Launched by */}
         <p style={{ fontSize: 14, color: '#9b9b9b', margin: '0 0 20px' }}>
-          by{' '}
+          launched by{' '}
           <a href={`https://x.com/${project.submitted_by_twitter}`} target="_blank" rel="noopener noreferrer"
             style={{ color: '#6f7784', fontWeight: 500, textDecoration: 'none' }}>
             @{project.submitted_by_twitter}
@@ -464,7 +464,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         </div>
       </main>
 
-      {/* ── STICKY FOOTER: Launching Today rank + Upvote + Navigation ── */}
+      {/* ── STICKY FOOTER: Rank + Upvote + Navigation ── */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
         background: '#ffffff', borderTop: '1px solid #e8e8e8',
@@ -475,7 +475,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           {/* Rank row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#21293c', margin: 0 }}>Launching Today</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#21293c', margin: 0 }}>Agent Ranking</p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span style={{ fontSize: 28, fontWeight: 800, color: '#21293c', lineHeight: 1 }}>#{dayRank}</span>
                 <span style={{ fontSize: 13, color: '#6f7784' }}>Day Rank</span>
