@@ -166,7 +166,7 @@ export default function Home() {
 
         {/* Section title */}
         <h1 style={{ fontSize: 24, fontWeight: 700, color: '#21293c', margin: '0 0 20px', lineHeight: 1.3 }}>
-          Top Agents Launching Today
+          Top Products Launching Today
         </h1>
 
         {/* Product list */}
@@ -185,11 +185,11 @@ export default function Home() {
           </div>
         ) : projects.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ fontSize: 17, fontWeight: 600, color: '#21293c', marginBottom: 4 }}>No agents yet</p>
-            <p style={{ fontSize: 14, color: '#6f7784', marginBottom: 16 }}>Be the first to launch your agent</p>
+            <p style={{ fontSize: 17, fontWeight: 600, color: '#21293c', marginBottom: 4 }}>No products yet</p>
+            <p style={{ fontSize: 14, color: '#6f7784', marginBottom: 16 }}>Be the first to launch a product</p>
             <button onClick={() => verified ? setShowSubmit(true) : setShowAuth(true)}
               style={{ fontSize: 14, fontWeight: 600, color: '#ff6154', background: 'none', border: 'none', cursor: 'pointer' }}>
-              Launch your agent →
+              Launch a product →
             </button>
           </div>
         ) : (
@@ -301,20 +301,20 @@ export default function Home() {
       {showSubmit && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: 20 }} onClick={() => setShowSubmit(false)}>
           <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, padding: 24, maxHeight: '85vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#21293c', margin: '0 0 4px' }}>Launch your agent</h2>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: '#21293c', margin: '0 0 4px' }}>Launch a product</h2>
             <p style={{ fontSize: 14, color: '#6f7784', margin: '0 0 20px' }}>launching as @{userHandle}</p>
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <input type="text" placeholder="Agent name" required
+              <input type="text" placeholder="Product name" required
                 value={submitForm.name} onChange={e => setSubmitForm({...submitForm, name: e.target.value})}
                 style={{ width: '100%', height: 46, padding: '0 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
-              <input type="text" placeholder="What does your agent do?" required maxLength={100}
+              <input type="text" placeholder="What does it do?" required maxLength={100}
                 value={submitForm.tagline} onChange={e => setSubmitForm({...submitForm, tagline: e.target.value})}
                 style={{ width: '100%', height: 46, padding: '0 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               <select value={submitForm.category} onChange={e => setSubmitForm({...submitForm, category: e.target.value})}
                 style={{ width: '100%', height: 46, padding: '0 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, outline: 'none', boxSizing: 'border-box', color: '#21293c' }}>
                 {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
               </select>
-              <input type="url" placeholder="Agent website (optional)"
+              <input type="url" placeholder="Website (optional)"
                 value={submitForm.website_url} onChange={e => setSubmitForm({...submitForm, website_url: e.target.value})}
                 style={{ width: '100%', height: 46, padding: '0 16px', borderRadius: 12, border: 'none', background: '#f5f5f5', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
               <button type="submit" disabled={submitting || !submitForm.name || !submitForm.tagline}

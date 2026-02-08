@@ -282,7 +282,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         {/* Launching today badge */}
         <div style={{ marginBottom: 16 }}>
           <span style={{ display: 'inline-block', padding: '5px 12px', borderRadius: 6, background: '#ff6154', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: 0.3 }}>
-            Launched on Sonarbot
+            Launching today
           </span>
         </div>
 
@@ -303,7 +303,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
         {/* Launched by */}
         <p style={{ fontSize: 14, color: '#9b9b9b', margin: '0 0 20px' }}>
-          launched by{' '}
+          by{' '}
           <a href={`https://x.com/${project.submitted_by_twitter}`} target="_blank" rel="noopener noreferrer"
             style={{ color: '#6f7784', fontWeight: 500, textDecoration: 'none' }}>
             @{project.submitted_by_twitter}
@@ -475,7 +475,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           {/* Rank row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#21293c', margin: 0 }}>Agent Ranking</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#21293c', margin: 0 }}>Launching Today</p>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span style={{ fontSize: 28, fontWeight: 800, color: '#21293c', lineHeight: 1 }}>#{dayRank}</span>
                 <span style={{ fontSize: 13, color: '#6f7784' }}>Day Rank</span>
