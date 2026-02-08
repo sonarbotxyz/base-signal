@@ -1,27 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/db';
-
-interface UpvoteRequest {
-  twitter_handle: string;
-}
+import { validateApiKey } from '@/lib/auth';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const supabase = getSupabase();
-    const { id: projectId } = await params;
-    const body: UpvoteRequest = await request.json();
-
-    if (!body.twitter_handle) {
+    // Validate API key
+    const authedHandle = await validateApiKey(request);
+    if (!authedHandle) {
       return NextResponse.json(
-        { error: 'twitter_handle is required' },
-        { status: 400 }
+        { error: 'Valid API key required. Register at POST /api/register.' },
+        { status: 401 }
       );
     }
 
-    const twitterHandle = body.twitter_handle.replace(/^@/, '');
+    const supabase = getSupabase();
+    const { id: projectId } = await params;
+    const twitterHandle = authedHandle;
 
     // Check if project exists
     const { data: project, error: projectError } = await supabase

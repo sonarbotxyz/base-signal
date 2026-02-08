@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
 
 export async function GET(
   request: NextRequest,
@@ -29,14 +30,24 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Validate API key
+    const authedHandle = await validateApiKey(request);
+    if (!authedHandle) {
+      return NextResponse.json(
+        { error: 'Valid API key required. Register at POST /api/register.' },
+        { status: 401 }
+      );
+    }
+
     const { id } = await params;
     const body = await request.json();
-    const { twitter_handle, content } = body;
+    const { content } = body;
+    const twitter_handle = authedHandle;
     const supabase = getSupabase();
     
-    if (!twitter_handle || !content) {
+    if (!content) {
       return NextResponse.json(
-        { error: 'twitter_handle and content are required' },
+        { error: 'content is required' },
         { status: 400 }
       );
     }

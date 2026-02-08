@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/db';
+import { validateApiKey } from '@/lib/auth';
 
 interface ProjectSubmission {
   name: string;
@@ -76,16 +77,28 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Submit a new project
+// POST - Submit a new project (requires API key)
 export async function POST(request: NextRequest) {
   try {
+    // Validate API key
+    const authedHandle = await validateApiKey(request);
+    if (!authedHandle) {
+      return NextResponse.json(
+        { error: 'Valid API key required. Register at POST /api/register with your twitter_handle.' },
+        { status: 401 }
+      );
+    }
+
     const supabase = getSupabase();
     const body: ProjectSubmission = await request.json();
 
+    // Use the authenticated handle as submitted_by_twitter
+    body.submitted_by_twitter = authedHandle;
+
     // Validate required fields
-    if (!body.name || !body.tagline || !body.submitted_by_twitter) {
+    if (!body.name || !body.tagline) {
       return NextResponse.json(
-        { error: 'name, tagline, and submitted_by_twitter are required' },
+        { error: 'name and tagline are required' },
         { status: 400 }
       );
     }
