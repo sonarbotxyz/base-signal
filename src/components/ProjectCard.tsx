@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 
 interface Project {
   id: string;
@@ -63,9 +64,9 @@ export default function ProjectCard({ project, userHandle, onUpvote }: ProjectCa
   };
 
   return (
-    <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-200 hover:border-[#0052ff] hover:shadow-sm transition-all">
-      {/* Logo */}
-      <div className="flex-shrink-0">
+    <div className="flex items-start gap-4 p-4 bg-white rounded-lg border border-gray-200 hover:border-[#0052ff] hover:shadow-sm transition-all group">
+      {/* Logo - Clickable */}
+      <Link href={`/project/${project.id}`} className="flex-shrink-0">
         {project.logo_url ? (
           <img 
             src={project.logo_url} 
@@ -79,20 +80,18 @@ export default function ProjectCard({ project, userHandle, onUpvote }: ProjectCa
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Content */}
       <div className="flex-grow min-w-0">
         <div className="flex items-start justify-between gap-2">
           <div>
-            <a 
-              href={project.website_url || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link 
+              href={`/project/${project.id}`}
               className="text-lg font-semibold text-gray-900 hover:text-[#0052ff] transition-colors"
             >
               {project.name}
-            </a>
+            </Link>
             <p className="text-gray-600 text-sm mt-0.5 line-clamp-2">
               {project.tagline}
             </p>
@@ -109,6 +108,7 @@ export default function ProjectCard({ project, userHandle, onUpvote }: ProjectCa
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs text-gray-500 hover:text-[#0052ff]"
+              onClick={(e) => e.stopPropagation()}
             >
               @{project.twitter_handle}
             </a>
@@ -121,7 +121,10 @@ export default function ProjectCard({ project, userHandle, onUpvote }: ProjectCa
 
       {/* Upvote Button */}
       <button
-        onClick={handleUpvote}
+        onClick={(e) => {
+          e.preventDefault();
+          handleUpvote();
+        }}
         disabled={!userHandle || isUpvoting}
         className={`flex-shrink-0 flex flex-col items-center justify-center w-14 h-16 rounded-lg border-2 transition-all ${
           hasUpvoted 

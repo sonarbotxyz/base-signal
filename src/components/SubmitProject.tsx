@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 interface SubmitProjectProps {
   onSuccess?: () => void;
+  userHandle?: string;
 }
 
 const CATEGORIES = [
@@ -17,10 +18,10 @@ const CATEGORIES = [
   { id: 'other', label: 'Other' }
 ];
 
-export default function SubmitProject({ onSuccess }: SubmitProjectProps) {
+export default function SubmitProject({ onSuccess, userHandle: initialHandle }: SubmitProjectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState<'verify' | 'submit'>('verify');
-  const [twitterHandle, setTwitterHandle] = useState('');
+  const [twitterHandle, setTwitterHandle] = useState(initialHandle || '');
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
