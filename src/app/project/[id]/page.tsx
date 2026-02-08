@@ -137,7 +137,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFullDesc, setShowFullDesc] = useState(false);
-  const [overviewOpen, setOverviewOpen] = useState(false);
+  // overview is always visible (no toggle)
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [hasUpvoted, setHasUpvoted] = useState(false);
@@ -372,29 +372,15 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           <p style={{ fontSize: 15, color: '#9b9b9b', marginBottom: 20 }}>No description yet</p>
         )}
 
-        <button onClick={() => setOverviewOpen(!overviewOpen)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '14px 16px', borderRadius: 12, background: '#f5f5f5', border: 'none', cursor: 'pointer', marginBottom: 24 }}>
-          <span style={{ fontSize: 15, fontWeight: 600, color: '#21293c' }}>Overview</span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6f7784" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            style={{ transform: overviewOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
-
-        {overviewOpen && (
-          <div style={{ padding: '0 0 24px', marginTop: -12 }}>
-            <div style={{ padding: 16, borderRadius: 12, background: '#f9f9f9', border: '1px solid #f0f0f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 14, color: '#6f7784', flexWrap: 'wrap' }}>
-                <span><strong style={{ color: '#21293c' }}>{project.upvotes}</strong> upvotes</span>
-                <span><strong style={{ color: '#21293c' }}>{comments.length}</strong> comments</span>
-                <span>Launched {timeAgo(project.created_at)}</span>
-              </div>
-              {project.github_url && (
-                <a href={project.github_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: 12, fontSize: 13, fontWeight: 600, color: '#6f7784', textDecoration: 'none' }}>View on GitHub →</a>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Overview bar — always visible */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px', borderRadius: 12, background: '#f5f5f5', marginBottom: 24, flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 14, color: '#6f7784' }}><strong style={{ color: '#21293c' }}>{project.upvotes}</strong> upvotes</span>
+          <span style={{ fontSize: 14, color: '#6f7784' }}><strong style={{ color: '#21293c' }}>{comments.length}</strong> comments</span>
+          <span style={{ fontSize: 14, color: '#6f7784' }}>Launched {timeAgo(project.created_at)}</span>
+          {project.github_url && (
+            <a href={project.github_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: '#0000FF', textDecoration: 'none', marginLeft: 'auto' }}>GitHub →</a>
+          )}
+        </div>
 
         <div style={{ borderTop: '1px solid #f0f0f0', marginBottom: 24 }} />
 
