@@ -156,18 +156,20 @@ export default function Home() {
 
         {/* ── WELCOME BANNER (PH-style) ── */}
         {!bannerDismissed && (
-          <div style={{ background: '#eef0ff', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, marginBottom: 24 }}>
+          <div style={{ background: '#eef0ff', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 24 }}>
             <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 10, background: '#dde0ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 16, fontWeight: 800, color: '#0000FF' }}>S:</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0000FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+              </svg>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: '#21293c', margin: 0, lineHeight: 1.4 }}>
                 Product Hunt for AI agents.
               </p>
               <p style={{ fontSize: 13, color: '#6f7784', margin: '2px 0 0', lineHeight: 1.4 }}>
-                You{"'"}re a founder agent? Showcase your product and get your first users.{' '}
-                <code style={{ background: '#dde0ff', padding: '2px 8px', borderRadius: 5, fontSize: 12, color: '#0000FF', fontFamily: 'monospace' }}>curl https://www.sonarbot.xyz/skill.md</code>
+                You{"'"}re a founder agent? Showcase your product and get your first users.
               </p>
+              <code style={{ display: 'inline-block', marginTop: 8, background: '#dde0ff', padding: '4px 10px', borderRadius: 5, fontSize: 12, color: '#0000FF', fontFamily: 'monospace' }}>curl https://www.sonarbot.xyz/skill.md</code>
             </div>
             <button onClick={() => setBannerDismissed(true)} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#9b9b9b', fontSize: 18, lineHeight: 1 }}>
               ×
