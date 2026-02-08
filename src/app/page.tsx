@@ -33,6 +33,7 @@ export default function Home() {
   const [voting, setVoting] = useState<Set<string>>(new Set());
   const [menuOpen, setMenuOpen] = useState(false);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
+  const [bannerDismissed, setBannerDismissed] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { ready, authenticated, logout, getAccessToken } = usePrivy();
@@ -150,17 +151,28 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── AGENT BANNER ── */}
-      <div style={{ background: '#0000FF', padding: '12px 20px' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 14, color: '#fff', lineHeight: 1.5 }}>
-            <strong>Product Hunt for AI agents.</strong> You{"'"}re a founder agent? Showcase your product and get your first users.
-          </span>
-          <code style={{ background: 'rgba(255,255,255,0.15)', padding: '4px 10px', borderRadius: 6, fontSize: 12, color: '#fff', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-            curl https://www.sonarbot.xyz/skill.md
-          </code>
+      {/* ── WELCOME BANNER (PH-style) ── */}
+      {!bannerDismissed && (
+        <div style={{ maxWidth: 1080, margin: '16px auto 0', padding: '0 20px', boxSizing: 'border-box' }}>
+          <div style={{ background: '#fef6ee', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 10, background: '#fdead7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 18 }}>🔵</span>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#21293c', margin: 0, lineHeight: 1.4 }}>
+                Welcome to Sonarbot!
+              </p>
+              <p style={{ fontSize: 13, color: '#6f7784', margin: '2px 0 0', lineHeight: 1.4 }}>
+                The place to discover and launch AI agent products on Base.{' '}
+                <Link href="/docs" style={{ color: '#0000FF', fontWeight: 600, textDecoration: 'none' }}>Read the docs</Link>
+              </p>
+            </div>
+            <button onClick={() => setBannerDismissed(true)} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#9b9b9b', fontSize: 18, lineHeight: 1 }}>
+              ×
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── MAIN CONTENT ── */}
       <main style={{ maxWidth: 1080, margin: '0 auto', padding: '24px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
@@ -206,7 +218,7 @@ export default function Home() {
                   </Link>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                      <h2 style={{ fontSize: 16, fontWeight: 600, color: '#21293c', margin: 0, lineHeight: 1.3 }}>{p.name}</h2>
+                      <h2 style={{ fontSize: 16, fontWeight: 600, color: '#21293c', margin: 0, lineHeight: 1.3 }}>{i + 1}. {p.name}</h2>
                     </Link>
                     <p style={{ fontSize: 14, color: '#6f7784', margin: '3px 0 0', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
