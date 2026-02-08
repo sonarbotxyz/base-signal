@@ -1,82 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 
-const execAsync = promisify(exec);
-
-interface TwitterVerifyRequest {
-  handle: string;
-}
-
-interface TwitterUserInfo {
-  handle: string;
-  exists: boolean;
-  followers?: number;
-  verified?: boolean;
-}
-
-async function verifyTwitterHandle(handle: string): Promise<TwitterUserInfo> {
-  // Clean handle (remove @ if present)
-  const cleanHandle = handle.replace(/^@/, '');
-  
-  try {
-    // Use bird CLI to check if user exists and get basic info
-    const { stdout } = await execAsync(`bird user-tweets @${cleanHandle} -n 1 --json 2>/dev/null`);
-    const data = JSON.parse(stdout);
-    
-    if (data && data.length > 0) {
-      // User exists
-      return {
-        handle: cleanHandle,
-        exists: true,
-        // We could extract more info from the response if needed
-      };
-    }
-    
-    return { handle: cleanHandle, exists: false };
-  } catch (error) {
-    // Try about command for more info
-    try {
-      const { stdout } = await execAsync(`bird about @${cleanHandle} --plain 2>/dev/null`);
-      if (stdout && stdout.includes('Account based in')) {
-        return { handle: cleanHandle, exists: true };
-      }
-    } catch {
-      // Account doesn't exist or is private
-    }
-    
-    return { handle: cleanHandle, exists: false };
-  }
-}
-
+// Simplified verification - just accept the handle
+// Real verification would be done by Sonarbot agent checking the account
 export async function POST(request: NextRequest) {
   try {
-    const body: TwitterVerifyRequest = await request.json();
+    const body = await request.json();
     const { handle } = body;
 
     if (!handle) {
       return NextResponse.json(
-        { error: 'Twitter handle is required' },
+        { error: 'X handle is required', verified: false },
         { status: 400 }
       );
     }
 
-    const result = await verifyTwitterHandle(handle);
+    // Clean the handle
+    const cleanHandle = handle.replace(/^@/, '').trim().toLowerCase();
 
-    if (!result.exists) {
+    // Basic validation
+    if (!/^[a-zA-Z0-9_]{1,15}$/.test(cleanHandle)) {
       return NextResponse.json(
-        { error: 'Twitter account not found', verified: false },
-        { status: 404 }
+        { error: 'Invalid X handle format', verified: false },
+        { status: 400 }
       );
     }
 
+    // For now, we trust the user's handle
+    // Sonarbot can verify accounts asynchronously if needed
     return NextResponse.json({
       verified: true,
-      handle: result.handle,
-      message: 'Twitter account verified'
+      handle: cleanHandle,
+      message: 'Handle accepted'
     });
   } catch (error) {
-    console.error('Twitter verification error:', error);
+    console.error('Verification error:', error);
     return NextResponse.json(
       { error: 'Verification failed', verified: false },
       { status: 500 }

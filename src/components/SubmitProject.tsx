@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SubmitProjectProps {
   onSuccess?: () => void;
@@ -8,7 +8,7 @@ interface SubmitProjectProps {
 }
 
 const CATEGORIES = [
-  { id: 'agents', label: 'Agents & AI' },
+  { id: 'agents', label: 'AI Agents' },
   { id: 'defi', label: 'DeFi' },
   { id: 'infrastructure', label: 'Infrastructure' },
   { id: 'consumer', label: 'Consumer' },
@@ -18,15 +18,21 @@ const CATEGORIES = [
   { id: 'other', label: 'Other' }
 ];
 
-export default function SubmitProject({ onSuccess, userHandle: initialHandle }: SubmitProjectProps) {
+export default function SubmitProject({ onSuccess, userHandle: propHandle }: SubmitProjectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState<'verify' | 'submit'>('verify');
-  const [twitterHandle, setTwitterHandle] = useState(initialHandle || '');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [userHandle, setUserHandle] = useState(propHandle || '');
+
+  useEffect(() => {
+    if (propHandle) {
+      setUserHandle(propHandle);
+    } else {
+      const saved = localStorage.getItem('sonarbot_handle');
+      if (saved) setUserHandle(saved);
+    }
+  }, [propHandle]);
 
   const [form, setForm] = useState({
     name: '',
@@ -39,37 +45,13 @@ export default function SubmitProject({ onSuccess, userHandle: initialHandle }: 
     category: 'agents'
   });
 
-  const verifyTwitter = async () => {
-    if (!twitterHandle) return;
-    
-    setIsVerifying(true);
-    setError('');
-    
-    try {
-      const res = await fetch('/api/verify-twitter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ handle: twitterHandle })
-      });
-      
-      const data = await res.json();
-      
-      if (data.verified) {
-        setIsVerified(true);
-        setStep('submit');
-      } else {
-        setError(data.error || 'Could not verify Twitter account');
-      }
-    } catch (err) {
-      setError('Verification failed. Please try again.');
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isVerified) return;
+    
+    if (!userHandle) {
+      setError('Please sign in with your X handle first');
+      return;
+    }
     
     setIsSubmitting(true);
     setError('');
@@ -80,20 +62,17 @@ export default function SubmitProject({ onSuccess, userHandle: initialHandle }: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
-          submitted_by_twitter: twitterHandle
+          submitted_by_twitter: userHandle
         })
       });
       
       const data = await res.json();
       
-      if (data.success) {
+      if (data.success || data.project) {
         setSuccess(true);
         setTimeout(() => {
           setIsOpen(false);
           setSuccess(false);
-          setStep('verify');
-          setIsVerified(false);
-          setTwitterHandle('');
           setForm({
             name: '',
             tagline: '',
@@ -105,7 +84,7 @@ export default function SubmitProject({ onSuccess, userHandle: initialHandle }: 
             category: 'agents'
           });
           onSuccess?.();
-        }, 2000);
+        }, 1500);
       } else {
         setError(data.error || 'Failed to submit project');
       }
@@ -116,13 +95,26 @@ export default function SubmitProject({ onSuccess, userHandle: initialHandle }: 
     }
   };
 
+  const handleOpen = () => {
+    if (!userHandle) {
+      // Let the parent handle showing the sign-in modal
+      const saved = localStorage.getItem('sonarbot_handle');
+      if (!saved) {
+        setError('Please sign in first');
+        return;
+      }
+      setUserHandle(saved);
+    }
+    setIsOpen(true);
+  };
+
   return (
     <>
       <button
-        onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-[#0052ff] text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+        onClick={handleOpen}
+        className="px-4 py-1.5 bg-[#0052ff] text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
       >
-        Submit Project
+        Submit
       </button>
 
       {isOpen && (
@@ -130,9 +122,7 @@ export default function SubmitProject({ onSuccess, userHandle: initialHandle }: 
           <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">
-                  {step === 'verify' ? 'Verify Your Twitter' : 'Submit Project'}
-                </h2>
+                <h2 className="text-xl font-bold text-gray-900">Submit a Project</h2>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -153,81 +143,54 @@ export default function SubmitProject({ onSuccess, userHandle: initialHandle }: 
                   <p className="text-lg font-medium text-gray-900">Project submitted!</p>
                   <p className="text-gray-500 text-sm mt-1">Your project is now live</p>
                 </div>
-              ) : step === 'verify' ? (
-                <div className="space-y-4">
-                  <p className="text-gray-600 text-sm">
-                    To prevent spam, please verify your Twitter account first.
-                  </p>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Your Twitter Handle
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={twitterHandle}
-                        onChange={(e) => setTwitterHandle(e.target.value.replace('@', ''))}
-                        placeholder="yourhandle"
-                        className="flex-grow px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
-                      />
-                      <button
-                        onClick={verifyTwitter}
-                        disabled={!twitterHandle || isVerifying}
-                        className="px-4 py-2 bg-[#0052ff] text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isVerifying ? 'Verifying...' : 'Verify'}
-                      </button>
-                    </div>
-                  </div>
-                  {error && (
-                    <p className="text-red-600 text-sm">{error}</p>
-                  )}
-                </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  {/* Submitting as */}
+                  <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
-                    Verified as @{twitterHandle}
+                    Submitting as @{userHandle}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Project Name *
+                      Project Name <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
+                      placeholder="My Awesome Project"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tagline *
+                      Tagline <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={form.tagline}
                       onChange={(e) => setForm({ ...form, tagline: e.target.value })}
-                      placeholder="A short description of your project"
+                      placeholder="A short description (max 100 chars)"
                       required
                       maxLength={100}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
                     />
+                    <p className="text-xs text-gray-400 mt-1">{form.tagline.length}/100</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Category *
+                      Category <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={form.category}
                       onChange={(e) => setForm({ ...form, category: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
                     >
                       {CATEGORIES.map((cat) => (
                         <option key={cat.id} value={cat.id}>{cat.label}</option>
@@ -243,32 +206,48 @@ export default function SubmitProject({ onSuccess, userHandle: initialHandle }: 
                       type="url"
                       value={form.website_url}
                       onChange={(e) => setForm({ ...form, website_url: e.target.value })}
-                      placeholder="https://..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
+                      placeholder="https://yourproject.xyz"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Project Twitter
+                      Project X Handle
                     </label>
-                    <input
-                      type="text"
-                      value={form.twitter_handle}
-                      onChange={(e) => setForm({ ...form, twitter_handle: e.target.value.replace('@', '') })}
-                      placeholder="projecthandle"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">@</span>
+                      <input
+                        type="text"
+                        value={form.twitter_handle}
+                        onChange={(e) => setForm({ ...form, twitter_handle: e.target.value.replace('@', '') })}
+                        placeholder="projecthandle"
+                        className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      placeholder="Tell us more about your project..."
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#0052ff] focus:border-transparent resize-none"
                     />
                   </div>
 
                   {error && (
-                    <p className="text-red-600 text-sm">{error}</p>
+                    <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{error}</p>
                   )}
 
                   <button
                     type="submit"
                     disabled={isSubmitting || !form.name || !form.tagline}
-                    className="w-full py-3 bg-[#0052ff] text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 bg-[#0052ff] text-white font-medium rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {isSubmitting ? 'Submitting...' : 'Submit Project'}
                   </button>
