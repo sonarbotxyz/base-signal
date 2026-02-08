@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
 
 interface Project {
@@ -31,9 +31,92 @@ const CATEGORY_LABELS: Record<string, string> = {
   consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
 };
 
+/* Renders text with auto-linked URLs and embedded tweets */
+function RichDescription({ text }: { text: string }) {
+  const tweetRegex = /https?:\/\/(x\.com|twitter\.com)\/\w+\/status\/(\d+)\S*/g;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+
+  // Split into segments: tweet embeds, plain URLs, and text
+  const parts: { type: 'text' | 'url' | 'tweet'; value: string; tweetId?: string }[] = [];
+  let lastIndex = 0;
+
+  // Find all tweets first
+  const tweetMatches: { index: number; length: number; url: string; tweetId: string }[] = [];
+  let m;
+  while ((m = tweetRegex.exec(text)) !== null) {
+    tweetMatches.push({ index: m.index, length: m[0].length, url: m[0], tweetId: m[2] });
+  }
+
+  // Build parts
+  let remaining = text;
+  let offset = 0;
+
+  for (const tweet of tweetMatches) {
+    const before = text.slice(offset, tweet.index);
+    if (before) {
+      // Within "before", find plain URLs
+      let urlLast = 0;
+      let um;
+      const urlRe = /(https?:\/\/[^\s]+)/g;
+      while ((um = urlRe.exec(before)) !== null) {
+        if (um.index > urlLast) parts.push({ type: 'text', value: before.slice(urlLast, um.index) });
+        parts.push({ type: 'url', value: um[0] });
+        urlLast = um.index + um[0].length;
+      }
+      if (urlLast < before.length) parts.push({ type: 'text', value: before.slice(urlLast) });
+    }
+    parts.push({ type: 'tweet', value: tweet.url, tweetId: tweet.tweetId });
+    offset = tweet.index + tweet.length;
+  }
+
+  // Remaining text after last tweet
+  const tail = text.slice(offset);
+  if (tail) {
+    let urlLast = 0;
+    let um;
+    const urlRe = /(https?:\/\/[^\s]+)/g;
+    while ((um = urlRe.exec(tail)) !== null) {
+      if (um.index > urlLast) parts.push({ type: 'text', value: tail.slice(urlLast, um.index) });
+      parts.push({ type: 'url', value: um[0] });
+      urlLast = um.index + um[0].length;
+    }
+    if (urlLast < tail.length) parts.push({ type: 'text', value: tail.slice(urlLast) });
+  }
+
+  return (
+    <div>
+      {parts.map((part, i) => {
+        if (part.type === 'tweet') {
+          return (
+            <div key={i} style={{ margin: '12px 0' }}>
+              <a href={part.value} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12, border: '1px solid #e8e8e8', background: '#fafafa', textDecoration: 'none', color: '#21293c', fontSize: 14, fontWeight: 500 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#21293c">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                View post on X →
+              </a>
+            </div>
+          );
+        }
+        if (part.type === 'url') {
+          return (
+            <a key={i} href={part.value} target="_blank" rel="noopener noreferrer"
+              style={{ color: '#ff6154', fontWeight: 500, textDecoration: 'none', wordBreak: 'break-all' }}>
+              {part.value}
+            </a>
+          );
+        }
+        return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part.value}</span>;
+      })}
+    </div>
+  );
+}
+
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [project, setProject] = useState<Project | null>(null);
+  const [allProjects, setAllProjects] = useState<{ id: string; name: string }[]>([]);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [userHandle, setUserHandle] = useState('');
@@ -55,7 +138,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     if (savedV === 'true') setVerified(true);
   }, []);
 
-  useEffect(() => { fetchProject(); fetchComments(); }, [id]);
+  useEffect(() => { fetchProject(); fetchComments(); fetchAllProjects(); }, [id]);
 
   const fetchProject = async () => {
     try {
@@ -71,6 +154,14 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       const res = await fetch(`/api/projects/${id}/comments`);
       const data = await res.json();
       setComments(data.comments || []);
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchAllProjects = async () => {
+    try {
+      const res = await fetch('/api/projects?sort=upvotes&limit=50');
+      const data = await res.json();
+      setAllProjects((data.projects || []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name })));
     } catch (e) { console.error(e); }
   };
 
@@ -123,6 +214,12 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     return `${Math.floor(s / 86400)}d ago`;
   };
 
+  // Navigation between projects
+  const currentIndex = allProjects.findIndex(p => p.id === id);
+  const prevProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
+  const nextProject = currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
+  const dayRank = currentIndex >= 0 ? currentIndex + 1 : 1;
+
   const hue = project ? project.name.charCodeAt(0) * 7 % 360 : 0;
 
   if (loading) {
@@ -149,7 +246,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const descTruncated = project.description && project.description.length > 150;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#ffffff', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div style={{ minHeight: '100vh', background: '#ffffff', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", paddingBottom: 180 }}>
 
       {/* ── HEADER ── */}
       <header style={{ position: 'sticky', top: 0, zIndex: 50, background: '#ffffff', borderBottom: '1px solid #e8e8e8' }}>
@@ -180,7 +277,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       </header>
 
       {/* ── PRODUCT CONTENT ── */}
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 20px 40px' }}>
+      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 20px 0' }}>
 
         {/* Launching today badge */}
         <div style={{ marginBottom: 16 }}>
@@ -241,19 +338,19 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
 
-        {/* Description */}
+        {/* Description with auto-linked tweets */}
         {project.description ? (
-          <div style={{ marginBottom: 20 }}>
-            <p style={{ fontSize: 16, color: '#21293c', lineHeight: 1.6, margin: 0 }}>
-              {showFullDesc || !descTruncated
-                ? project.description
-                : project.description.slice(0, 150) + '...'}
-            </p>
-            {descTruncated && !showFullDesc && (
-              <button onClick={() => setShowFullDesc(true)}
-                style={{ fontSize: 15, fontWeight: 600, color: '#21293c', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>
-                see more
-              </button>
+          <div style={{ marginBottom: 20, fontSize: 16, color: '#21293c', lineHeight: 1.6 }}>
+            {showFullDesc || !descTruncated ? (
+              <RichDescription text={project.description} />
+            ) : (
+              <>
+                <RichDescription text={project.description.slice(0, 150) + '...'} />
+                <button onClick={() => setShowFullDesc(true)}
+                  style={{ fontSize: 15, fontWeight: 600, color: '#21293c', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>
+                  see more
+                </button>
+              </>
             )}
           </div>
         ) : (
@@ -272,8 +369,8 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
         {overviewOpen && (
           <div style={{ padding: '0 0 24px', marginTop: -12 }}>
-            <div style={{ padding: '16px', borderRadius: 12, background: '#f9f9f9', border: '1px solid #f0f0f0' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 14, color: '#6f7784' }}>
+            <div style={{ padding: 16, borderRadius: 12, background: '#f9f9f9', border: '1px solid #f0f0f0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 14, color: '#6f7784', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff6154" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
                   <span><strong style={{ color: '#21293c' }}>{upvotes}</strong> upvotes</span>
@@ -302,46 +399,8 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         {/* Divider */}
         <div style={{ borderTop: '1px solid #f0f0f0', marginBottom: 24 }} />
 
-        {/* Launching Today rank section */}
-        <div style={{ marginBottom: 24 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, color: '#21293c', margin: '0 0 8px' }}>Launching Today</h2>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <p style={{ fontSize: 36, fontWeight: 800, color: '#21293c', margin: 0, lineHeight: 1 }}>#1</p>
-              <p style={{ fontSize: 14, color: '#6f7784', margin: '4px 0 0' }}>Day Rank</p>
-            </div>
-            <div style={{ display: 'flex', gap: 0, border: '1px solid #e8e8e8', borderRadius: 24, overflow: 'hidden' }}>
-              <button style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: 'none', cursor: 'pointer', borderRight: '1px solid #e8e8e8' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9b9b9b" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
-              </button>
-              <button style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: 'none', cursor: 'pointer' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9b9b9b" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Big upvote button — full width orange pill */}
-        <button onClick={handleUpvote}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            width: '100%', height: 52, borderRadius: 26,
-            background: voted ? '#e8554a' : '#ff6154',
-            border: 'none', cursor: 'pointer',
-            fontSize: 17, fontWeight: 700, color: '#fff',
-            marginBottom: 32,
-          }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="18 15 12 9 6 15" />
-          </svg>
-          {voted ? 'Upvoted' : 'Upvote'} · {upvotes} points
-        </button>
-
-        {/* Divider */}
-        <div style={{ borderTop: '1px solid #f0f0f0', marginBottom: 24 }} />
-
-        {/* Discussion */}
-        <div>
+        {/* ── DISCUSSION (moved above sticky footer) ── */}
+        <div style={{ marginBottom: 40 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: '#21293c', margin: '0 0 20px' }}>
             Discussion ({comments.length})
           </h2>
@@ -405,22 +464,65 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         </div>
       </main>
 
-      {/* ── FOOTER ── */}
-      <footer style={{ borderTop: '1px solid #e8e8e8', background: '#ffffff', padding: '20px 20px' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#6f7784' }}>
-            <span style={{ fontWeight: 600, color: '#21293c' }}>Sonarbot</span>
-            <span>·</span>
-            <span>© {new Date().getFullYear()}</span>
-            <span>·</span>
-            <span>Built on Base</span>
+      {/* ── STICKY FOOTER: Launching Today rank + Upvote + Navigation ── */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
+        background: '#ffffff', borderTop: '1px solid #e8e8e8',
+        padding: '16px 20px', paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+      }}>
+        <div style={{ maxWidth: 1080, margin: '0 auto' }}>
+
+          {/* Rank row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#21293c', margin: 0 }}>Launching Today</p>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <span style={{ fontSize: 28, fontWeight: 800, color: '#21293c', lineHeight: 1 }}>#{dayRank}</span>
+                <span style={{ fontSize: 13, color: '#6f7784' }}>Day Rank</span>
+              </div>
+            </div>
+
+            {/* Prev / Next navigation */}
+            <div style={{ display: 'flex', gap: 0, border: '1px solid #e8e8e8', borderRadius: 24, overflow: 'hidden' }}>
+              {prevProject ? (
+                <Link href={`/project/${prevProject.id}`}
+                  style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', borderRight: '1px solid #e8e8e8', textDecoration: 'none' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9b9b9b" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+                </Link>
+              ) : (
+                <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', borderRight: '1px solid #e8e8e8', opacity: 0.4 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9b9b9b" strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+                </div>
+              )}
+              {nextProject ? (
+                <Link href={`/project/${nextProject.id}`}
+                  style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', textDecoration: 'none' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9b9b9b" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+                </Link>
+              ) : (
+                <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fafafa', opacity: 0.4 }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9b9b9b" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+                </div>
+              )}
+            </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13, color: '#6f7784' }}>
-            <Link href="/docs" style={{ color: '#6f7784', textDecoration: 'none' }}>Docs</Link>
-            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: '#6f7784', textDecoration: 'none' }}>@sonarbotxyz</a>
-          </div>
+
+          {/* Big upvote button */}
+          <button onClick={handleUpvote}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              width: '100%', height: 48, borderRadius: 24,
+              background: voted ? '#e8554a' : '#ff6154',
+              border: 'none', cursor: 'pointer',
+              fontSize: 16, fontWeight: 700, color: '#fff',
+            }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="18 15 12 9 6 15" />
+            </svg>
+            {voted ? 'Upvoted' : 'Upvote'} · {upvotes} points
+          </button>
         </div>
-      </footer>
+      </div>
 
       {/* ── AUTH MODAL ── */}
       {showAuth && (
