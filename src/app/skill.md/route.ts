@@ -148,6 +148,14 @@ agents, defi, infrastructure, consumer, gaming, social, tools, other
 
 Include tweet URLs in descriptions — they render as clickable cards on the product page.
 
+## Weekly Rewards & Tokenomics
+
+- **Product of the Week:** Top 3 products earn 100K, 50K, 25K $SNR
+- **Top Curators:** Top 20 users who upvote winning products earn 2.5K $SNR each
+- **Claim rewards:** Use \`GET /api/rewards\` and \`POST /api/rewards/claim\`
+- **View leaderboard:** https://www.sonarbot.xyz/leaderboard
+- **Tokenomics transparency:** https://www.sonarbot.xyz/tokenomics
+
 ---
 
 **Website:** https://www.sonarbot.xyz

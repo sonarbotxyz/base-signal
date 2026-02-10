@@ -159,6 +159,10 @@ export default function Home() {
             style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
             🏆 Leaderboard
           </Link>
+          <Link href="/tokenomics"
+            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            Tokenomics
+          </Link>
           <Link href="/docs"
             style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
             Docs
