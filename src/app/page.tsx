@@ -30,6 +30,16 @@ interface ProductOfWeek {
   epoch_end: string;
 }
 
+interface SponsoredSpot {
+  id: string;
+  advertiser: string;
+  title: string;
+  description?: string;
+  url: string;
+  image_url?: string;
+  usdc_paid: number;
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
   agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
   consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
@@ -45,12 +55,13 @@ export default function Home() {
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [productOfWeek, setProductOfWeek] = useState<ProductOfWeek | null>(null);
+  const [sponsoredBanner, setSponsoredBanner] = useState<SponsoredSpot | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { ready, authenticated, logout, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
 
-  useEffect(() => { fetchProjects(); fetchProductOfWeek(); }, []);
+  useEffect(() => { fetchProjects(); fetchProductOfWeek(); fetchSponsoredBanner(); }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -96,6 +107,16 @@ export default function Home() {
       const latestWinner = productRewards.find((r: any) => r.reward_type === 'product_of_week');
       if (latestWinner) {
         setProductOfWeek(latestWinner);
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchSponsoredBanner = async () => {
+    try {
+      const res = await fetch('/api/sponsored?type=homepage_banner');
+      const data = await res.json();
+      if (data.active_spot) {
+        setSponsoredBanner(data.active_spot);
       }
     } catch (e) { console.error(e); }
   };
@@ -201,6 +222,67 @@ export default function Home() {
             <button onClick={() => setBannerDismissed(true)} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#9b9b9b', fontSize: 18, lineHeight: 1 }}>
               ×
             </button>
+          </div>
+        )}
+
+        {/* ── SPONSORED BANNER ── */}
+        {sponsoredBanner && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ 
+              padding: 20, borderRadius: 16, 
+              background: '#ffffff', 
+              border: '1px solid #e8e8e8',
+              position: 'relative'
+            }}>
+              <div style={{ 
+                position: 'absolute', top: 12, right: 12,
+                background: '#f5f5f5', color: '#9b9b9b', 
+                fontSize: 11, fontWeight: 600, padding: '4px 8px', 
+                borderRadius: 6, textTransform: 'uppercase', letterSpacing: 0.5
+              }}>
+                Sponsored
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+                {sponsoredBanner.image_url && (
+                  <div style={{ flexShrink: 0 }}>
+                    <img 
+                      src={sponsoredBanner.image_url} 
+                      alt={sponsoredBanner.title}
+                      style={{ width: 64, height: 64, borderRadius: 12, objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: '#21293c', margin: '0 0 6px' }}>
+                    {sponsoredBanner.title}
+                  </h3>
+                  {sponsoredBanner.description && (
+                    <p style={{ fontSize: 15, color: '#6f7784', margin: '0 0 12px', lineHeight: 1.5 }}>
+                      {sponsoredBanner.description}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <a 
+                      href={sponsoredBanner.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ 
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '8px 16px', borderRadius: 20, 
+                        background: '#0000FF', color: '#fff', 
+                        fontSize: 14, fontWeight: 600, 
+                        textDecoration: 'none', whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Check it out →
+                    </a>
+                    <span style={{ fontSize: 12, color: '#9b9b9b' }}>
+                      by {sponsoredBanner.advertiser}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

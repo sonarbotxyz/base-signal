@@ -35,6 +35,16 @@ interface UserInfo {
   avatar: string | null;
 }
 
+interface SponsoredSpot {
+  id: string;
+  advertiser: string;
+  title: string;
+  description?: string;
+  url: string;
+  image_url?: string;
+  usdc_paid: number;
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
   agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
   consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
@@ -144,12 +154,13 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const [votingInProgress, setVotingInProgress] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sponsoredSidebar, setSponsoredSidebar] = useState<SponsoredSpot | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const { ready, authenticated, logout, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
 
-  useEffect(() => { fetchProject(); fetchComments(); fetchAllProjects(); }, [id]);
+  useEffect(() => { fetchProject(); fetchComments(); fetchAllProjects(); fetchSponsoredSidebar(); }, [id]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -180,6 +191,16 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   };
   const fetchAllProjects = async () => {
     try { const res = await fetch('/api/projects?sort=upvotes&limit=50'); const data = await res.json(); setAllProjects((data.projects || []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name }))); } catch (e) { console.error(e); }
+  };
+
+  const fetchSponsoredSidebar = async () => {
+    try {
+      const res = await fetch('/api/sponsored?type=product_sidebar');
+      const data = await res.json();
+      if (data.active_spot) {
+        setSponsoredSidebar(data.active_spot);
+      }
+    } catch (e) { console.error(e); }
   };
 
   const handleUpvote = async () => {
@@ -301,6 +322,10 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
       {/* ── PRODUCT CONTENT ── */}
       <main style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 20px 0' }}>
+        <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+          
+          {/* Main Content */}
+          <div style={{ flex: '1', minWidth: 0 }}>
 
         <div style={{ marginBottom: 16 }}>
           <span style={{ display: 'inline-block', padding: '5px 12px', borderRadius: 6, background: '#0000FF', color: '#fff', fontSize: 12, fontWeight: 700, letterSpacing: 0.3 }}>
@@ -448,6 +473,71 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             </div>
           )}
         </div>
+        
+        </div> {/* End Main Content */}
+
+        {/* Sidebar */}
+        <div style={{ width: 300, flexShrink: 0 }}>
+          {sponsoredSidebar && (
+            <div style={{ 
+              padding: 20, borderRadius: 16, 
+              background: '#ffffff', 
+              border: '1px solid #e8e8e8',
+              position: 'sticky',
+              top: 80
+            }}>
+              <div style={{ 
+                marginBottom: 12,
+                fontSize: 11, fontWeight: 600, 
+                color: '#9b9b9b', textTransform: 'uppercase', 
+                letterSpacing: 0.5
+              }}>
+                Sponsored
+              </div>
+              
+              {sponsoredSidebar.image_url && (
+                <div style={{ marginBottom: 12 }}>
+                  <img 
+                    src={sponsoredSidebar.image_url} 
+                    alt={sponsoredSidebar.title}
+                    style={{ width: '100%', height: 120, borderRadius: 12, objectFit: 'cover' }}
+                  />
+                </div>
+              )}
+              
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#21293c', margin: '0 0 8px' }}>
+                {sponsoredSidebar.title}
+              </h3>
+              
+              {sponsoredSidebar.description && (
+                <p style={{ fontSize: 14, color: '#6f7784', margin: '0 0 16px', lineHeight: 1.5 }}>
+                  {sponsoredSidebar.description}
+                </p>
+              )}
+              
+              <a 
+                href={sponsoredSidebar.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ 
+                  display: 'block', textAlign: 'center',
+                  padding: '10px 16px', borderRadius: 12, 
+                  background: '#0000FF', color: '#fff', 
+                  fontSize: 14, fontWeight: 600, 
+                  textDecoration: 'none', marginBottom: 8
+                }}
+              >
+                Learn more
+              </a>
+              
+              <p style={{ fontSize: 11, color: '#9b9b9b', margin: 0, textAlign: 'center' }}>
+                by {sponsoredSidebar.advertiser}
+              </p>
+            </div>
+          )}
+        </div>
+
+        </div> {/* End flex container */}
       </main>
 
       {/* ── STICKY FOOTER ── */}
