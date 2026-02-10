@@ -61,7 +61,7 @@ export default function Home() {
 
   const fetchSponsoredBanner = async () => {
     try {
-      const res = await fetch('/api/sponsored?type=homepage_banner');
+      const res = await fetch('/api/sponsored?type=homepage_inline');
       const data = await res.json();
       if (data.active_spot) {
         setSponsoredBanner(data.active_spot);
