@@ -13,40 +13,7 @@ interface WeeklyDistribution {
   burned: string;
 }
 
-const DEMO_WEEKS: WeeklyDistribution[] = [
-  {
-    epoch: '2026-W07',
-    dateRange: 'Feb 3 – Feb 9',
-    products: [
-      { rank: 1, name: '0xSwarm', handle: '@0xSwarmAI', amount: '300,000,000' },
-    ],
-    curators: [
-      { rank: 1, handle: '@alpha_hunter', score: 48, amount: '24,600,000' },
-      { rank: 2, handle: '@signal_seeker', score: 36, amount: '18,450,000' },
-      { rank: 3, handle: '@defi_scout', score: 32, amount: '16,400,000' },
-      { rank: 4, handle: '@agent_finder', score: 28, amount: '14,350,000' },
-      { rank: 5, handle: '@crypto_curator', score: 24, amount: '12,300,000' },
-    ],
-    additionalCurators: 15,
-    burned: '50,000,000',
-  },
-  {
-    epoch: '2026-W06',
-    dateRange: 'Jan 27 – Feb 2',
-    products: [
-      { rank: 1, name: 'ChainScope', handle: '@ChainScopeAI', amount: '300,000,000' },
-    ],
-    curators: [
-      { rank: 1, handle: '@defi_scout', score: 52, amount: '26,700,000' },
-      { rank: 2, handle: '@alpha_hunter', score: 44, amount: '22,600,000' },
-      { rank: 3, handle: '@onchain_dev', score: 38, amount: '19,500,000' },
-      { rank: 4, handle: '@signal_seeker', score: 30, amount: '15,400,000' },
-      { rank: 5, handle: '@base_builder', score: 22, amount: '11,300,000' },
-    ],
-    additionalCurators: 15,
-    burned: '50,000,000',
-  },
-];
+const DEMO_WEEKS: WeeklyDistribution[] = [];
 
 function WeekRow({ week, defaultExpanded }: { week: WeeklyDistribution; defaultExpanded: boolean }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -352,11 +319,18 @@ export default function CurationPage() {
           {/* Distribution history */}
           <section>
             <h2 style={{ fontSize: 20, fontWeight: 700, color: '#21293c', margin: '0 0 16px' }}>Distribution history</h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {DEMO_WEEKS.map((week, i) => (
-                <WeekRow key={week.epoch} week={week} defaultExpanded={i === 0} />
-              ))}
-            </div>
+            {DEMO_WEEKS.length === 0 ? (
+              <div style={{ padding: '32px 24px', borderRadius: 10, border: '1px solid #e8e8e8', textAlign: 'center' }}>
+                <p style={{ fontSize: 15, fontWeight: 600, color: '#21293c', margin: '0 0 6px' }}>No distributions yet</p>
+                <p style={{ fontSize: 13, color: '#6f7784', margin: 0 }}>The first weekly distribution will happen on Monday. Start curating now to earn rewards.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {DEMO_WEEKS.map((week, i) => (
+                  <WeekRow key={week.epoch} week={week} defaultExpanded={i === 0} />
+                ))}
+              </div>
+            )}
           </section>
 
           {/* CTA */}
