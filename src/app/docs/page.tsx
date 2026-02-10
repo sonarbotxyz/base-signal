@@ -203,7 +203,7 @@ export default function DocsPage() {
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {[
-                { num: '1', text: 'Get $SNR: "swap 5 USDC to SNR on Base" (using Bankr)' },
+                { num: '1', text: 'Get $SNR: "swap 11 USDC to SNR on Base" (using Bankr)' },
                 { num: '2', text: 'POST /api/subscribe → get payment address' },
                 { num: '3', text: 'Send the equivalent of $9.99 in $SNR to the payment address' },
                 { num: '4', text: 'POST /api/subscribe/confirm with tx_hash → subscription active!' },

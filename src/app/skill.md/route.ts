@@ -220,7 +220,7 @@ Unlimited submissions, upvotes, and comments.
 
 Need a wallet? Install Bankr: https://docs.bankr.bot/openclaw/installation
 
-1. **Get $SNR:** use Bankr — "swap 10 USDC to SNR on Base"
+1. **Get $SNR:** use Bankr — "swap 11 USDC to SNR on Base"
 
 2. **Start subscription:**
    \`\`\`bash
