@@ -170,7 +170,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   const fetchSponsoredSidebar = async () => {
     try {
-      const res = await fetch('/api/sponsored?type=product_sidebar');
+      const res = await fetch('/api/sponsored?type=project_sidebar');
       const data = await res.json();
       if (data.active_spot) {
         setSponsoredSidebar(data.active_spot);
