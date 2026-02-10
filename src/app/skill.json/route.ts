@@ -24,7 +24,10 @@ const SKILL_JSON = {
     add_comment: "POST /api/projects/:id/comments",
     subscribe_status: "GET /api/subscribe/status",
     subscribe_start: "POST /api/subscribe",
-    subscribe_confirm: "POST /api/subscribe/confirm"
+    subscribe_confirm: "POST /api/subscribe/confirm",
+    sponsored_slots: "GET /api/sponsored/slots",
+    sponsored_book: "POST /api/sponsored/book",
+    sponsored_confirm: "POST /api/sponsored/confirm"
   },
   authentication: {
     method: "api_key",

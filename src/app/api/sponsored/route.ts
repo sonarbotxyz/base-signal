@@ -9,12 +9,12 @@ export async function GET(request: NextRequest) {
 
     if (!spotType) {
       return NextResponse.json(
-        { error: 'type parameter is required (e.g., ?type=homepage_banner)' },
+        { error: 'type parameter is required (e.g., ?type=homepage_inline)' },
         { status: 400 }
       );
     }
 
-    const validSpotTypes = ['homepage_banner', 'product_sidebar'];
+    const validSpotTypes = ['homepage_inline', 'homepage_banner', 'project_sidebar'];
     if (!validSpotTypes.includes(spotType)) {
       return NextResponse.json(
         { error: `Invalid type. Must be one of: ${validSpotTypes.join(', ')}` },
@@ -23,28 +23,49 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = getSupabase();
-    const now = new Date().toISOString();
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
     
-    // Get active sponsored spots for the specified type - catch errors gracefully
+    // Try new schema first: status='active' + week_start/week_end
     let activeSpot = null;
     try {
-      const { data: spots, error } = await supabase
+      const { data: newSpots, error: newError } = await supabase
         .from('sponsored_spots')
         .select('*')
         .eq('spot_type', spotType)
-        .eq('active', true)
-        .lte('starts_at', now)  // Started already
-        .gte('ends_at', now)    // Not ended yet
+        .eq('status', 'active')
+        .lte('week_start', todayStr)
+        .gte('week_end', todayStr)
         .order('created_at', { ascending: false })
-        .limit(1); // Only return the most recent active spot
+        .limit(1);
 
-      if (error) {
-        console.error('Database error (sponsored_spots table may not exist):', error);
-      } else if (spots && spots.length > 0) {
-        activeSpot = spots[0];
+      if (!newError && newSpots && newSpots.length > 0) {
+        activeSpot = newSpots[0];
       }
     } catch (e) {
-      console.error('Error fetching sponsored spots:', e);
+      console.error('Error fetching new-schema spots:', e);
+    }
+
+    // Fallback: old schema with starts_at/ends_at + active boolean
+    if (!activeSpot) {
+      try {
+        const nowIso = now.toISOString();
+        const { data: oldSpots, error: oldError } = await supabase
+          .from('sponsored_spots')
+          .select('*')
+          .eq('spot_type', spotType)
+          .eq('active', true)
+          .lte('starts_at', nowIso)
+          .gte('ends_at', nowIso)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (!oldError && oldSpots && oldSpots.length > 0) {
+          activeSpot = oldSpots[0];
+        }
+      } catch (e) {
+        console.error('Error fetching old-schema spots:', e);
+      }
     }
 
     return NextResponse.json({
@@ -53,7 +74,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching sponsored spots:', error);
-    // Return fallback data on error
     return NextResponse.json({
       active_spot: null,
       count: 0
