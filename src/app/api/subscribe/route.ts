@@ -93,12 +93,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       payment_address: paymentAddress,
-      amount: 1000,
-      token: '$SNR',
+      price: '$9.99/month',
+      payment_token: '$SNR',
+      payment_note: 'Priced at $9.99/month, paid in $SNR at market rate',
       token_contract: '0xE1231f809124e4Aa556cD9d8c28CB33f02c75b07',
       chain: 'Base',
       duration: '30 days',
-      instructions: 'Send 1000 $SNR to the payment address, then call /api/subscribe/confirm with the tx hash.'
+      instructions: 'Send the equivalent of $9.99 in $SNR to the payment address, then call /api/subscribe/confirm with the tx hash.'
     });
   } catch (error) {
     console.error('Error getting payment instructions:', error);

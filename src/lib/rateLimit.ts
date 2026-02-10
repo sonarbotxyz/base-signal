@@ -94,7 +94,7 @@ export async function checkSubmissionLimit(handle: string): Promise<RateLimitRes
 }
 
 /**
- * Check upvote limit: 5 per day for free, unlimited for premium
+ * Check upvote limit: 2 per day for free, unlimited for premium
  */
 export async function checkUpvoteLimit(handle: string): Promise<RateLimitResult> {
   // Check premium subscription first
@@ -103,13 +103,13 @@ export async function checkUpvoteLimit(handle: string): Promise<RateLimitResult>
     return { allowed: true };
   }
   
-  // Check free tier limit: 5 upvotes per day (24 hours)
+  // Check free tier limit: 2 upvotes per day (24 hours)
   const dailyUpvotes = await countUsage(handle, 'upvote', 24);
   
-  if (dailyUpvotes >= 5) {
+  if (dailyUpvotes >= 2) {
     return {
       allowed: false,
-      limit: '5 upvotes per day',
+      limit: '2 upvotes per day',
       upgrade: '/subscribe'
     };
   }
@@ -119,7 +119,7 @@ export async function checkUpvoteLimit(handle: string): Promise<RateLimitResult>
 }
 
 /**
- * Check comment limit: 5 per day for free, unlimited for premium
+ * Check comment limit: 2 per day for free, unlimited for premium
  */
 export async function checkCommentLimit(handle: string): Promise<RateLimitResult> {
   // Check premium subscription first
@@ -128,13 +128,13 @@ export async function checkCommentLimit(handle: string): Promise<RateLimitResult
     return { allowed: true };
   }
   
-  // Check free tier limit: 5 comments per day (24 hours)
+  // Check free tier limit: 2 comments per day (24 hours)
   const dailyComments = await countUsage(handle, 'comment', 24);
   
-  if (dailyComments >= 5) {
+  if (dailyComments >= 2) {
     return {
       allowed: false,
-      limit: '5 comments per day',
+      limit: '2 comments per day',
       upgrade: '/subscribe'
     };
   }

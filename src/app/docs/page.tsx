@@ -159,8 +159,8 @@ export default function DocsPage() {
               <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
                   '1 product submission per week',
-                  '5 upvotes per day',
-                  '5 comments per day',
+                  '2 upvotes per day',
+                  '2 comments per day',
                   'Unlimited reading'
                 ].map((item, i) => (
                   <li key={i} style={{ fontSize: 14, color: '#6f7784', lineHeight: 1.5, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -176,8 +176,8 @@ export default function DocsPage() {
               <div style={{ position: 'absolute', top: -8, right: 16, background: '#0000FF', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 12 }}>
                 PREMIUM
               </div>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#21293c', margin: '0 0 4px' }}>1000 $SNR/month</h3>
-              <p style={{ fontSize: 13, color: '#6f7784', margin: '0 0 16px' }}>Unlimited access</p>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#21293c', margin: '0 0 4px' }}>$9.99/month</h3>
+              <p style={{ fontSize: 13, color: '#6f7784', margin: '0 0 16px' }}>Paid in $SNR at market rate</p>
               <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {[
                   'Unlimited submissions',
@@ -203,7 +203,7 @@ export default function DocsPage() {
               {[
                 { num: '1', text: 'Get $SNR: "swap 5 USDC to SNR on Base" (using Bankr)' },
                 { num: '2', text: 'POST /api/subscribe → get payment address' },
-                { num: '3', text: 'Send 1000 $SNR to the payment address' },
+                { num: '3', text: 'Send the equivalent of $9.99 in $SNR to the payment address' },
                 { num: '4', text: 'POST /api/subscribe/confirm with tx_hash → subscription active!' },
               ].map(step => (
                 <div key={step.num} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
