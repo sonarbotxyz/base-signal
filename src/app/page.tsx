@@ -15,16 +15,6 @@ interface Project {
   upvotes: number;
 }
 
-interface ProductOfWeek {
-  id: string;
-  project_name: string;
-  project_id: string;
-  twitter_handle: string;
-  snr_amount: number;
-  epoch_start: string;
-  epoch_end: string;
-}
-
 interface SponsoredSpot {
   id: string;
   advertiser: string;
@@ -47,13 +37,12 @@ export default function Home() {
   const [voting, setVoting] = useState<Set<string>>(new Set());
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [productOfWeek, setProductOfWeek] = useState<ProductOfWeek | null>(null);
   const [sponsoredBanner, setSponsoredBanner] = useState<SponsoredSpot | null>(null);
 
   const { authenticated, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
 
-  useEffect(() => { fetchProjects(); fetchProductOfWeek(); fetchSponsoredBanner(); }, []);
+  useEffect(() => { fetchProjects(); fetchSponsoredBanner(); }, []);
 
   const fetchProjects = async () => {
     try {
@@ -69,41 +58,6 @@ export default function Home() {
       }
     } catch (e) { console.error(e); }
     setLoading(false);
-  };
-
-  const fetchProductOfWeek = async () => {
-    try {
-      const res = await fetch('/api/leaderboard');
-      const data = await res.json();
-      const productRewards = data.product_rewards || [];
-      const latestWinner = productRewards.find((r: any) => r.reward_type === 'product_of_week');
-      if (latestWinner) {
-        setProductOfWeek(latestWinner);
-      } else {
-        // Demo fallback data when API returns nothing
-        setProductOfWeek({
-          id: 'demo',
-          project_name: '0xSwarm',
-          project_id: 'demo',
-          twitter_handle: '0xSwarmAI',
-          snr_amount: 100000,
-          epoch_start: '2026-02-03',
-          epoch_end: '2026-02-10'
-        });
-      }
-    } catch (e) { 
-      console.error(e);
-      // Demo fallback data on error
-      setProductOfWeek({
-        id: 'demo',
-        project_name: '0xSwarm',
-        project_id: 'demo',
-        twitter_handle: '0xSwarmAI',
-        snr_amount: 100000,
-        epoch_start: '2026-02-03',
-        epoch_end: '2026-02-10'
-      });
-    }
   };
 
   const fetchSponsoredBanner = async () => {
@@ -253,68 +207,6 @@ export default function Home() {
                     </span>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── PRODUCT OF THE WEEK ── */}
-        {productOfWeek && (
-          <div style={{ marginBottom: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0000FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="7" />
-                <polyline points="8.21,13.89 7,23 12,20 17,23 15.79,13.88" />
-              </svg>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: '#21293c', margin: 0 }}>Product of the Week</h2>
-            </div>
-            <div style={{ 
-              padding: 20, borderRadius: 16, 
-              background: 'linear-gradient(135deg, #f0f0ff 0%, #eef0ff 100%)', 
-              border: '2px solid #0000FF', 
-              position: 'relative',
-              overflow: 'hidden'
-            }}>
-              <div style={{ 
-                position: 'absolute', top: 12, right: 12,
-                background: '#0000FF', color: '#fff', 
-                fontSize: 11, fontWeight: 700, padding: '4px 10px', 
-                borderRadius: 8, textTransform: 'uppercase', letterSpacing: 0.5
-              }}>
-                WINNER
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
-                <div style={{ 
-                  width: 48, height: 48, borderRadius: 12, 
-                  background: '#0000FF', 
-                  display: 'flex', alignItems: 'center', justifyContent: 'center' 
-                }}>
-                  <span style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>
-                    {productOfWeek.project_name ? productOfWeek.project_name[0] : '?'}
-                  </span>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <Link href={`/project/${productOfWeek.project_id}`} style={{ textDecoration: 'none' }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#21293c', margin: 0, lineHeight: 1.3 }}>
-                      {productOfWeek.project_name}
-                    </h3>
-                  </Link>
-                  <p style={{ fontSize: 14, color: '#6f7784', margin: '4px 0 0' }}>
-                    by @{productOfWeek.twitter_handle} • Earned {productOfWeek.snr_amount.toLocaleString()} $SNR
-                  </p>
-                </div>
-                <Link href="/leaderboard" 
-                  style={{ 
-                    padding: '8px 16px', borderRadius: 20, 
-                    background: '#fff', border: '1px solid #0000FF', 
-                    fontSize: 13, fontWeight: 600, color: '#0000FF', 
-                    textDecoration: 'none', whiteSpace: 'nowrap'
-                  }}>
-                  View all winners
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6, display: 'inline' }}>
-                    <polyline points="9,18 15,12 9,6" />
-                  </svg>
-                </Link>
               </div>
             </div>
           </div>

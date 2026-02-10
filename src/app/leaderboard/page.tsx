@@ -1,299 +1,253 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
 
-interface WeeklyReward {
+interface Project {
   id: string;
-  epoch_start: string;
-  epoch_end: string;
-  product_id?: string;
+  name: string;
+  tagline: string;
+  logo_url?: string;
   twitter_handle?: string;
-  reward_type: string;
-  snr_amount: number;
-  project_name?: string;
-  project_tagline?: string;
-  upvotes_that_week?: number;
+  category: string;
+  upvotes: number;
+  created_at: string;
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
+  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
+};
+
+function getWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+function getWeekRange(year: number, week: number): { start: Date; end: Date } {
+  const jan1 = new Date(Date.UTC(year, 0, 1));
+  const jan1Day = jan1.getUTCDay() || 7;
+  const startOfWeek1 = new Date(jan1);
+  startOfWeek1.setUTCDate(jan1.getUTCDate() - jan1Day + 1);
+  const start = new Date(startOfWeek1);
+  start.setUTCDate(startOfWeek1.getUTCDate() + (week - 1) * 7);
+  const end = new Date(start);
+  end.setUTCDate(start.getUTCDate() + 6);
+  return { start, end };
+}
+
+function formatDateShort(d: Date): string {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 export default function LeaderboardPage() {
-  const [productRewards, setProductRewards] = useState<WeeklyReward[]>([]);
-  const [curatorRewards, setCuratorRewards] = useState<WeeklyReward[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Current week
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentWeek = getWeekNumber(now);
+
+  const [selectedYear, setSelectedYear] = useState(currentYear);
+  const [selectedWeek, setSelectedWeek] = useState(currentWeek);
+
   useEffect(() => {
-    fetchRewards();
+    fetchProjects();
   }, []);
 
-  const fetchRewards = async () => {
+  const fetchProjects = async () => {
     try {
-      const res = await fetch('/api/leaderboard');
+      const res = await fetch('/api/projects?sort=upvotes&limit=100');
       const data = await res.json();
-      
-      let productRewards = data.product_rewards || [];
-      let curatorRewards = data.curator_rewards || [];
-      
-      // Add demo data when API returns empty
-      if (productRewards.length === 0) {
-        productRewards = [
-          {
-            id: 'demo-1',
-            epoch_start: '2026-02-03',
-            epoch_end: '2026-02-10',
-            product_id: '0xswarm',
-            twitter_handle: '0xSwarmAI',
-            reward_type: 'product_of_week',
-            snr_amount: 100000,
-            project_name: '0xSwarm',
-            project_tagline: 'Autonomous AI agents'
-          },
-          {
-            id: 'demo-2',
-            epoch_start: '2026-02-03',
-            epoch_end: '2026-02-10',
-            product_id: 'lobster-trap',
-            twitter_handle: 'LobsterTrapAI',
-            reward_type: 'runner_up',
-            snr_amount: 50000,
-            project_name: 'Lobster Trap',
-            project_tagline: 'MEV protection for DeFi'
-          },
-          {
-            id: 'demo-3',
-            epoch_start: '2026-02-03',
-            epoch_end: '2026-02-10',
-            product_id: 'agentpaint',
-            twitter_handle: 'AgentPaintAI',
-            reward_type: 'third_place',
-            snr_amount: 25000,
-            project_name: 'AgentPaint',
-            project_tagline: 'AI art generation'
-          }
-        ];
-      }
-      
-      if (curatorRewards.length === 0) {
-        const demoHandles = ['alpha_hunter', 'signal_seeker', 'defi_scout', 'agent_finder', 'crypto_curator', 'base_builder', 'ai_explorer', 'web3_hunter', 'token_tracker', 'degen_detector'];
-        curatorRewards = demoHandles.map((handle, i) => ({
-          id: `curator-${handle}`,
-          epoch_start: '2026-02-03',
-          epoch_end: '2026-02-10',
-          twitter_handle: handle,
-          reward_type: 'curator',
-          snr_amount: 2500
-        }));
-      }
-      
-      setProductRewards(productRewards);
-      setCuratorRewards(curatorRewards);
-    } catch (e) {
-      console.error(e);
-      // Use demo data on error too
-      setProductRewards([
-        {
-          id: 'demo-1',
-          epoch_start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-          epoch_end: new Date().toISOString(),
-          product_id: 'sonarbot-demo',
-          twitter_handle: 'sonarbotxyz',
-          reward_type: 'product_of_week',
-          snr_amount: 25000,
-          project_name: 'Sonarbot',
-          project_tagline: 'Product Hunt for AI agents'
-        }
-      ]);
-      setCuratorRewards([]);
-    }
+      setProjects(data.projects || []);
+    } catch (e) { console.error(e); }
     setLoading(false);
   };
 
-  const formatEpoch = (epochStart: string) => {
-    const date = new Date(epochStart);
-    const year = date.getFullYear();
-    const weekNumber = Math.ceil(
-      (date.getTime() - new Date(year, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000)
-    );
-    return `${year}-W${weekNumber.toString().padStart(2, '0')}`;
-  };
+  // Filter projects by selected week
+  const weekProjects = useMemo(() => {
+    const { start, end } = getWeekRange(selectedYear, selectedWeek);
+    const endOfDay = new Date(end);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
-  const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    const filtered = projects.filter(p => {
+      const created = new Date(p.created_at);
+      return created >= start && created <= endOfDay;
     });
-  };
 
-  const getRewardTypeDisplay = (type: string) => {
-    switch (type) {
-      case 'product_of_week': return 'Product of the Week';
-      case 'runner_up': return 'Runner Up';
-      case 'third_place': return 'Third Place';
-      default: return type;
+    // Sort by upvotes descending
+    return filtered.sort((a, b) => b.upvotes - a.upvotes);
+  }, [projects, selectedYear, selectedWeek]);
+
+  const { start: weekStart, end: weekEnd } = getWeekRange(selectedYear, selectedWeek);
+
+  const goToPrevWeek = () => {
+    if (selectedWeek <= 1) {
+      setSelectedYear(selectedYear - 1);
+      setSelectedWeek(52);
+    } else {
+      setSelectedWeek(selectedWeek - 1);
     }
   };
 
-  const getRankText = (type: string) => {
-    switch (type) {
-      case 'product_of_week': 
-        return '#1';
-      case 'runner_up': 
-        return '#2';
-      case 'third_place': 
-        return '#3';
-      default: 
-        return '#?';
+  const goToNextWeek = () => {
+    if (selectedYear === currentYear && selectedWeek >= currentWeek) return;
+    if (selectedWeek >= 52) {
+      setSelectedYear(selectedYear + 1);
+      setSelectedWeek(1);
+    } else {
+      setSelectedWeek(selectedWeek + 1);
     }
   };
 
-  // Group product rewards by epoch for better display
-  const groupedRewards = productRewards.reduce((acc, reward) => {
-    const epoch = formatEpoch(reward.epoch_start);
-    if (!acc[epoch]) {
-      acc[epoch] = [];
-    }
-    acc[epoch].push(reward);
-    return acc;
-  }, {} as Record<string, WeeklyReward[]>);
+  const isCurrentWeek = selectedYear === currentYear && selectedWeek === currentWeek;
+  const canGoNext = !(selectedYear === currentYear && selectedWeek >= currentWeek);
 
-  // Sort epochs by date (newest first)
-  const sortedEpochs = Object.keys(groupedRewards).sort().reverse();
+  const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
 
   return (
     <div style={{ minHeight: '100vh', background: '#ffffff', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", display: 'flex', flexDirection: 'column' }}>
 
       <Header activePage="leaderboard" />
 
-      {/* ── MAIN CONTENT ── */}
       <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
 
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 700, color: '#21293c', margin: 0, lineHeight: 1.2, marginBottom: 8 }}>
-            Leaderboard
+        {/* Title + week nav */}
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: '#21293c', margin: '0 0 4px' }}>
+            Weekly Leaderboard
           </h1>
-          <p style={{ fontSize: 17, color: '#6f7784', margin: 0, lineHeight: 1.4 }}>
-            Weekly winners and top curators earning $SNR rewards
+          <p style={{ fontSize: 15, color: '#6f7784', margin: '0 0 24px' }}>
+            Top products by upvotes, ranked weekly
           </p>
+
+          {/* Week selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={goToPrevWeek} style={{
+              width: 36, height: 36, borderRadius: 8, border: '1px solid #e8e8e8', background: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6f7784" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ fontSize: 18, fontWeight: 700, color: '#21293c' }}>
+                Week {selectedWeek}
+              </span>
+              <span style={{ fontSize: 14, color: '#9b9b9b' }}>
+                {formatDateShort(weekStart)} – {formatDateShort(weekEnd)}, {selectedYear}
+              </span>
+              {isCurrentWeek && (
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#0000FF', background: '#eef0ff', padding: '2px 8px', borderRadius: 4 }}>
+                  This week
+                </span>
+              )}
+            </div>
+
+            <button onClick={goToNextWeek} disabled={!canGoNext} style={{
+              width: 36, height: 36, borderRadius: 8, border: '1px solid #e8e8e8',
+              background: canGoNext ? '#fff' : '#fafafa',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: canGoNext ? 'pointer' : 'default', opacity: canGoNext ? 1 : 0.4,
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6f7784" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          </div>
         </div>
 
+        {/* Product list */}
         {loading ? (
+          <div>
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0', borderBottom: '1px solid #f0f0f0' }}>
+                <div style={{ width: 32, height: 20, borderRadius: 4, background: '#f0f0f0' }} />
+                <div style={{ width: 48, height: 48, borderRadius: 10, background: '#f0f0f0' }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ width: 180, height: 16, borderRadius: 4, background: '#f0f0f0', marginBottom: 6 }} />
+                  <div style={{ width: 260, height: 14, borderRadius: 4, background: '#f0f0f0' }} />
+                </div>
+                <div style={{ width: 52, height: 52, borderRadius: 10, background: '#f0f0f0' }} />
+              </div>
+            ))}
+          </div>
+        ) : weekProjects.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
-                <circle cx="12" cy="12" r="10" stroke="#f0f0f0" strokeWidth="3" />
-                <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="#0000FF" />
-              </svg>
-              <span style={{ fontSize: 15, color: '#6f7784' }}>Loading leaderboard...</span>
-            </div>
-            <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+            <p style={{ fontSize: 17, fontWeight: 600, color: '#21293c', marginBottom: 4 }}>No products launched this week</p>
+            <p style={{ fontSize: 14, color: '#6f7784' }}>
+              {isCurrentWeek ? 'Products launched this week will appear here.' : 'Try browsing a different week.'}
+            </p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          <div>
+            {weekProjects.map((p, i) => {
+              const hue = hueFrom(p.name);
+              const rank = i + 1;
+              return (
+                <div key={p.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 14, padding: '16px 0',
+                  borderBottom: '1px solid #f0f0f0',
+                }}>
+                  {/* Rank */}
+                  <span style={{
+                    fontSize: rank <= 3 ? 18 : 15, fontWeight: 700,
+                    color: rank === 1 ? '#0000FF' : rank <= 3 ? '#21293c' : '#9b9b9b',
+                    minWidth: 28, textAlign: 'center', flexShrink: 0,
+                  }}>
+                    {rank}
+                  </span>
 
-            {/* Product of the Week Winners */}
-            <section>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: '#21293c', margin: '0 0 20px' }}>
-                Product of the Week Winners
-              </h2>
-              
-              {sortedEpochs.length === 0 ? (
-                <div style={{ padding: '40px 20px', textAlign: 'center', background: '#f9f9f9', borderRadius: 16 }}>
-                  <p style={{ fontSize: 16, color: '#6f7784', margin: 0 }}>
-                    No weekly winners yet. Check back after the first epoch calculation!
-                  </p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  {sortedEpochs.map(epoch => {
-                    const epochRewards = groupedRewards[epoch].sort((a, b) => {
-                      const order = { product_of_week: 0, runner_up: 1, third_place: 2 };
-                      return order[a.reward_type as keyof typeof order] - order[b.reward_type as keyof typeof order];
-                    });
-                    
-                    return (
-                      <div key={epoch} style={{ padding: 24, background: '#ffffff', border: '1px solid #e8e8e8', borderRadius: 16 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                          <h3 style={{ fontSize: 18, fontWeight: 700, color: '#21293c', margin: 0 }}>
-                            Week {epoch}
-                          </h3>
-                          <span style={{ fontSize: 13, color: '#9b9b9b' }}>
-                            {formatDate(epochRewards[0].epoch_start)} - {formatDate(epochRewards[0].epoch_end)}
-                          </span>
-                        </div>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                          {epochRewards.map(reward => (
-                            <div key={reward.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, background: '#f9f9f9', borderRadius: 12 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <span style={{ fontSize: 16, fontWeight: 700, color: '#0000FF', minWidth: 24 }}>{getRankText(reward.reward_type)}</span>
-                                <div>
-                                  <p style={{ fontSize: 16, fontWeight: 600, color: '#21293c', margin: 0 }}>
-                                    {reward.project_name || 'Unknown Product'}
-                                  </p>
-                                  <p style={{ fontSize: 14, color: '#6f7784', margin: '2px 0 0' }}>
-                                    by @{reward.twitter_handle} • {getRewardTypeDisplay(reward.reward_type)}
-                                  </p>
-                                </div>
-                              </div>
-                              <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontSize: 18, fontWeight: 700, color: '#0000FF', margin: 0 }}>
-                                  {reward.snr_amount.toLocaleString()} $SNR
-                                </p>
-                                {reward.upvotes_that_week && (
-                                  <p style={{ fontSize: 12, color: '#9b9b9b', margin: '2px 0 0' }}>
-                                    {reward.upvotes_that_week} upvotes that week
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                  {/* Logo */}
+                  <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
+                    {p.logo_url ? (
+                      <img src={p.logo_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ width: 48, height: 48, borderRadius: 10, background: `hsl(${hue}, 45%, 92%)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: `hsl(${hue}, 45%, 45%)` }}>{p.name[0]}</span>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
+                    )}
+                  </Link>
 
-            {/* Top Curators */}
-            <section>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: '#21293c', margin: '0 0 20px' }}>
-                Top Curators
-              </h2>
-              
-              {curatorRewards.length === 0 ? (
-                <div style={{ padding: '40px 20px', textAlign: 'center', background: '#f9f9f9', borderRadius: 16 }}>
-                  <p style={{ fontSize: 16, color: '#6f7784', margin: 0 }}>
-                    No curator rewards yet. Curators earn $SNR by upvoting products that become weekly winners!
-                  </p>
-                </div>
-              ) : (
-                <div style={{ padding: 24, background: '#ffffff', border: '1px solid #e8e8e8', borderRadius: 16 }}>
-                  <p style={{ fontSize: 14, color: '#6f7784', margin: '0 0 16px' }}>
-                    Curators earn 2,500 $SNR for upvoting products that land in the weekly top 10
-                  </p>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-                    {curatorRewards.slice(0, 20).map((curator, index) => (
-                      <div key={curator.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 12, background: '#f9f9f9', borderRadius: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <span style={{ fontSize: 12, fontWeight: 700, color: '#9b9b9b' }}>#{index + 1}</span>
-                          <span style={{ fontSize: 14, fontWeight: 600, color: '#21293c' }}>@{curator.twitter_handle}</span>
-                        </div>
-                        <span style={{ fontSize: 12, fontWeight: 600, color: '#0000FF' }}>2.5K $SNR</span>
-                      </div>
-                    ))}
+                  {/* Name + tagline */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+                      <h3 style={{ fontSize: 15, fontWeight: 600, color: '#21293c', margin: 0, lineHeight: 1.3 }}>{p.name}</h3>
+                    </Link>
+                    <p style={{ fontSize: 13, color: '#6f7784', margin: '2px 0 0', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <span style={{ fontSize: 11, color: '#9b9b9b', padding: '1px 6px', borderRadius: 3, background: '#f5f5f5' }}>
+                        {CATEGORY_LABELS[p.category] || p.category}
+                      </span>
+                      {p.twitter_handle && (
+                        <span style={{ fontSize: 11, color: '#9b9b9b' }}>@{p.twitter_handle}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Upvote count */}
+                  <div style={{
+                    flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    width: 52, height: 52, borderRadius: 10,
+                    border: rank === 1 ? '2px solid #0000FF' : '1px solid #e0e0e0',
+                    background: rank === 1 ? '#f0f0ff' : '#ffffff',
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={rank === 1 ? '#0000FF' : '#21293c'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="18 15 12 9 6 15" />
+                    </svg>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: rank === 1 ? '#0000FF' : '#21293c', lineHeight: 1 }}>{p.upvotes}</span>
                   </div>
                 </div>
-              )}
-            </section>
-
+              );
+            })}
           </div>
         )}
+
       </main>
 
-      {/* ── FOOTER ── */}
+      {/* Footer */}
       <footer style={{ borderTop: '1px solid #e8e8e8', background: '#ffffff', padding: '20px 20px' }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#6f7784' }}>
