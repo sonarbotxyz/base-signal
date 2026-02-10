@@ -174,30 +174,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       const data = await res.json();
       if (data.active_spot) {
         setSponsoredSidebar(data.active_spot);
-      } else {
-        // Demo sponsored sidebar when API returns null
-        setSponsoredSidebar({
-          id: 'demo',
-          advertiser: 'BasePay',
-          title: 'BasePay',
-          description: 'Instant crypto payments for AI agents.',
-          url: 'https://basepay.app',
-          image_url: undefined,
-          usdc_paid: 500
-        });
       }
-    } catch (e) { 
+    } catch (e) {
       console.error(e);
-      // Demo sponsored sidebar on error
-      setSponsoredSidebar({
-        id: 'demo',
-        advertiser: 'BasePay',
-        title: 'BasePay',
-        description: 'Instant crypto payments for AI agents.',
-        url: 'https://basepay.app',
-        image_url: undefined,
-        usdc_paid: 500
-      });
     }
   };
 
@@ -432,7 +411,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
         {/* Sidebar */}
         <div className="project-sidebar">
-          {sponsoredSidebar && (
+          {sponsoredSidebar ? (
             <div style={{ 
               padding: 24, borderRadius: 16, 
               background: '#fafbff', 
@@ -446,7 +425,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                 color: '#9b9b9b', textTransform: 'uppercase', 
                 letterSpacing: 0.5
               }}>
-                Sponsored
+                Ad
               </div>
               
               {sponsoredSidebar.image_url && (
@@ -478,24 +457,42 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   padding: '12px 16px', borderRadius: 12, 
                   background: '#0000FF', color: '#fff', 
                   fontSize: 14, fontWeight: 600, 
-                  textDecoration: 'none', marginBottom: 10
+                  textDecoration: 'none'
                 }}
               >
                 Learn more
               </a>
-              
-              <p style={{ fontSize: 11, color: '#9b9b9b', margin: '0 0 14px', textAlign: 'center' }}>
-                by {sponsoredSidebar.advertiser}
-              </p>
-
-              <div style={{ borderTop: '1px solid #eef0ff', paddingTop: 14 }}>
-                <p style={{ fontSize: 12, color: '#9b9b9b', margin: '0 0 4px', lineHeight: 1.4 }}>
-                  Promote your product here. Open to agents and humans.
-                </p>
-                <Link href="/docs#sponsored" style={{ fontSize: 12, fontWeight: 600, color: '#0000FF', textDecoration: 'none' }}>
-                  Get a spot →
-                </Link>
+            </div>
+          ) : (
+            <div style={{ 
+              padding: 24, borderRadius: 16, 
+              background: '#fafbff', 
+              border: '1px dashed #d4d6e8',
+              position: 'sticky',
+              top: 80
+            }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10, background: '#eef0ff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0000FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
               </div>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#21293c', margin: '0 0 8px' }}>
+                Promote your product
+              </h3>
+              <p style={{ fontSize: 13, color: '#6f7784', margin: '0 0 16px', lineHeight: 1.5 }}>
+                This spot is open. Agents and humans can advertise here to reach builders and curators.
+              </p>
+              <Link href="/docs" style={{
+                display: 'block', textAlign: 'center',
+                padding: '10px 16px', borderRadius: 10,
+                border: '1px solid #0000FF', color: '#0000FF',
+                fontSize: 14, fontWeight: 600, textDecoration: 'none',
+              }}>
+                Learn more
+              </Link>
             </div>
           )}
         </div>

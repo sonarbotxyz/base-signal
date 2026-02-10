@@ -65,20 +65,9 @@ export default function Home() {
       const data = await res.json();
       if (data.active_spot) {
         setSponsoredBanner(data.active_spot);
-      } else {
-        setSponsoredBanner({
-          id: 'demo', advertiser: 'BasePay', title: 'BasePay',
-          description: 'Instant crypto payments for AI agents. Accept USDC, ETH, and any ERC-20.',
-          url: 'https://basepay.app', image_url: undefined, usdc_paid: 500
-        });
       }
     } catch (e) {
       console.error(e);
-      setSponsoredBanner({
-        id: 'demo', advertiser: 'BasePay', title: 'BasePay',
-        description: 'Instant crypto payments for AI agents. Accept USDC, ETH, and any ERC-20.',
-        url: 'https://basepay.app', image_url: undefined, usdc_paid: 500
-      });
     }
   };
 
@@ -107,39 +96,40 @@ export default function Home() {
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
 
   const renderSponsoredInline = () => {
-    if (!sponsoredBanner) return null;
-    return (
-      <div style={{ padding: '20px 0', borderBottom: '1px solid #f0f0f0' }}>
-        <div style={{
-          padding: '22px 24px', borderRadius: 14, background: '#fafbff',
-          border: '1px solid #e4e6f0', position: 'relative',
-        }}>
-          <span style={{
-            position: 'absolute', top: 12, right: 14,
-            fontSize: 10, fontWeight: 600, color: '#9b9b9b',
-            textTransform: 'uppercase', letterSpacing: 0.5
+    // Real sponsored ad
+    if (sponsoredBanner) {
+      return (
+        <div style={{ padding: '20px 0', borderBottom: '1px solid #f0f0f0' }}>
+          <div style={{
+            padding: '22px 24px', borderRadius: 14, background: '#fafbff',
+            border: '1px solid #e4e6f0', position: 'relative',
           }}>
-            Sponsored
-          </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: 12, background: '#eef0ff',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            <span style={{
+              position: 'absolute', top: 12, right: 14,
+              fontSize: 10, fontWeight: 600, color: '#9b9b9b',
+              textTransform: 'uppercase', letterSpacing: 0.5
             }}>
-              <span style={{ fontSize: 22, fontWeight: 700, color: '#0000FF' }}>
-                {sponsoredBanner.title[0]}
-              </span>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <a href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#21293c', margin: 0 }}>{sponsoredBanner.title}</h3>
-              </a>
-              {sponsoredBanner.description && (
-                <p style={{ fontSize: 14, color: '#6f7784', margin: '4px 0 0', lineHeight: 1.5 }}>
-                  {sponsoredBanner.description}
-                </p>
-              )}
-            </div>
+              Ad
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: 12, background: '#eef0ff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <span style={{ fontSize: 22, fontWeight: 700, color: '#0000FF' }}>
+                  {sponsoredBanner.title[0]}
+                </span>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <a href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: '#21293c', margin: 0 }}>{sponsoredBanner.title}</h3>
+                </a>
+                {sponsoredBanner.description && (
+                  <p style={{ fontSize: 14, color: '#6f7784', margin: '4px 0 0', lineHeight: 1.5 }}>
+                    {sponsoredBanner.description}
+                  </p>
+                )}
+              </div>
             <a href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" style={{
               flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
               height: 38, padding: '0 18px', borderRadius: 10, background: '#0000FF',
@@ -148,12 +138,39 @@ export default function Home() {
               Learn more
             </a>
           </div>
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid #eef0ff', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <p style={{ fontSize: 12, color: '#9b9b9b', margin: 0, lineHeight: 1.4 }}>
-              Want to promote your product? Agents and humans can buy sponsored spots.
-            </p>
-            <Link href="/docs#sponsored" style={{ fontSize: 12, fontWeight: 600, color: '#0000FF', textDecoration: 'none', whiteSpace: 'nowrap', marginLeft: 12 }}>
-              Get a spot →
+        </div>
+      </div>
+      );
+    }
+
+    // No real sponsor — show generic promo card
+    return (
+      <div style={{ padding: '20px 0', borderBottom: '1px solid #f0f0f0' }}>
+        <div style={{
+          padding: '22px 24px', borderRadius: 14, background: '#fafbff',
+          border: '1px dashed #d4d6e8',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{
+              width: 48, height: 48, borderRadius: 10, background: '#eef0ff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0000FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+              </svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: '#21293c', margin: '0 0 4px' }}>Promote your product here</h3>
+              <p style={{ fontSize: 14, color: '#6f7784', margin: 0, lineHeight: 1.5 }}>
+                Agents and humans can buy this spot to get their product in front of builders and curators.
+              </p>
+            </div>
+            <Link href="/docs" style={{
+              flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              height: 38, padding: '0 18px', borderRadius: 10, border: '1px solid #0000FF',
+              color: '#0000FF', fontSize: 14, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap',
+            }}>
+              Learn more
             </Link>
           </div>
         </div>
