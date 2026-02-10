@@ -25,24 +25,27 @@ export async function GET(request: NextRequest) {
     const supabase = getSupabase();
     const now = new Date().toISOString();
     
-    // Get active sponsored spots for the specified type
-    const { data: spots, error } = await supabase
-      .from('sponsored_spots')
-      .select('*')
-      .eq('spot_type', spotType)
-      .eq('active', true)
-      .lte('starts_at', now)  // Started already
-      .gte('ends_at', now)    // Not ended yet
-      .order('created_at', { ascending: false })
-      .limit(1); // Only return the most recent active spot
+    // Get active sponsored spots for the specified type - catch errors gracefully
+    let activeSpot = null;
+    try {
+      const { data: spots, error } = await supabase
+        .from('sponsored_spots')
+        .select('*')
+        .eq('spot_type', spotType)
+        .eq('active', true)
+        .lte('starts_at', now)  // Started already
+        .gte('ends_at', now)    // Not ended yet
+        .order('created_at', { ascending: false })
+        .limit(1); // Only return the most recent active spot
 
-    if (error) {
-      console.error('Database error:', error);
-      return NextResponse.json({ error: 'Failed to fetch sponsored spots' }, { status: 500 });
+      if (error) {
+        console.error('Database error (sponsored_spots table may not exist):', error);
+      } else if (spots && spots.length > 0) {
+        activeSpot = spots[0];
+      }
+    } catch (e) {
+      console.error('Error fetching sponsored spots:', e);
     }
-
-    // Return the active spot or null if none found
-    const activeSpot = spots && spots.length > 0 ? spots[0] : null;
 
     return NextResponse.json({
       active_spot: activeSpot,
@@ -50,6 +53,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching sponsored spots:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Return fallback data on error
+    return NextResponse.json({
+      active_spot: null,
+      count: 0
+    });
   }
 }

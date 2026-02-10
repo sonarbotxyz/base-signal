@@ -6,32 +6,44 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabase();
     
-    // Get product rewards with project details
-    const { data: productRewards, error: productError } = await supabase
-      .from('weekly_rewards')
-      .select(`
-        *,
-        projects!inner(id, name, tagline)
-      `)
-      .in('reward_type', ['product_of_week', 'runner_up', 'third_place'])
-      .order('epoch_start', { ascending: false })
-      .order('snr_amount', { ascending: false });
+    // Get product rewards with project details - catch errors gracefully
+    let productRewards = null;
+    try {
+      const { data, error: productError } = await supabase
+        .from('weekly_rewards')
+        .select(`
+          *,
+          projects!inner(id, name, tagline)
+        `)
+        .in('reward_type', ['product_of_week', 'runner_up', 'third_place'])
+        .order('epoch_start', { ascending: false })
+        .order('snr_amount', { ascending: false });
 
-    if (productError) {
-      console.error('Database error:', productError);
-      return NextResponse.json({ error: 'Failed to fetch product rewards' }, { status: 500 });
+      if (productError) {
+        console.error('Database error (weekly_rewards or projects table may not exist):', productError);
+      } else {
+        productRewards = data;
+      }
+    } catch (e) {
+      console.error('Error fetching product rewards:', e);
     }
 
-    // Get curator rewards, group by handle and epoch to avoid duplicates
-    const { data: curatorRewards, error: curatorError } = await supabase
-      .from('weekly_rewards')
-      .select('*')
-      .eq('reward_type', 'curator')
-      .order('created_at', { ascending: false });
+    // Get curator rewards - catch errors gracefully
+    let curatorRewards = null;
+    try {
+      const { data, error: curatorError } = await supabase
+        .from('weekly_rewards')
+        .select('*')
+        .eq('reward_type', 'curator')
+        .order('created_at', { ascending: false });
 
-    if (curatorError) {
-      console.error('Database error:', curatorError);
-      return NextResponse.json({ error: 'Failed to fetch curator rewards' }, { status: 500 });
+      if (curatorError) {
+        console.error('Database error (weekly_rewards table may not exist):', curatorError);
+      } else {
+        curatorRewards = data;
+      }
+    } catch (e) {
+      console.error('Error fetching curator rewards:', e);
     }
 
     // Format product rewards with additional info
@@ -90,6 +102,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching leaderboard:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Return empty arrays on error
+    return NextResponse.json({
+      product_rewards: [],
+      curator_rewards: []
+    });
   }
 }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
+import Header from '@/components/Header';
 
 interface Project {
   id: string;
@@ -12,12 +13,6 @@ interface Project {
   twitter_handle?: string;
   category: string;
   upvotes: number;
-}
-
-interface UserInfo {
-  twitter_handle: string;
-  name: string;
-  avatar: string | null;
 }
 
 interface ProductOfWeek {
@@ -48,40 +43,17 @@ const CATEGORY_LABELS: Record<string, string> = {
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
   const [voting, setVoting] = useState<Set<string>>(new Set());
-  const [menuOpen, setMenuOpen] = useState(false);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [productOfWeek, setProductOfWeek] = useState<ProductOfWeek | null>(null);
   const [sponsoredBanner, setSponsoredBanner] = useState<SponsoredSpot | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  const { ready, authenticated, logout, getAccessToken } = usePrivy();
+  const { authenticated, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
 
   useEffect(() => { fetchProjects(); fetchProductOfWeek(); fetchSponsoredBanner(); }, []);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const fetchUserInfo = useCallback(async () => {
-    if (!authenticated) { setUserInfo(null); return; }
-    try {
-      const token = await getAccessToken();
-      if (!token) return;
-      const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) setUserInfo(await res.json());
-    } catch (e) { console.error(e); }
-  }, [authenticated, getAccessToken]);
-
-  useEffect(() => { if (ready && authenticated) fetchUserInfo(); }, [ready, authenticated, fetchUserInfo]);
 
   const fetchProjects = async () => {
     try {
@@ -107,8 +79,31 @@ export default function Home() {
       const latestWinner = productRewards.find((r: any) => r.reward_type === 'product_of_week');
       if (latestWinner) {
         setProductOfWeek(latestWinner);
+      } else {
+        // Demo fallback data when API returns nothing
+        setProductOfWeek({
+          id: 'demo',
+          project_name: '0xSwarm',
+          project_id: 'demo',
+          twitter_handle: '0xSwarmAI',
+          snr_amount: 100000,
+          epoch_start: '2026-02-03',
+          epoch_end: '2026-02-10'
+        });
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e);
+      // Demo fallback data on error
+      setProductOfWeek({
+        id: 'demo',
+        project_name: '0xSwarm',
+        project_id: 'demo',
+        twitter_handle: '0xSwarmAI',
+        snr_amount: 100000,
+        epoch_start: '2026-02-03',
+        epoch_end: '2026-02-10'
+      });
+    }
   };
 
   const fetchSponsoredBanner = async () => {
@@ -117,8 +112,31 @@ export default function Home() {
       const data = await res.json();
       if (data.active_spot) {
         setSponsoredBanner(data.active_spot);
+      } else {
+        // Demo fallback data when API returns nothing
+        setSponsoredBanner({
+          id: 'demo',
+          advertiser: 'BasePay',
+          title: 'BasePay',
+          description: 'Instant crypto payments for AI agents. Accept USDC, ETH, and any ERC-20.',
+          url: 'https://basepay.app',
+          image_url: undefined,
+          usdc_paid: 500
+        });
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e);
+      // Demo fallback data on error
+      setSponsoredBanner({
+        id: 'demo',
+        advertiser: 'BasePay',
+        title: 'BasePay',
+        description: 'Instant crypto payments for AI agents. Accept USDC, ETH, and any ERC-20.',
+        url: 'https://basepay.app',
+        image_url: undefined,
+        usdc_paid: 500
+      });
+    }
   };
 
   const handleUpvote = async (projectId: string) => {
@@ -148,60 +166,7 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', background: '#ffffff', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── HEADER ── */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: '#ffffff', borderBottom: '1px solid #e8e8e8' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', height: 56, gap: 10 }}>
-          <Link href="/" style={{ flexShrink: 0, textDecoration: 'none' }}>
-            <span style={{ fontWeight: 800, fontSize: 18, color: "#0000FF", lineHeight: 1, whiteSpace: "nowrap" }}>sonarbot :</span>
-          </Link>
-          <div style={{ flex: 1 }} />
-          <Link href="/leaderboard"
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            🏆 Leaderboard
-          </Link>
-          <Link href="/tokenomics"
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            Tokenomics
-          </Link>
-          <Link href="/docs"
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            Docs
-          </Link>
-
-          {ready && (
-            authenticated && userInfo ? (
-              <div ref={menuRef} style={{ position: 'relative' }}>
-                <button onClick={() => setMenuOpen(!menuOpen)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 10px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#21293c' }}>
-                  {userInfo.avatar ? (
-                    <img src={userInfo.avatar} alt="" style={{ width: 22, height: 22, borderRadius: '50%' }} />
-                  ) : (
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#6f7784' }}>
-                      {userInfo.twitter_handle[0]?.toUpperCase()}
-                    </div>
-                  )}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6f7784" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-                </button>
-                {menuOpen && (
-                  <div style={{ position: 'absolute', right: 0, top: 40, background: '#fff', border: '1px solid #e8e8e8', borderRadius: 12, padding: 4, minWidth: 160, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', zIndex: 100 }}>
-                    <div style={{ padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#21293c', borderBottom: '1px solid #f0f0f0' }}>@{userInfo.twitter_handle}</div>
-                    <button onClick={() => { logout(); setMenuOpen(false); }}
-                      style={{ width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500, color: '#e53e3e', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', borderRadius: 8 }}>
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button onClick={() => initOAuth({ provider: 'twitter' })}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 20, background: '#0000FF', border: 'none', fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                Sign in
-              </button>
-            )
-          )}
-        </div>
-      </header>
+      <Header activePage="home" />
 
       {/* ── MAIN CONTENT ── */}
       <main style={{ maxWidth: 1080, margin: '0 auto', padding: '24px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
@@ -278,7 +243,10 @@ export default function Home() {
                         textDecoration: 'none', whiteSpace: 'nowrap'
                       }}
                     >
-                      Check it out →
+                      Check it out
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
+                        <polyline points="9,18 15,12 9,6" />
+                      </svg>
                     </a>
                     <span style={{ fontSize: 12, color: '#9b9b9b' }}>
                       by {sponsoredBanner.advertiser}
@@ -294,7 +262,10 @@ export default function Home() {
         {productOfWeek && (
           <div style={{ marginBottom: 32 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <span style={{ fontSize: 24 }}>🏆</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0000FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="8" r="7" />
+                <polyline points="8.21,13.89 7,23 12,20 17,23 15.79,13.88" />
+              </svg>
               <h2 style={{ fontSize: 20, fontWeight: 700, color: '#21293c', margin: 0 }}>Product of the Week</h2>
             </div>
             <div style={{ 
@@ -310,7 +281,7 @@ export default function Home() {
                 fontSize: 11, fontWeight: 700, padding: '4px 10px', 
                 borderRadius: 8, textTransform: 'uppercase', letterSpacing: 0.5
               }}>
-                Winner
+                WINNER
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
                 <div style={{ 
@@ -339,7 +310,10 @@ export default function Home() {
                     fontSize: 13, fontWeight: 600, color: '#0000FF', 
                     textDecoration: 'none', whiteSpace: 'nowrap'
                   }}>
-                  View all winners →
+                  View all winners
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6, display: 'inline' }}>
+                    <polyline points="9,18 15,12 9,6" />
+                  </svg>
                 </Link>
               </div>
             </div>

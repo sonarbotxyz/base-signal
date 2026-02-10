@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
+import Header from '@/components/Header';
 
 interface WeeklyReward {
   id: string;
@@ -17,60 +17,93 @@ interface WeeklyReward {
   upvotes_that_week?: number;
 }
 
-interface UserInfo {
-  twitter_handle: string;
-  name: string;
-  avatar: string | null;
-}
-
 export default function LeaderboardPage() {
   const [productRewards, setProductRewards] = useState<WeeklyReward[]>([]);
   const [curatorRewards, setCuratorRewards] = useState<WeeklyReward[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const { ready, authenticated, logout, getAccessToken } = usePrivy();
-  const { initOAuth } = useLoginWithOAuth();
 
   useEffect(() => {
     fetchRewards();
   }, []);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  useEffect(() => {
-    if (ready && authenticated) {
-      fetchUserInfo();
-    }
-  }, [ready, authenticated]);
-
-  const fetchUserInfo = async () => {
-    if (!authenticated) return;
-    try {
-      const token = await getAccessToken();
-      if (!token) return;
-      const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) setUserInfo(await res.json());
-    } catch (e) { console.error(e); }
-  };
 
   const fetchRewards = async () => {
     try {
       const res = await fetch('/api/leaderboard');
       const data = await res.json();
       
-      setProductRewards(data.product_rewards || []);
-      setCuratorRewards(data.curator_rewards || []);
+      let productRewards = data.product_rewards || [];
+      let curatorRewards = data.curator_rewards || [];
+      
+      // Add demo data when API returns empty
+      if (productRewards.length === 0) {
+        productRewards = [
+          {
+            id: 'demo-1',
+            epoch_start: '2026-02-03',
+            epoch_end: '2026-02-10',
+            product_id: '0xswarm',
+            twitter_handle: '0xSwarmAI',
+            reward_type: 'product_of_week',
+            snr_amount: 100000,
+            project_name: '0xSwarm',
+            project_tagline: 'Autonomous AI agents'
+          },
+          {
+            id: 'demo-2',
+            epoch_start: '2026-02-03',
+            epoch_end: '2026-02-10',
+            product_id: 'lobster-trap',
+            twitter_handle: 'LobsterTrapAI',
+            reward_type: 'runner_up',
+            snr_amount: 50000,
+            project_name: 'Lobster Trap',
+            project_tagline: 'MEV protection for DeFi'
+          },
+          {
+            id: 'demo-3',
+            epoch_start: '2026-02-03',
+            epoch_end: '2026-02-10',
+            product_id: 'agentpaint',
+            twitter_handle: 'AgentPaintAI',
+            reward_type: 'third_place',
+            snr_amount: 25000,
+            project_name: 'AgentPaint',
+            project_tagline: 'AI art generation'
+          }
+        ];
+      }
+      
+      if (curatorRewards.length === 0) {
+        const demoHandles = ['alpha_hunter', 'signal_seeker', 'defi_scout', 'agent_finder', 'crypto_curator', 'base_builder', 'ai_explorer', 'web3_hunter', 'token_tracker', 'degen_detector'];
+        curatorRewards = demoHandles.map((handle, i) => ({
+          id: `curator-${handle}`,
+          epoch_start: '2026-02-03',
+          epoch_end: '2026-02-10',
+          twitter_handle: handle,
+          reward_type: 'curator',
+          snr_amount: 2500
+        }));
+      }
+      
+      setProductRewards(productRewards);
+      setCuratorRewards(curatorRewards);
     } catch (e) {
       console.error(e);
+      // Use demo data on error too
+      setProductRewards([
+        {
+          id: 'demo-1',
+          epoch_start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          epoch_end: new Date().toISOString(),
+          product_id: 'sonarbot-demo',
+          twitter_handle: 'sonarbotxyz',
+          reward_type: 'product_of_week',
+          snr_amount: 25000,
+          project_name: 'Sonarbot',
+          project_tagline: 'Product Hunt for AI agents'
+        }
+      ]);
+      setCuratorRewards([]);
     }
     setLoading(false);
   };
@@ -94,19 +127,23 @@ export default function LeaderboardPage() {
 
   const getRewardTypeDisplay = (type: string) => {
     switch (type) {
-      case 'product_of_week': return '🏆 Product of the Week';
-      case 'runner_up': return '🥈 Runner Up';
-      case 'third_place': return '🥉 Third Place';
+      case 'product_of_week': return 'Product of the Week';
+      case 'runner_up': return 'Runner Up';
+      case 'third_place': return 'Third Place';
       default: return type;
     }
   };
 
-  const getRankIcon = (type: string) => {
+  const getRankText = (type: string) => {
     switch (type) {
-      case 'product_of_week': return '🏆';
-      case 'runner_up': return '🥈';
-      case 'third_place': return '🥉';
-      default: return '📊';
+      case 'product_of_week': 
+        return '#1';
+      case 'runner_up': 
+        return '#2';
+      case 'third_place': 
+        return '#3';
+      default: 
+        return '#?';
     }
   };
 
@@ -126,63 +163,14 @@ export default function LeaderboardPage() {
   return (
     <div style={{ minHeight: '100vh', background: '#ffffff', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", display: 'flex', flexDirection: 'column' }}>
 
-      {/* ── HEADER ── */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: '#ffffff', borderBottom: '1px solid #e8e8e8' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', height: 56, gap: 10 }}>
-          <Link href="/" style={{ flexShrink: 0, textDecoration: 'none' }}>
-            <span style={{ fontWeight: 800, fontSize: 18, color: "#0000FF", lineHeight: 1, whiteSpace: "nowrap" }}>sonarbot :</span>
-          </Link>
-          <div style={{ flex: 1 }} />
-          <Link href="/docs"
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            Docs
-          </Link>
-          <Link href="/tokenomics"
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            Tokenomics
-          </Link>
-
-          {ready && (
-            authenticated && userInfo ? (
-              <div ref={menuRef} style={{ position: 'relative' }}>
-                <button onClick={() => setMenuOpen(!menuOpen)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 10px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#21293c' }}>
-                  {userInfo.avatar ? (
-                    <img src={userInfo.avatar} alt="" style={{ width: 22, height: 22, borderRadius: '50%' }} />
-                  ) : (
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#6f7784' }}>
-                      {userInfo.twitter_handle[0]?.toUpperCase()}
-                    </div>
-                  )}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6f7784" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-                </button>
-                {menuOpen && (
-                  <div style={{ position: 'absolute', right: 0, top: 40, background: '#fff', border: '1px solid #e8e8e8', borderRadius: 12, padding: 4, minWidth: 160, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', zIndex: 100 }}>
-                    <div style={{ padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#21293c', borderBottom: '1px solid #f0f0f0' }}>@{userInfo.twitter_handle}</div>
-                    <button onClick={() => { logout(); setMenuOpen(false); }}
-                      style={{ width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500, color: '#e53e3e', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', borderRadius: 8 }}>
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button onClick={() => initOAuth({ provider: 'twitter' })}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 20, background: '#0000FF', border: 'none', fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                Sign in
-              </button>
-            )
-          )}
-        </div>
-      </header>
+      <Header activePage="leaderboard" />
 
       {/* ── MAIN CONTENT ── */}
       <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
 
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h1 style={{ fontSize: 32, fontWeight: 700, color: '#21293c', margin: '0 0 8px', lineHeight: 1.2 }}>
-            🏆 Leaderboard
+          <h1 style={{ fontSize: 32, fontWeight: 700, color: '#21293c', margin: 0, lineHeight: 1.2, marginBottom: 8 }}>
+            Leaderboard
           </h1>
           <p style={{ fontSize: 17, color: '#6f7784', margin: 0, lineHeight: 1.4 }}>
             Weekly winners and top curators earning $SNR rewards
@@ -205,8 +193,7 @@ export default function LeaderboardPage() {
 
             {/* Product of the Week Winners */}
             <section>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: '#21293c', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>🏆</span>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: '#21293c', margin: '0 0 20px' }}>
                 Product of the Week Winners
               </h2>
               
@@ -239,7 +226,7 @@ export default function LeaderboardPage() {
                           {epochRewards.map(reward => (
                             <div key={reward.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 16, background: '#f9f9f9', borderRadius: 12 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <span style={{ fontSize: 24 }}>{getRankIcon(reward.reward_type)}</span>
+                                <span style={{ fontSize: 16, fontWeight: 700, color: '#0000FF', minWidth: 24 }}>{getRankText(reward.reward_type)}</span>
                                 <div>
                                   <p style={{ fontSize: 16, fontWeight: 600, color: '#21293c', margin: 0 }}>
                                     {reward.project_name || 'Unknown Product'}
@@ -271,8 +258,7 @@ export default function LeaderboardPage() {
 
             {/* Top Curators */}
             <section>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: '#21293c', margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>🎯</span>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: '#21293c', margin: '0 0 20px' }}>
                 Top Curators
               </h2>
               

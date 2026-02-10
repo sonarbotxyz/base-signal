@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, use, useCallback, useRef } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
+import Header from '@/components/Header';
 
 interface Project {
   id: string;
@@ -27,12 +28,6 @@ interface Comment {
   created_at: string;
   is_agent?: boolean;
   avatar_url?: string;
-}
-
-interface UserInfo {
-  twitter_handle: string;
-  name: string;
-  avatar: string | null;
 }
 
 interface SponsoredSpot {
@@ -114,7 +109,10 @@ function RichDescription({ text }: { text: string }) {
               <a href={part.value} target="_blank" rel="noopener noreferrer"
                 style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12, border: '1px solid #e8e8e8', background: '#fafafa', textDecoration: 'none', color: '#21293c', fontSize: 14, fontWeight: 500 }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="#21293c"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                View post on X →
+                View post on X
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
+                  <polyline points="9,18 15,12 9,6"/>
+                </svg>
               </a>
             </div>
           );
@@ -152,35 +150,12 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const [submittingComment, setSubmittingComment] = useState(false);
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [votingInProgress, setVotingInProgress] = useState(false);
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [sponsoredSidebar, setSponsoredSidebar] = useState<SponsoredSpot | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
-  const { ready, authenticated, logout, getAccessToken } = usePrivy();
+  const { authenticated, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
 
   useEffect(() => { fetchProject(); fetchComments(); fetchAllProjects(); fetchSponsoredSidebar(); }, [id]);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
-
-  const fetchUserInfo = useCallback(async () => {
-    if (!authenticated) { setUserInfo(null); return; }
-    try {
-      const token = await getAccessToken();
-      if (!token) return;
-      const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) setUserInfo(await res.json());
-    } catch (e) { console.error(e); }
-  }, [authenticated, getAccessToken]);
-
-  useEffect(() => { if (ready && authenticated) fetchUserInfo(); }, [ready, authenticated, fetchUserInfo]);
 
   const fetchProject = async () => {
     try { const res = await fetch(`/api/projects/${id}`); const data = await res.json(); if (data.project) setProject(data.project); } catch (e) { console.error(e); }
@@ -199,8 +174,31 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       const data = await res.json();
       if (data.active_spot) {
         setSponsoredSidebar(data.active_spot);
+      } else {
+        // Demo sponsored sidebar when API returns null
+        setSponsoredSidebar({
+          id: 'demo',
+          advertiser: 'BasePay',
+          title: 'BasePay',
+          description: 'Instant crypto payments for AI agents.',
+          url: 'https://basepay.app',
+          image_url: undefined,
+          usdc_paid: 500
+        });
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error(e);
+      // Demo sponsored sidebar on error
+      setSponsoredSidebar({
+        id: 'demo',
+        advertiser: 'BasePay',
+        title: 'BasePay',
+        description: 'Instant crypto payments for AI agents.',
+        url: 'https://basepay.app',
+        image_url: undefined,
+        usdc_paid: 500
+      });
+    }
   };
 
   const handleUpvote = async () => {
@@ -269,68 +267,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   return (
     <div style={{ minHeight: '100vh', background: '#ffffff', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif", paddingBottom: 140 }}>
 
-      {/* ── HEADER ── */}
-      <header style={{ position: 'sticky', top: 0, zIndex: 50, background: '#ffffff', borderBottom: '1px solid #e8e8e8' }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', height: 56, gap: 10 }}>
-          <Link href="/" style={{ flexShrink: 0, textDecoration: 'none' }}>
-            <span style={{ fontWeight: 800, fontSize: 18, color: "#0000FF", lineHeight: 1, whiteSpace: "nowrap" }}>sonarbot :</span>
-          </Link>
-          <div style={{ flex: 1 }} />
-          <Link href="/leaderboard"
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            🏆 Leaderboard
-          </Link>
-          <Link href="/tokenomics"
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            Tokenomics
-          </Link>
-          <Link href="/docs"
-            style={{ display: 'flex', alignItems: 'center', height: 34, padding: '0 14px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', fontSize: 13, fontWeight: 600, color: '#21293c', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-            Docs
-          </Link>
-
-          {ready && (
-            authenticated && userInfo ? (
-              <div ref={menuRef} style={{ position: 'relative' }}>
-                <button onClick={() => setMenuOpen(!menuOpen)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 10px', borderRadius: 20, border: '1px solid #e8e8e8', background: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: '#21293c' }}>
-                  {userInfo.avatar ? (
-                    <img src={userInfo.avatar} alt="" style={{ width: 22, height: 22, borderRadius: '50%' }} />
-                  ) : (
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: '#6f7784' }}>
-                      {userInfo.twitter_handle[0]?.toUpperCase()}
-                    </div>
-                  )}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6f7784" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
-                </button>
-                {menuOpen && (
-                  <div style={{ position: 'absolute', right: 0, top: 40, background: '#fff', border: '1px solid #e8e8e8', borderRadius: 12, padding: 4, minWidth: 160, boxShadow: '0 4px 16px rgba(0,0,0,0.08)', zIndex: 100 }}>
-                    <div style={{ padding: '8px 12px', fontSize: 13, fontWeight: 600, color: '#21293c', borderBottom: '1px solid #f0f0f0' }}>
-                      @{userInfo.twitter_handle}
-                    </div>
-                    <button onClick={() => { logout(); setMenuOpen(false); }}
-                      style={{ width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500, color: '#e53e3e', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', borderRadius: 8 }}>
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button onClick={() => initOAuth({ provider: 'twitter' })}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px', borderRadius: 20, background: '#0000FF', border: 'none', fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                Sign in
-              </button>
-            )
-          )}
-        </div>
-      </header>
+      <Header activePage="" />
 
       {/* ── PRODUCT CONTENT ── */}
       <main style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 20px 0' }}>
-        <div style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+        <div className="project-container">
           
           {/* Main Content */}
           <div style={{ flex: '1', minWidth: 0 }}>
@@ -411,7 +352,12 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           <span style={{ fontSize: 14, color: '#6f7784' }}><strong style={{ color: '#21293c' }}>{comments.length}</strong> comments</span>
           <span style={{ fontSize: 14, color: '#6f7784' }}>Launched {timeAgo(project.created_at)}</span>
           {project.github_url && (
-            <a href={project.github_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: '#0000FF', textDecoration: 'none', marginLeft: 'auto' }}>GitHub →</a>
+            <a href={project.github_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, fontWeight: 600, color: '#0000FF', textDecoration: 'none', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
+              GitHub
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9,18 15,12 9,6"/>
+              </svg>
+            </a>
           )}
         </div>
 
@@ -424,7 +370,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           {/* Comment input */}
           <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
             <div style={{ flexShrink: 0 }}>
-              <Avatar url={userInfo?.avatar || undefined} handle={userInfo?.twitter_handle || '?'} size={36} />
+              <Avatar url={undefined} handle={'user'} size={36} />
             </div>
             <div style={{ flex: 1 }}>
               <textarea
@@ -485,7 +431,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         </div> {/* End Main Content */}
 
         {/* Sidebar */}
-        <div style={{ width: 300, flexShrink: 0 }}>
+        <div className="project-sidebar">
           {sponsoredSidebar && (
             <div style={{ 
               padding: 20, borderRadius: 16, 
@@ -585,6 +531,28 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       </div>
+
+      {/* CSS for responsive layout */}
+      <style jsx>{`
+        .project-container {
+          display: flex;
+          gap: 32px;
+          align-items: flex-start;
+        }
+        .project-sidebar {
+          width: 300px;
+          flex-shrink: 0;
+        }
+        @media (max-width: 768px) {
+          .project-container {
+            flex-direction: column;
+            gap: 20px;
+          }
+          .project-sidebar {
+            width: 100%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

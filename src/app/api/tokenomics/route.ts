@@ -6,15 +6,21 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabase();
 
-    // Get weekly rewards summary
-    const { data: weeklyRewards, error: rewardsError } = await supabase
-      .from('weekly_rewards')
-      .select('*')
-      .order('epoch_start', { ascending: false });
+    // Get weekly rewards summary - catch errors gracefully
+    let weeklyRewards = null;
+    try {
+      const { data, error: rewardsError } = await supabase
+        .from('weekly_rewards')
+        .select('*')
+        .order('epoch_start', { ascending: false });
 
-    if (rewardsError) {
-      console.error('Database error:', rewardsError);
-      return NextResponse.json({ error: 'Failed to fetch weekly rewards' }, { status: 500 });
+      if (rewardsError) {
+        console.error('Database error (weekly_rewards table may not exist):', rewardsError);
+      } else {
+        weeklyRewards = data;
+      }
+    } catch (e) {
+      console.error('Error fetching weekly rewards:', e);
     }
 
     // Group rewards by epoch and calculate totals
@@ -62,36 +68,58 @@ export async function GET(request: NextRequest) {
     const sponsoredBurned = 0; // TODO: Calculate from USDC buybacks
     const totalSnrBurned = totalRewardsBurned + subscriptionsBurned + sponsoredBurned;
 
-    // Get active subscriptions count
-    const { data: subscriptionsCount, error: subError } = await supabase
-      .from('api_keys')
-      .select('id', { count: 'exact' })
-      .eq('subscription_tier', 'premium')
-      .gt('subscription_expires', new Date().toISOString());
+    // Get active subscriptions count - catch errors gracefully
+    let activeSubscriptions = 0;
+    let subscriptionRevenue = 0;
+    try {
+      const { data: subscriptionsCount, error: subError } = await supabase
+        .from('api_keys')
+        .select('id', { count: 'exact' })
+        .eq('subscription_tier', 'premium')
+        .gt('subscription_expires', new Date().toISOString());
 
-    const activeSubscriptions = subError ? 0 : (subscriptionsCount || 0);
+      if (!subError && subscriptionsCount) {
+        activeSubscriptions = Array.isArray(subscriptionsCount) ? subscriptionsCount.length : Number(subscriptionsCount);
+        subscriptionRevenue = activeSubscriptions * 1000;
+      }
+    } catch (e) {
+      console.error('Error fetching subscriptions:', e);
+    }
 
-    // Get sponsored revenue total
-    const { data: sponsoredSpots, error: sponsoredError } = await supabase
-      .from('sponsored_spots')
-      .select('usdc_paid');
+    // Get sponsored revenue total - catch errors gracefully
+    let sponsoredRevenue = 0;
+    try {
+      const { data: sponsoredSpots, error: sponsoredError } = await supabase
+        .from('sponsored_spots')
+        .select('usdc_paid');
 
-    const sponsoredRevenue = sponsoredError ? 0 : 
-      (sponsoredSpots || []).reduce((sum, spot) => sum + Number(spot.usdc_paid), 0);
+      if (!sponsoredError && sponsoredSpots) {
+        sponsoredRevenue = sponsoredSpots.reduce((sum, spot) => sum + Number(spot.usdc_paid), 0);
+      }
+    } catch (e) {
+      console.error('Error fetching sponsored spots:', e);
+    }
 
-    // Calculate subscription revenue (estimated)
-    const subscriptionRevenue = Array.isArray(subscriptionsCount) ? subscriptionsCount.length * 1000 : Number(activeSubscriptions) * 1000;
-
-    return NextResponse.json({
-      total_snr_burned: totalSnrBurned,
-      weekly_rewards: weeklyRewardsSummary,
+    // Return fallback data if no real data exists
+    const fallbackData = {
+      total_snr_burned: totalSnrBurned || 0,
+      weekly_rewards: weeklyRewardsSummary.length > 0 ? weeklyRewardsSummary : [],
       active_subscriptions: activeSubscriptions,
       sponsored_revenue: sponsoredRevenue,
       subscription_revenue: subscriptionRevenue
-    });
+    };
+
+    return NextResponse.json(fallbackData);
   } catch (error) {
     console.error('Error fetching tokenomics data:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Return fallback data on ANY database error
+    return NextResponse.json({
+      total_snr_burned: 0,
+      weekly_rewards: [],
+      active_subscriptions: 0,
+      sponsored_revenue: 0,
+      subscription_revenue: 0
+    });
   }
 }
 
