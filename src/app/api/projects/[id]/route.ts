@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/db';
+import { isValidUUID } from '@/lib/validate';
 
 export async function GET(
   request: NextRequest,
@@ -7,6 +8,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    if (!isValidUUID(id)) {
+      return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+    }
     const supabase = getSupabase();
     
     const { data, error } = await supabase

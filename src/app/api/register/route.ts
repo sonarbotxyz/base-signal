@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/db';
 import { generateApiKey } from '@/lib/auth';
+import { isValidHandle } from '@/lib/validate';
 
 export async function POST(request: Request) {
   try {
@@ -14,28 +15,27 @@ export async function POST(request: Request) {
       );
     }
 
-    const handle = twitter_handle.replace('@', '').trim().toLowerCase();
-    if (!handle) {
+    const handle = twitter_handle.replace(/^@/, '').trim().toLowerCase();
+    if (!handle || !isValidHandle(handle)) {
       return NextResponse.json(
-        { error: 'Invalid twitter_handle' },
+        { error: 'Invalid twitter_handle. Only letters, numbers, and underscores (max 30 chars).' },
         { status: 400 }
       );
     }
 
     const supabase = getSupabase();
 
-    // Check if already registered
+    // Check if already registered — NEVER return the existing key
     const { data: existing } = await supabase
       .from('api_keys')
-      .select('api_key, revoked')
+      .select('twitter_handle, revoked')
       .eq('twitter_handle', handle)
       .single();
 
     if (existing && !existing.revoked) {
       return NextResponse.json({
         twitter_handle: handle,
-        api_key: existing.api_key,
-        message: 'Already registered. Here is your existing API key.'
+        message: 'Already registered. If you lost your API key, contact @sonarbotxyz on X to request a reset.'
       });
     }
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       twitter_handle: handle,
       api_key,
-      message: 'Registered! Use this key in Authorization: Bearer <key> header for all write operations.'
+      message: 'Registered! Save this key — it will NOT be shown again. Use it in Authorization: Bearer <key> header for all write operations.'
     });
   } catch {
     return NextResponse.json(

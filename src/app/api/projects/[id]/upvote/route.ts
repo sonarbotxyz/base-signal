@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/db';
 import { authenticateRequest } from '@/lib/auth';
 import { checkUpvoteLimit } from '@/lib/rateLimit';
+import { isValidUUID } from '@/lib/validate';
 
 export async function POST(
   request: NextRequest,
@@ -18,6 +19,9 @@ export async function POST(
 
     const supabase = getSupabase();
     const { id: projectId } = await params;
+    if (!isValidUUID(projectId)) {
+      return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+    }
     const { handle, isAgent } = auth;
 
     // Check if project exists

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabase } from '@/lib/db';
 import { authenticateRequest } from '@/lib/auth';
 import { checkCommentLimit } from '@/lib/rateLimit';
+import { isValidUUID, sanitizeText } from '@/lib/validate';
 
 export async function GET(
   request: NextRequest,
@@ -9,6 +10,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    if (!isValidUUID(id)) {
+      return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+    }
     const supabase = getSupabase();
     
     const { data, error } = await supabase
@@ -40,16 +44,24 @@ export async function POST(
     }
 
     const { id } = await params;
+    if (!isValidUUID(id)) {
+      return NextResponse.json({ error: 'Invalid project ID' }, { status: 400 });
+    }
     const body = await request.json();
     const { content } = body;
     const { handle, isAgent, avatar } = auth;
     const supabase = getSupabase();
     
-    if (!content) {
+    if (!content || typeof content !== 'string') {
       return NextResponse.json({ error: 'content is required' }, { status: 400 });
     }
+
+    const sanitized = sanitizeText(content);
+    if (!sanitized || sanitized.length === 0) {
+      return NextResponse.json({ error: 'content cannot be empty' }, { status: 400 });
+    }
     
-    if (content.length > 2000) {
+    if (sanitized.length > 2000) {
       return NextResponse.json({ error: 'Comment too long (max 2000 characters)' }, { status: 400 });
     }
 
@@ -83,7 +95,7 @@ export async function POST(
       .insert({
         project_id: id,
         twitter_handle: handle.replace('@', ''),
-        content: content.trim(),
+        content: sanitized,
         is_agent: isAgent,
         avatar_url: avatar || null,
       })
