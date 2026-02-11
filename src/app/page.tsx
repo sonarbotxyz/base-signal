@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
 import Header from '@/components/Header';
+import SubscriptionModal from '@/components/SubscriptionModal';
 import { useTheme } from '@/components/ThemeProvider';
 
 interface Project {
@@ -39,6 +40,8 @@ export default function Home() {
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [sponsoredBanner, setSponsoredBanner] = useState<SponsoredSpot | null>(null);
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [rateLimitMsg, setRateLimitMsg] = useState('');
 
   const { authenticated, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
@@ -90,6 +93,12 @@ export default function Home() {
           if (data.action === 'added') next.add(projectId); else next.delete(projectId);
           return next;
         });
+      } else if (res.status === 429) {
+        try {
+          const data = await res.json();
+          setRateLimitMsg(data.limit || 'Rate limit exceeded');
+          setShowSubModal(true);
+        } catch { setRateLimitMsg('Rate limit exceeded'); setShowSubModal(true); }
       }
     } catch (e) { console.error(e); }
     setVoting(prev => { const n = new Set(prev); n.delete(projectId); return n; });
@@ -401,6 +410,11 @@ export default function Home() {
         </div>
       </footer>
 
+      <SubscriptionModal
+        isOpen={showSubModal}
+        onClose={() => setShowSubModal(false)}
+        limitMessage={rateLimitMsg}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
 import Header from '@/components/Header';
+import SubscriptionModal from '@/components/SubscriptionModal';
 import { useTheme } from '@/components/ThemeProvider';
 
 interface Project {
@@ -164,6 +165,8 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [votingInProgress, setVotingInProgress] = useState(false);
   const [sponsoredSidebar, setSponsoredSidebar] = useState<SponsoredSpot | null>(null);
+  const [showSubModal, setShowSubModal] = useState(false);
+  const [rateLimitMsg, setRateLimitMsg] = useState('');
 
   const { authenticated, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
@@ -202,6 +205,10 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       const token = await getAccessToken();
       const res = await fetch(`/api/projects/${id}/upvote`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) { const data = await res.json(); setProject(prev => prev ? { ...prev, upvotes: data.upvotes } : prev); setHasUpvoted(data.action === 'added'); }
+      else if (res.status === 429) {
+        try { const data = await res.json(); setRateLimitMsg(data.limit || 'Rate limit exceeded'); setShowSubModal(true); }
+        catch { setRateLimitMsg('Rate limit exceeded'); setShowSubModal(true); }
+      }
     } catch (e) { console.error(e); }
     setVotingInProgress(false);
   };
@@ -218,6 +225,10 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         body: JSON.stringify({ content: commentText.trim() }),
       });
       if (res.ok) { const data = await res.json(); setComments(prev => [...prev, data.comment]); setCommentText(''); }
+      else if (res.status === 429) {
+        try { const data = await res.json(); setRateLimitMsg(data.limit || 'Rate limit exceeded'); setShowSubModal(true); }
+        catch { setRateLimitMsg('Rate limit exceeded'); setShowSubModal(true); }
+      }
     } catch (e) { console.error(e); }
     setSubmittingComment(false);
   };
@@ -605,6 +616,12 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       </div>
+
+      <SubscriptionModal
+        isOpen={showSubModal}
+        onClose={() => setShowSubModal(false)}
+        limitMessage={rateLimitMsg}
+      />
 
       {/* CSS for responsive layout */}
       <style jsx>{`
