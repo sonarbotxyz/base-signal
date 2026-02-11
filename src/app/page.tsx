@@ -13,6 +13,8 @@ interface Project {
   tagline: string;
   logo_url?: string;
   twitter_handle?: string;
+  github_url?: string;
+  website_url?: string;
   category: string;
   upvotes: number;
 }
@@ -356,6 +358,19 @@ export default function Home() {
                         }}>
                           {CATEGORY_LABELS[p.category] || p.category}
                         </span>
+                        {(p.website_url || p.twitter_handle || p.github_url) && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
+                            {p.website_url && (
+                              <a href={p.website_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: colors.textDim, textDecoration: 'none', lineHeight: 1 }} title="Website">🌐</a>
+                            )}
+                            {p.twitter_handle && (
+                              <a href={`https://x.com/${p.twitter_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: colors.textDim, textDecoration: 'none', lineHeight: 1 }} title="Twitter">𝕏</a>
+                            )}
+                            {p.github_url && (
+                              <a href={p.github_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: colors.textDim, textDecoration: 'none', lineHeight: 1 }} title="GitHub">⌂</a>
+                            )}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div style={{ flexShrink: 0, display: 'flex', alignItems: 'stretch', gap: 0, marginTop: 6 }}>

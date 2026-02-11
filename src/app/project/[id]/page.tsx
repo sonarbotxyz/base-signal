@@ -324,6 +324,18 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               Visit website
             </a>
           )}
+          {project.demo_url && (
+            <a href={project.demo_url} target="_blank" rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1,
+                height: 48, borderRadius: 10, border: `1px solid ${colors.border}`, background: colors.bgCard,
+                fontSize: 15, fontWeight: 600, color: colors.text, textDecoration: 'none',
+                transition: 'all 0.2s ease',
+                boxShadow: colors.cardShadow,
+              }}>
+              Try demo
+            </a>
+          )}
           <button onClick={handleUpvote}
             className={`upvote-btn ${hasUpvoted ? 'active' : ''}`}
             style={{
