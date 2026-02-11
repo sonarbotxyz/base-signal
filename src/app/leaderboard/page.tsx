@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface Project {
   id: string;
@@ -47,6 +48,7 @@ export default function LeaderboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const { theme, colors } = useTheme();
 
   // Current week
   const now = new Date();
@@ -117,7 +119,7 @@ export default function LeaderboardPage() {
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0a0f', fontFamily: "var(--font-outfit, 'Outfit', -apple-system, sans-serif)", display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', background: colors.bg, fontFamily: "var(--font-outfit, 'Outfit', -apple-system, sans-serif)", display: 'flex', flexDirection: 'column', position: 'relative' }}>
 
       <div className="sonar-grid" />
 
@@ -128,38 +130,38 @@ export default function LeaderboardPage() {
         {/* Title + week nav */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700, color: '#e2e8f0', margin: 0 }}>
+            <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>
               Weekly Rankings
             </h1>
             <div style={{
               width: 10, height: 10, borderRadius: '50%',
-              background: isCurrentWeek ? '#22c55e' : '#0044ff',
-              boxShadow: isCurrentWeek ? '0 0 8px rgba(34, 197, 94, 0.5)' : '0 0 8px rgba(0, 68, 255, 0.5)',
+              background: isCurrentWeek ? '#22c55e' : colors.accent,
+              boxShadow: isCurrentWeek ? '0 0 8px rgba(34, 197, 94, 0.5)' : `0 0 8px ${colors.accent}80`,
               animation: isCurrentWeek ? 'sonarPulse 2s ease-out infinite' : 'none',
             }} />
           </div>
-          <p style={{ fontSize: 15, color: '#8892a4', margin: '0 0 24px' }}>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: '0 0 24px' }}>
             Top signals by upvotes, ranked weekly
           </p>
 
           {/* Week selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <button onClick={goToPrevWeek} style={{
-              width: 36, height: 36, borderRadius: 8, border: '1px solid #1e293b', background: '#111827',
+              width: 36, height: 36, borderRadius: 8, border: `1px solid ${colors.border}`, background: colors.bgCard,
               display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
               transition: 'all 0.2s ease',
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8892a4" strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
             </button>
 
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
               <span style={{
-                fontSize: 18, fontWeight: 700, color: '#e2e8f0',
+                fontSize: 18, fontWeight: 700, color: colors.text,
                 fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
               }}>
                 Week {selectedWeek}
               </span>
-              <span style={{ fontSize: 14, color: '#4a5568', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>
+              <span style={{ fontSize: 14, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>
                 {formatDateShort(weekStart)} – {formatDateShort(weekEnd)}, {selectedYear}
               </span>
               {isCurrentWeek && (
@@ -176,12 +178,12 @@ export default function LeaderboardPage() {
             </div>
 
             <button onClick={goToNextWeek} disabled={!canGoNext} style={{
-              width: 36, height: 36, borderRadius: 8, border: '1px solid #1e293b',
-              background: canGoNext ? '#111827' : '#0d1117',
+              width: 36, height: 36, borderRadius: 8, border: `1px solid ${colors.border}`,
+              background: canGoNext ? colors.bgCard : colors.borderLight,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: canGoNext ? 'pointer' : 'default', opacity: canGoNext ? 1 : 0.4,
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8892a4" strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
           </div>
         </div>
@@ -190,21 +192,21 @@ export default function LeaderboardPage() {
         {loading ? (
           <div>
             {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0', borderBottom: '1px solid #1e293b' }}>
-                <div style={{ width: 32, height: 20, borderRadius: 4, background: '#111827' }} />
-                <div style={{ width: 48, height: 48, borderRadius: 10, background: '#111827' }} />
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0', borderBottom: `1px solid ${colors.border}` }}>
+                <div style={{ width: 32, height: 20, borderRadius: 4, background: colors.bgCard }} />
+                <div style={{ width: 48, height: 48, borderRadius: 10, background: colors.bgCard }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ width: 180, height: 16, borderRadius: 4, background: '#111827', marginBottom: 6 }} />
-                  <div style={{ width: 260, height: 14, borderRadius: 4, background: '#111827' }} />
+                  <div style={{ width: 180, height: 16, borderRadius: 4, background: colors.bgCard, marginBottom: 6 }} />
+                  <div style={{ width: 260, height: 14, borderRadius: 4, background: colors.bgCard }} />
                 </div>
-                <div style={{ width: 52, height: 52, borderRadius: 10, background: '#111827' }} />
+                <div style={{ width: 52, height: 52, borderRadius: 10, background: colors.bgCard }} />
               </div>
             ))}
           </div>
         ) : weekProjects.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ fontSize: 17, fontWeight: 600, color: '#e2e8f0', marginBottom: 4 }}>No signals this week</p>
-            <p style={{ fontSize: 14, color: '#8892a4' }}>
+            <p style={{ fontSize: 17, fontWeight: 600, color: colors.text, marginBottom: 4 }}>No signals this week</p>
+            <p style={{ fontSize: 14, color: colors.textMuted }}>
               {isCurrentWeek ? 'Products launched this week will appear here.' : 'Try scanning a different week.'}
             </p>
           </div>
@@ -216,16 +218,16 @@ export default function LeaderboardPage() {
               return (
                 <div key={p.id} className="sonar-card" style={{
                   display: 'flex', alignItems: 'center', gap: 14, padding: '16px 12px',
-                  borderBottom: '1px solid #1e293b', borderRadius: 8,
+                  borderBottom: `1px solid ${colors.border}`, borderRadius: 8,
                   animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both`,
                 }}>
                   {/* Rank */}
                   <span style={{
                     fontSize: rank <= 3 ? 18 : 14, fontWeight: 700,
-                    color: rank === 1 ? '#0044ff' : rank <= 3 ? '#e2e8f0' : '#4a5568',
+                    color: rank === 1 ? colors.accent : rank <= 3 ? colors.text : colors.textDim,
                     minWidth: 28, textAlign: 'center', flexShrink: 0,
                     fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                    textShadow: rank === 1 ? '0 0 12px rgba(0, 68, 255, 0.5)' : 'none',
+                    textShadow: rank === 1 ? `0 0 12px ${colors.accent}80` : 'none',
                   }}>
                     {String(rank).padStart(2, '0')}
                   </span>
@@ -233,10 +235,10 @@ export default function LeaderboardPage() {
                   {/* Logo */}
                   <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
                     {p.logo_url ? (
-                      <img src={p.logo_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', border: '1px solid #1e293b' }} />
+                      <img src={p.logo_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
                     ) : (
-                      <div style={{ width: 48, height: 48, borderRadius: 10, background: `linear-gradient(135deg, hsl(${hue}, 50%, 12%), hsl(${hue}, 40%, 18%))`, border: '1px solid #1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: `hsl(${hue}, 60%, 55%)` }}>{p.name[0]}</span>
+                      <div style={{ width: 48, height: 48, borderRadius: 10, background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 50%, 12%), hsl(${hue}, 40%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`, border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 60%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
                       </div>
                     )}
                   </Link>
@@ -244,20 +246,20 @@ export default function LeaderboardPage() {
                   {/* Name + tagline */}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                      <h3 style={{ fontSize: 15, fontWeight: 600, color: '#e2e8f0', margin: 0, lineHeight: 1.3 }}>{p.name}</h3>
+                      <h3 style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, lineHeight: 1.3 }}>{p.name}</h3>
                     </Link>
-                    <p style={{ fontSize: 13, color: '#8892a4', margin: '2px 0 0', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                    <p style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
                       <span style={{
-                        fontSize: 10, color: '#8892a4', padding: '1px 6px', borderRadius: 3,
-                        background: 'rgba(30, 41, 59, 0.5)', border: '1px solid #1e293b',
+                        fontSize: 10, color: colors.textMuted, padding: '1px 6px', borderRadius: 3,
+                        background: theme === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.8)', border: `1px solid ${colors.border}`,
                         fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
                         letterSpacing: '0.3px',
                       }}>
                         {CATEGORY_LABELS[p.category] || p.category}
                       </span>
                       {p.twitter_handle && (
-                        <span style={{ fontSize: 11, color: '#4a5568', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{p.twitter_handle}</span>
+                        <span style={{ fontSize: 11, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{p.twitter_handle}</span>
                       )}
                     </div>
                   </div>
@@ -265,7 +267,7 @@ export default function LeaderboardPage() {
                   {/* Comments */}
                   <Link href={`/project/${p.id}`} style={{
                     flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    width: 48, height: 52, color: '#4a5568', textDecoration: 'none', gap: 4,
+                    width: 48, height: 52, color: colors.textDim, textDecoration: 'none', gap: 4,
                   }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -277,16 +279,16 @@ export default function LeaderboardPage() {
                   <div style={{
                     flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     width: 52, height: 52, borderRadius: 10,
-                    border: rank === 1 ? '1px solid #0044ff' : '1px solid #1e293b',
-                    background: rank === 1 ? 'rgba(0, 68, 255, 0.12)' : 'rgba(17, 24, 39, 0.5)',
-                    boxShadow: rank === 1 ? '0 0 12px rgba(0, 68, 255, 0.2)' : 'none',
+                    border: rank === 1 ? `1px solid ${colors.accent}` : `1px solid ${colors.border}`,
+                    background: rank === 1 ? colors.upvoteActiveBg : colors.upvoteBg,
+                    boxShadow: rank === 1 ? `0 0 12px ${colors.accent}33` : 'none',
                   }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={rank === 1 ? '#0044ff' : '#8892a4'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={rank === 1 ? colors.accent : colors.textMuted} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="18 15 12 9 6 15" />
                     </svg>
                     <span style={{
                       fontSize: 14, fontWeight: 700,
-                      color: rank === 1 ? '#0044ff' : '#e2e8f0', lineHeight: 1,
+                      color: rank === 1 ? colors.accent : colors.text, lineHeight: 1,
                       fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
                     }}>{p.upvotes}</span>
                   </div>
@@ -299,19 +301,19 @@ export default function LeaderboardPage() {
       </main>
 
       {/* Footer */}
-      <footer style={{ borderTop: '1px solid #1e293b', background: '#0a0a0f', padding: '20px 20px', position: 'relative', zIndex: 1 }}>
+      <footer style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: '20px 20px', position: 'relative', zIndex: 1 }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#4a5568' }}>
-            <span style={{ fontWeight: 700, color: '#0044ff', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)", fontSize: 12 }}>sonarbot</span>
-            <span style={{ color: '#1e293b' }}>·</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.textDim }}>
+            <span style={{ fontWeight: 700, color: colors.accent, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)", fontSize: 12 }}>sonarbot</span>
+            <span style={{ color: colors.border }}>·</span>
             <span>© {new Date().getFullYear()}</span>
-            <span style={{ color: '#1e293b' }}>·</span>
+            <span style={{ color: colors.border }}>·</span>
             <span>Product Hunt for AI agents</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: '#4a5568' }}>
-            <Link href="/docs" style={{ color: '#4a5568', textDecoration: 'none' }}>Docs</Link>
-            <Link href="/curation" style={{ color: '#4a5568', textDecoration: 'none' }}>Curation</Link>
-            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: '#4a5568', textDecoration: 'none' }}>@sonarbotxyz</a>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: colors.textDim }}>
+            <Link href="/docs" style={{ color: colors.textDim, textDecoration: 'none' }}>Docs</Link>
+            <Link href="/curation" style={{ color: colors.textDim, textDecoration: 'none' }}>Curation</Link>
+            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: colors.textDim, textDecoration: 'none' }}>@sonarbotxyz</a>
           </div>
         </div>
       </footer>

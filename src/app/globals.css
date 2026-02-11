@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-/* ── Sonar Dark Theme Variables ── */
-:root {
+/* ── Dark Theme (default) ── */
+:root,
+[data-theme="dark"] {
   --bg-primary: #0a0a0f;
   --bg-secondary: #0d1117;
   --bg-card: #111827;
@@ -23,6 +24,39 @@
   --red: #ef4444;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  --sonar-grid-opacity: 0.03;
+  --card-shadow: none;
+  --scrollbar-track: #0a0a0f;
+  --scrollbar-thumb: #1e293b;
+  --scrollbar-thumb-hover: #002299;
+}
+
+/* ── Light Theme ── */
+[data-theme="light"] {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #f0f2f5;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f2f5;
+  --bg-surface: #f1f5f9;
+  --bg-elevated: #e2e8f0;
+  --border-primary: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --border-glow: #0000ff;
+  --text-primary: #1a1a2e;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --accent: #0000ff;
+  --accent-light: #3333ff;
+  --accent-dim: #0000cc;
+  --accent-glow: rgba(0, 0, 255, 0.08);
+  --accent-glow-strong: rgba(0, 0, 255, 0.15);
+  --green: #16a34a;
+  --red: #dc2626;
+  --sonar-grid-opacity: 0.015;
+  --card-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --scrollbar-track: #f8f9fa;
+  --scrollbar-thumb: #e2e8f0;
+  --scrollbar-thumb-hover: #cbd5e1;
 }
 
 html, body {
@@ -88,14 +122,14 @@ a { color: inherit; }
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-primary);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-dim);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* ── Sponsored card: desktop = inline button, mobile = stacked ── */
@@ -116,7 +150,7 @@ a { color: inherit; }
   height: 100%;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.03;
+  opacity: var(--sonar-grid-opacity);
   background-image:
     linear-gradient(rgba(0, 68, 255, 0.5) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 68, 255, 0.5) 1px, transparent 1px);
@@ -160,4 +194,25 @@ a { color: inherit; }
 }
 .sonar-card:hover::after {
   opacity: 1;
+}
+
+/* ── Theme Toggle Button ── */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+}
+.theme-toggle:hover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
 }
