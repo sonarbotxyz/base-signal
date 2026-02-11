@@ -353,7 +353,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           <span style={{
             fontSize: 12, color: colors.textMuted, fontWeight: 600,
             padding: '2px 8px', borderRadius: 4,
@@ -367,6 +367,92 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             </>
           )}
         </div>
+
+        {/* Links section — Product Hunt style */}
+        {(project.website_url || project.github_url || project.demo_url || project.twitter_handle) && (
+          <div style={{
+            display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 20,
+            borderRadius: 12, border: `1px solid ${colors.border}`, overflow: 'hidden',
+            background: colors.bgCard,
+          }}>
+            {project.website_url && (
+              <a href={project.website_url} target="_blank" rel="noopener noreferrer" style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                textDecoration: 'none', borderBottom: `1px solid ${colors.border}`,
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span style={{ fontSize: 16, width: 20, textAlign: 'center' }}>🌐</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>Website</div>
+                  <div style={{ fontSize: 12, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{project.website_url.replace(/^https?:\/\//, '')}</div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
+            )}
+            {project.twitter_handle && (
+              <a href={`https://x.com/${project.twitter_handle}`} target="_blank" rel="noopener noreferrer" style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                textDecoration: 'none', borderBottom: `1px solid ${colors.border}`,
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span style={{ fontSize: 14, width: 20, textAlign: 'center', fontWeight: 700 }}>𝕏</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>Twitter</div>
+                  <div style={{ fontSize: 12, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{project.twitter_handle}</div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
+            )}
+            {project.github_url && (
+              <a href={project.github_url} target="_blank" rel="noopener noreferrer" style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                textDecoration: 'none', borderBottom: `1px solid ${colors.border}`,
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span style={{ fontSize: 16, width: 20, textAlign: 'center' }}>⌂</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>GitHub</div>
+                  <div style={{ fontSize: 12, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{project.github_url.replace(/^https?:\/\/(www\.)?github\.com\//, '')}</div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
+            )}
+            {project.demo_url && (
+              <a href={project.demo_url} target="_blank" rel="noopener noreferrer" style={{
+                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
+                textDecoration: 'none',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span style={{ fontSize: 16, width: 20, textAlign: 'center' }}>▶</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>Demo</div>
+                  <div style={{ fontSize: 12, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{project.demo_url.replace(/^https?:\/\//, '')}</div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+              </a>
+            )}
+          </div>
+        )}
 
         {project.description ? (
           <div style={{ marginBottom: 20, fontSize: 16, color: colors.text, lineHeight: 1.6 }}>
@@ -397,18 +483,6 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             <strong style={{ color: colors.accent }}>{comments.length}</strong> comments
           </span>
           <span style={{ fontSize: 13, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>Launched {timeAgo(project.created_at)}</span>
-          {project.github_url && (
-            <a href={project.github_url} target="_blank" rel="noopener noreferrer" style={{
-              fontSize: 12, fontWeight: 600, color: colors.accent, textDecoration: 'none', marginLeft: 'auto',
-              display: 'flex', alignItems: 'center', gap: 4,
-              fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            }}>
-              GitHub
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9,18 15,12 9,6"/>
-              </svg>
-            </a>
-          )}
         </div>
 
         <div style={{ borderTop: `1px solid ${colors.border}`, marginBottom: 24 }} />
