@@ -312,7 +312,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         </p>
 
         <div className="action-buttons" style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-          {project.website_url && (
+          {project.website_url?.trim() && (
             <a href={project.website_url} target="_blank" rel="noopener noreferrer"
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1,
@@ -324,7 +324,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               Visit website
             </a>
           )}
-          {project.demo_url && (
+          {project.demo_url?.trim() && (
             <a href={project.demo_url} target="_blank" rel="noopener noreferrer"
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1,
@@ -360,7 +360,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             background: theme === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.8)', border: `1px solid ${colors.border}`,
             fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
           }}>{CATEGORY_LABELS[project.category] || project.category}</span>
-          {project.twitter_handle && (
+          {project.twitter_handle?.trim() && (
             <>
               <span style={{ color: colors.border }}>·</span>
               <a href={`https://x.com/${project.twitter_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: colors.textMuted, fontWeight: 500, textDecoration: 'none', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{project.twitter_handle}</a>
@@ -368,91 +368,51 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
 
-        {/* Links section — Product Hunt style */}
-        {(project.website_url || project.github_url || project.demo_url || project.twitter_handle) && (
-          <div style={{
-            display: 'flex', flexDirection: 'column', gap: 0, marginBottom: 20,
-            borderRadius: 12, border: `1px solid ${colors.border}`, overflow: 'hidden',
-            background: colors.bgCard,
-          }}>
-            {project.website_url && (
-              <a href={project.website_url} target="_blank" rel="noopener noreferrer" style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                textDecoration: 'none', borderBottom: `1px solid ${colors.border}`,
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <span style={{ fontSize: 16, width: 20, textAlign: 'center' }}>🌐</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>Website</div>
-                  <div style={{ fontSize: 12, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{project.website_url.replace(/^https?:\/\//, '')}</div>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
-            )}
-            {project.twitter_handle && (
-              <a href={`https://x.com/${project.twitter_handle}`} target="_blank" rel="noopener noreferrer" style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                textDecoration: 'none', borderBottom: `1px solid ${colors.border}`,
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <span style={{ fontSize: 14, width: 20, textAlign: 'center', fontWeight: 700 }}>𝕏</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>Twitter</div>
-                  <div style={{ fontSize: 12, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{project.twitter_handle}</div>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
-            )}
-            {project.github_url && (
-              <a href={project.github_url} target="_blank" rel="noopener noreferrer" style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                textDecoration: 'none', borderBottom: `1px solid ${colors.border}`,
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <span style={{ fontSize: 16, width: 20, textAlign: 'center' }}>⌂</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>GitHub</div>
-                  <div style={{ fontSize: 12, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{project.github_url.replace(/^https?:\/\/(www\.)?github\.com\//, '')}</div>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
-            )}
-            {project.demo_url && (
-              <a href={project.demo_url} target="_blank" rel="noopener noreferrer" style={{
-                display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                textDecoration: 'none',
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = theme === 'dark' ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-              >
-                <span style={{ fontSize: 16, width: 20, textAlign: 'center' }}>▶</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>Demo</div>
-                  <div style={{ fontSize: 12, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{project.demo_url.replace(/^https?:\/\//, '')}</div>
-                </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
-                </svg>
-              </a>
-            )}
-          </div>
-        )}
+        {/* Links — Product Hunt style */}
+        {(() => {
+          const links: { icon: React.ReactNode; label: string; url: string; sub: string }[] = [];
+          if (project.website_url?.trim()) links.push({
+            icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+            label: 'Website', url: project.website_url!, sub: project.website_url!.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''),
+          });
+          if (project.twitter_handle?.trim()) links.push({
+            icon: <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
+            label: 'Twitter', url: `https://x.com/${project.twitter_handle}`, sub: `@${project.twitter_handle}`,
+          });
+          if (project.github_url?.trim()) links.push({
+            icon: <svg width="16" height="16" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>,
+            label: 'GitHub', url: project.github_url!, sub: project.github_url!.replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, ''),
+          });
+          if (project.demo_url?.trim()) links.push({
+            icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+            label: 'Demo', url: project.demo_url!, sub: project.demo_url!.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''),
+          });
+          if (links.length === 0) return null;
+          return (
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ fontSize: 11, fontWeight: 700, color: colors.textDim, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 8px', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>Links</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {links.map((l, i) => (
+                  <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" className="sonar-card" style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                    borderRadius: 10, border: `1px solid ${colors.border}`, background: colors.bgCard,
+                    textDecoration: 'none', transition: 'all 0.15s ease', flex: links.length <= 2 ? '1 1 auto' : '0 1 auto',
+                    minWidth: links.length <= 2 ? 0 : 'calc(50% - 4px)',
+                  }}>
+                    <div style={{ flexShrink: 0, width: 20, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{l.icon}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: colors.text, lineHeight: 1.3 }}>{l.label}</div>
+                      <div style={{ fontSize: 11, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)", lineHeight: 1.3 }}>{l.sub}</div>
+                    </div>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.5 }}>
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {project.description ? (
           <div style={{ marginBottom: 20, fontSize: 16, color: colors.text, lineHeight: 1.6 }}>
