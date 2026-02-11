@@ -276,7 +276,7 @@ export default function Home() {
             fontSize: 24, fontWeight: 700, color: colors.text, margin: 0, lineHeight: 1.3,
             fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
           }}>
-            Signals detected
+            Trending products
           </h1>
           <div style={{
             width: 8, height: 8, borderRadius: '50%', background: '#22c55e',
