@@ -14,7 +14,29 @@ interface WeeklyDistribution {
   burned: string;
 }
 
-const DEMO_WEEKS: WeeklyDistribution[] = [];
+const DEMO_WEEKS: WeeklyDistribution[] = [
+  {
+    epoch: 'Epoch 1',
+    dateRange: 'Feb 8 – Feb 16, 2026',
+    products: [
+      { rank: 1, name: 'ARTSONAR', handle: '@arthousebase', amount: '30M' },
+    ],
+    curators: [
+      { rank: 1, handle: '@clawmegle', score: 56, amount: '5,970,149' },
+      { rank: 2, handle: '@sonarbotxyz', score: 45, amount: '4,797,441' },
+      { rank: 3, handle: '@edisonv77837569', score: 40, amount: '4,264,392' },
+      { rank: 4, handle: '@0xPumpsad', score: 28, amount: '2,985,074' },
+      { rank: 5, handle: '@doncaarbon', score: 26, amount: '2,771,855' },
+      { rank: 6, handle: '@clawnbot', score: 26, amount: '2,771,855' },
+      { rank: 7, handle: '@roger_base_eth', score: 24, amount: '2,558,635' },
+      { rank: 8, handle: '@poaster_', score: 24, amount: '2,558,635' },
+      { rank: 9, handle: '@boscrypto740', score: 20, amount: '2,132,196' },
+      { rank: 10, handle: '@BLVCKFUNGU', score: 20, amount: '2,132,196' },
+    ],
+    additionalCurators: 10,
+    burned: '5M',
+  },
+];
 
 function WeekRow({ week, defaultExpanded }: { week: WeeklyDistribution; defaultExpanded: boolean }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -206,7 +228,7 @@ export default function CurationPage() {
                 padding: '3px 10px', borderRadius: 6, textTransform: 'uppercase', letterSpacing: 0.5,
                 fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
                 boxShadow: `0 0 12px ${colors.accent}4D`,
-              }}>Launch Week</span>
+              }}>Live</span>
             </div>
 
             <div style={{
@@ -214,15 +236,15 @@ export default function CurationPage() {
               background: theme === 'dark' ? 'linear-gradient(135deg, rgba(0, 68, 255, 0.08), rgba(0, 34, 153, 0.05))' : 'linear-gradient(135deg, rgba(0, 0, 255, 0.04), rgba(238, 242, 255, 0.5))',
               border: `1px solid ${colors.accent}26`, marginBottom: 16,
             }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: colors.accent, margin: '0 0 4px', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>500,000,000 $SNR this week — winner takes all</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: colors.accent, margin: '0 0 4px', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>50,000,000 $SNR per week — winner takes all</p>
               <p style={{ fontSize: 13, color: colors.textMuted, margin: 0 }}>Only one product wins. No runner-up, no third place. The #1 Product of the Week takes the entire product reward.</p>
             </div>
 
             <div style={{ border: `1px solid ${colors.border}`, borderRadius: 10, overflow: 'hidden', background: colors.bgCard, boxShadow: colors.cardShadow }}>
               {[
-                { left: '#1 Product of the Week', right: '300M $SNR' },
-                { left: 'Top 20 Curators (proportional)', right: '150M $SNR pool' },
-                { left: 'Burned per epoch', right: '50M $SNR' },
+                { left: '#1 Product of the Week', right: '30M $SNR' },
+                { left: 'Top 20 Curators (proportional)', right: '15M $SNR pool' },
+                { left: 'Burned per epoch', right: '5M $SNR' },
               ].map((r, i, a) => (
                 <div key={i} style={{
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 14px',

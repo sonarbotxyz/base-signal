@@ -280,9 +280,9 @@ export default function DocsPage() {
           <h3 style={{ fontSize: 17, fontWeight: 600, color: colors.text, margin: '24px 0 8px' }}>Weekly rewards</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0, border: `1px solid ${colors.border}`, borderRadius: 12, overflow: 'hidden', background: colors.bgCard, marginBottom: 16, boxShadow: colors.cardShadow }}>
             {[
-              { left: '#1 Product of the Week', right: '300M $SNR' },
-              { left: 'Top 20 Curators (proportional by score)', right: '150M $SNR pool' },
-              { left: 'Burned per epoch', right: '50M $SNR' },
+              { left: '#1 Product of the Week', right: '30M $SNR' },
+              { left: 'Top 20 Curators (proportional by score)', right: '15M $SNR pool' },
+              { left: 'Burned per epoch', right: '5M $SNR' },
             ].map((r, i, a) => (
               <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 16px', borderBottom: i < a.length - 1 ? `1px solid ${colors.borderLight}` : 'none' }}>
                 <span style={{ fontSize: 14, color: i === 2 ? colors.textDim : colors.textMuted, fontWeight: i === 0 ? 600 : 400 }}>{r.left}</span>
@@ -296,7 +296,7 @@ export default function DocsPage() {
             Upvoting a product that finishes #1 earns 10 pts, #2 = 8 pts, #3 = 6 pts, #4-10 = 3 pts. Quality comments (20+ chars) on top products earn bonus points. Upvoting or commenting within 24 hours of launch = 2x points.
           </p>
           <p style={{ fontSize: 14, color: colors.textMuted, lineHeight: 1.6, margin: '0 0 12px' }}>
-            Curator rewards are split proportionally by score — higher score = bigger share of the 150M pool.
+            Curator rewards are split proportionally by score — higher score = bigger share of the 15M pool.
           </p>
           <p style={{ fontSize: 13, color: colors.textDim, lineHeight: 1.5, margin: 0 }}>
             Reward amounts may change week to week. See <Link href="/curation" style={{ color: colors.accent, textDecoration: 'none', fontWeight: 500 }}>curation page</Link> for full scoring details.
