@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
-import { useTheme } from './ThemeProvider';
 
 interface UserInfo {
   twitter_handle: string;
@@ -24,244 +23,145 @@ export default function Header({ activePage }: HeaderProps) {
 
   const { ready, authenticated, logout, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
-  const { theme, colors, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) {
-        setMobileMenuOpen(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) setMobileMenuOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const fetchUserInfo = async () => {
-    if (!authenticated) {
-      setUserInfo(null);
-      return;
-    }
-    try {
-      const token = await getAccessToken();
-      if (!token) return;
-      const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) setUserInfo(await res.json());
-    } catch (e) { 
-      console.error(e); 
-    }
-  };
-
   useEffect(() => {
-    if (ready && authenticated) fetchUserInfo();
-  }, [ready, authenticated]);
+    if (ready && authenticated) {
+      getAccessToken().then(token => {
+        if (!token) return;
+        fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+          .then(res => res.ok && res.json().then(setUserInfo))
+          .catch(console.error);
+      });
+    } else {
+      setUserInfo(null);
+    }
+  }, [ready, authenticated, getAccessToken]);
 
   const navLinks = [
+    { href: '/', label: 'Products', key: 'home' },
     { href: '/leaderboard', label: 'Leaderboard', key: 'leaderboard' },
-    { href: '/curation', label: 'Curation', key: 'curation' },
     { href: '/docs', label: 'Docs', key: 'docs' },
   ];
 
   return (
-    <header style={{
-      position: 'sticky', top: 0, zIndex: 50,
-      background: colors.headerBg,
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      borderBottom: `1px solid ${colors.border}60`,
-    }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', height: 56, gap: 10 }}>
-        
+    <header className="sticky top-0 z-50 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-primary)]">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         {/* Logo */}
-        <Link href="/" style={{ flexShrink: 0, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%', background: colors.accent,
-            boxShadow: `0 0 8px ${colors.accent}99`,
-            animation: 'sonarPulse 2s ease-out infinite',
-          }} />
-          <span style={{
-            fontWeight: 800, fontSize: 18, color: colors.accent, lineHeight: 1, whiteSpace: 'nowrap',
-            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            letterSpacing: '-0.5px',
-          }}>sonarbot</span>
+        <Link href="/" className="flex-shrink-0 flex items-center gap-2 no-underline">
+          <div className="w-2 h-2 rounded-full bg-[var(--accent)] shadow-[0_0_8px_var(--accent-glow)] animate-sonarPulse" />
+          <span className="font-extrabold text-[17px] text-[var(--accent)] leading-none tracking-tight font-mono">
+            sonarbot
+          </span>
         </Link>
         
-        <div style={{ flex: 1 }} />
+        {/* Center Nav (Desktop) */}
+        <nav className="hidden md:flex items-center gap-6 flex-1 justify-center">
+          {navLinks.map(link => (
+            <Link
+              key={link.key}
+              href={link.href}
+              className={`text-[14px] font-medium transition-colors ${
+                activePage === link.key ? 'text-[var(--text-primary)] font-semibold' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
 
-        {/* Desktop Navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Desktop nav links - hidden on mobile */}
-          <div className="desktop-nav">
-            {navLinks.map(link => (
-              <Link
-                key={link.key}
-                href={link.href}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  height: 34, 
-                  padding: '0 14px', 
-                  borderRadius: 8, 
-                  border: activePage === link.key ? `1px solid ${colors.accent}` : '1px solid transparent',
-                  background: activePage === link.key ? colors.accentGlow : 'transparent',
-                  fontSize: 13, 
-                  fontWeight: 600, 
-                  color: activePage === link.key ? colors.accent : colors.textMuted,
-                  textDecoration: 'none', 
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease',
-                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                  letterSpacing: '0.3px',
-                }}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
+        {/* Right Side */}
+        <div className="flex items-center gap-3">
+          {/* Submit Button */}
+          <Link href="/docs" className="hidden md:flex items-center justify-center h-9 px-4 rounded-md bg-[var(--accent)] hover:bg-blue-700 text-white text-[13px] font-semibold transition-colors shadow-sm">
+            Submit
+          </Link>
 
-          {/* Mobile burger menu button - visible on mobile only */}
-          <div ref={mobileMenuRef} style={{ position: 'relative' }} className="mobile-nav">
+          {/* Mobile Menu Toggle */}
+          <div ref={mobileMenuRef} className="md:hidden relative">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 34,
-                height: 34,
-                border: `1px solid ${colors.border}`,
-                borderRadius: 8,
-                background: colors.bgCard,
-                cursor: 'pointer'
-              }}
+              className="flex items-center justify-center w-9 h-9 border border-[var(--border-primary)] rounded-md bg-[var(--bg-card)] text-[var(--text-muted)]"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="3" y1="6" x2="21" y2="6"></line>
                 <line x1="3" y1="12" x2="21" y2="12"></line>
                 <line x1="3" y1="18" x2="21" y2="18"></line>
               </svg>
             </button>
-
-            {/* Mobile dropdown menu */}
             {mobileMenuOpen && (
-              <div style={{ 
-                position: 'absolute', 
-                right: 0, 
-                top: 40, 
-                background: colors.bgCard, 
-                border: `1px solid ${colors.border}`, 
-                borderRadius: 12, 
-                padding: 8, 
-                minWidth: 180, 
-                boxShadow: theme === 'dark' ? '0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 68, 255, 0.1)' : '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 16px rgba(0, 0, 255, 0.05)', 
-                zIndex: 100 
-              }}>
+              <div className="absolute right-0 top-11 bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl p-2 min-w-[180px] shadow-lg z-50">
                 {navLinks.map(link => (
                   <Link
                     key={link.key}
                     href={link.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    style={{
-                      display: 'block',
-                      padding: '12px 16px',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: activePage === link.key ? colors.accent : colors.text,
-                      textDecoration: 'none',
-                      borderRadius: 8,
-                      background: activePage === link.key ? colors.accentGlow : 'transparent',
-                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                    }}
+                    className={`block px-4 py-3 text-sm font-semibold rounded-lg ${
+                      activePage === link.key ? 'text-[var(--accent)] bg-[var(--accent-glow)]' : 'text-[var(--text-primary)]'
+                    }`}
                   >
                     {link.label}
                   </Link>
                 ))}
+                <Link href="/docs" className="block px-4 py-3 text-sm font-semibold rounded-lg text-white bg-[var(--accent)] mt-2">
+                  Submit Product
+                </Link>
               </div>
             )}
           </div>
 
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="theme-toggle"
-            aria-label="Toggle theme"
-          >
-            {theme === 'dark' ? '☀️' : '🌙'}
-          </button>
-
-          {/* Auth button - always visible */}
+          {/* Auth */}
           {ready && (
             authenticated && userInfo ? (
-              <div ref={menuRef} style={{ position: 'relative' }}>
-                <button onClick={() => setMenuOpen(!menuOpen)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 10px',
-                    borderRadius: 8, border: `1px solid ${colors.border}`, background: colors.bgCard,
-                    cursor: 'pointer', fontSize: 13, fontWeight: 600, color: colors.text,
-                    fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                  }}>
+              <div ref={menuRef} className="relative">
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="flex items-center gap-1.5 h-9 px-2 rounded-md border border-[var(--border-primary)] bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] transition-colors"
+                >
                   {userInfo.avatar ? (
-                    <img src={userInfo.avatar} alt="" style={{ width: 22, height: 22, borderRadius: '50%' }} />
+                    <img src={userInfo.avatar} alt="" className="w-5 h-5 rounded-full" />
                   ) : (
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: colors.border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: colors.textMuted }}>
+                    <div className="w-5 h-5 rounded-full bg-[var(--border-primary)] flex items-center justify-center text-[10px] font-bold text-[var(--text-muted)]">
                       {userInfo.twitter_handle[0]?.toUpperCase()}
                     </div>
                   )}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--text-muted)]">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
                 </button>
                 {menuOpen && (
-                  <div style={{
-                    position: 'absolute', right: 0, top: 40, background: colors.bgCard,
-                    border: `1px solid ${colors.border}`, borderRadius: 12, padding: 4, minWidth: 160,
-                    boxShadow: theme === 'dark' ? '0 8px 32px rgba(0, 0, 0, 0.5)' : '0 8px 32px rgba(0, 0, 0, 0.12)', zIndex: 100,
-                  }}>
-                    <div style={{ padding: '8px 12px', fontSize: 13, fontWeight: 600, color: colors.text, borderBottom: `1px solid ${colors.border}`, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{userInfo.twitter_handle}</div>
-                    <button onClick={() => { logout(); setMenuOpen(false); }}
-                      style={{ width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', borderRadius: 8 }}>
+                  <div className="absolute right-0 top-11 bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl p-1 min-w-[160px] shadow-lg z-50">
+                    <div className="px-3 py-2 text-sm font-semibold text-[var(--text-primary)] border-b border-[var(--border-primary)] mb-1">
+                      @{userInfo.twitter_handle}
+                    </div>
+                    <button
+                      onClick={() => { logout(); setMenuOpen(false); }}
+                      className="w-full px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-left rounded-lg transition-colors"
+                    >
                       Sign out
                     </button>
                   </div>
                 )}
               </div>
             ) : (
-              <button onClick={() => initOAuth({ provider: 'twitter' })}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px',
-                  borderRadius: 8, background: colors.accent, border: 'none',
-                  fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap',
-                  boxShadow: `0 0 16px ${colors.accent}4D`,
-                  transition: 'all 0.2s ease',
-                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+              <button
+                onClick={() => initOAuth({ provider: 'twitter' })}
+                className="flex items-center justify-center h-9 px-4 rounded-md bg-transparent hover:bg-[var(--bg-secondary)] text-[13px] font-semibold text-[var(--text-primary)] transition-colors"
+              >
                 Sign in
               </button>
             )
           )}
         </div>
       </div>
-
-      {/* CSS for mobile responsive behavior */}
-      <style jsx>{`
-        .desktop-nav {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-        .mobile-nav {
-          display: none;
-        }
-        @media (max-width: 768px) {
-          .desktop-nav {
-            display: none;
-          }
-          .mobile-nav {
-            display: block;
-          }
-        }
-      `}</style>
     </header>
   );
 }

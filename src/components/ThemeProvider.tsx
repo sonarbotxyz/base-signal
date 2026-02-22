@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+// Using CSS variables via tailwind or directly instead of this big object
 export interface ThemeColors {
   bg: string;
   bgCard: string;
@@ -24,48 +25,27 @@ export interface ThemeColors {
   cardShadow: string;
 }
 
-const darkColors: ThemeColors = {
-  bg: '#0a0a0f',
-  bgCard: '#111827',
-  bgCardHover: '#162032',
-  text: '#e2e8f0',
-  textMuted: '#8892a4',
-  textDim: '#64748b',
-  accent: '#0044ff',
-  accentGlow: 'rgba(0, 68, 255, 0.15)',
-  border: '#1e293b',
-  borderLight: '#162032',
-  codeBg: '#111827',
-  bannerBg: 'linear-gradient(135deg, #0a1628, #0d1f3c)',
-  upvoteBg: '#111827',
-  upvoteActiveBg: 'rgba(0, 68, 255, 0.15)',
-  upvoteActiveText: '#0044ff',
-  headerBg: 'rgba(10, 10, 15, 0.85)',
-  footerBg: '#0a0a0f',
-  separator: '#1e293b',
-  cardShadow: 'none',
-};
-
-const lightColors: ThemeColors = {
-  bg: '#f8f9fa',
-  bgCard: '#ffffff',
-  bgCardHover: '#f0f2f5',
-  text: '#1a1a2e',
-  textMuted: '#64748b',
-  textDim: '#94a3b8',
-  accent: '#0000ff',
-  accentGlow: 'rgba(0, 0, 255, 0.08)',
-  border: '#e2e8f0',
-  borderLight: '#f1f5f9',
-  codeBg: '#f1f5f9',
-  bannerBg: 'linear-gradient(135deg, #eef2ff, #e0e7ff)',
-  upvoteBg: '#f1f5f9',
-  upvoteActiveBg: 'rgba(0, 0, 255, 0.08)',
-  upvoteActiveText: '#0000ff',
-  headerBg: 'rgba(248, 249, 250, 0.85)',
-  footerBg: '#f8f9fa',
-  separator: '#e2e8f0',
-  cardShadow: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+// Fallback just to satisfy existing types cleanly, but we will mostly use tailwind classes.
+const fallbackColors: ThemeColors = {
+  bg: 'var(--bg-primary)',
+  bgCard: 'var(--bg-card)',
+  bgCardHover: 'var(--bg-card-hover)',
+  text: 'var(--text-primary)',
+  textMuted: 'var(--text-secondary)',
+  textDim: 'var(--text-muted)',
+  accent: 'var(--accent)',
+  accentGlow: 'var(--accent-glow)',
+  border: 'var(--border-primary)',
+  borderLight: 'var(--border-primary)',
+  codeBg: 'var(--bg-secondary)',
+  bannerBg: 'var(--bg-secondary)',
+  upvoteBg: 'var(--upvote-bg)',
+  upvoteActiveBg: 'var(--bg-secondary)',
+  upvoteActiveText: 'var(--accent)',
+  headerBg: 'var(--bg-primary)',
+  footerBg: 'var(--bg-primary)',
+  separator: 'var(--border-primary)',
+  cardShadow: 'var(--card-shadow)',
 };
 
 type Theme = 'dark' | 'light';
@@ -77,8 +57,8 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  theme: 'dark',
-  colors: darkColors,
+  theme: 'light',
+  colors: fallbackColors,
   toggleTheme: () => {},
 });
 
@@ -87,7 +67,7 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark');
+  const [theme, setTheme] = useState<Theme>('light'); // default to light
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -96,7 +76,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       setTheme(stored);
       document.documentElement.setAttribute('data-theme', stored);
     } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
+      document.documentElement.setAttribute('data-theme', 'light');
     }
     setMounted(true);
   }, []);
@@ -112,10 +92,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  const colors = theme === 'dark' ? darkColors : lightColors;
-
   return (
-    <ThemeContext.Provider value={{ theme, colors, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, colors: fallbackColors, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
