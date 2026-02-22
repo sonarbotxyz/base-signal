@@ -322,11 +322,7 @@ export default function Home() {
                     </div>
 
                     {/* Comment count */}
-                    <Link href={`/project/${p.id}`} style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'center',
-                      gap: 3, color: textDim, textDecoration: 'none', flexShrink: 0,
-                      fontSize: 12, fontWeight: 600, padding: '4px 8px',
-                    }}>
+                    <Link href={`/project/${p.id}`} className="comment-btn">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                       </svg>
@@ -335,7 +331,7 @@ export default function Home() {
 
                     {/* Upvote */}
                     <button
-                      onClick={() => handleUpvote(p.id)}
+                      onClick={(e) => { e.stopPropagation(); handleUpvote(p.id); }}
                       className={`upvote-btn ${isUpvoted ? 'active' : ''}`}
                       disabled={voting.has(p.id)}
                     >
@@ -360,7 +356,7 @@ export default function Home() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B', boxShadow: '0 0 8px rgba(245,158,11,0.5)' }} />
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: textMain, margin: 0 }}>Incoming Signals</h2>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Incoming Signals</h2>
               </div>
               <Link href="/upcoming" style={{ fontSize: 13, fontWeight: 600, color: '#0044FF', textDecoration: 'none' }}>
                 View all →
@@ -378,22 +374,22 @@ export default function Home() {
                     <div className="fade-in" style={{
                       animationDelay: `${i * 0.06}s`,
                       width: 240, padding: 16, borderRadius: 14,
-                      border: `1px solid ${border}`, background: cardBg,
+                      border: '1px solid var(--border)', background: 'var(--bg-card)',
                       transition: 'border-color 0.15s ease',
                     }}
                     onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(245,158,11,0.4)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = border; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)'; }}
                     >
                       <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
                         {p.logo_url ? (
-                          <img src={p.logo_url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', border: `1px solid ${border}` }} />
+                          <img src={p.logo_url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />
                         ) : (
                           <div style={{
                             width: 36, height: 36, borderRadius: 8,
                             background: isDark
                               ? `linear-gradient(135deg, hsl(${hue},40%,14%), hsl(${hue},30%,20%))`
                               : `linear-gradient(135deg, hsl(${hue},60%,92%), hsl(${hue},50%,85%))`,
-                            border: `1px solid ${border}`,
+                            border: '1px solid var(--border)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
                             <span style={{ fontSize: 14, fontWeight: 700, color: isDark ? `hsl(${hue},60%,60%)` : `hsl(${hue},60%,40%)` }}>
@@ -402,8 +398,8 @@ export default function Home() {
                           </div>
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <h3 style={{ fontSize: 14, fontWeight: 600, color: textMain, margin: '0 0 2px', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</h3>
-                          <p style={{ fontSize: 12, color: textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', margin: '0 0 2px', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</h3>
+                          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
                         </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -413,8 +409,8 @@ export default function Home() {
                           style={{
                             display: 'flex', alignItems: 'center', gap: 4,
                             padding: '4px 8px', borderRadius: 6,
-                            border: `1px solid ${border}`, background: 'transparent',
-                            color: textDim, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                            border: '1px solid var(--border)', background: 'transparent',
+                            color: 'var(--text-dim)', fontSize: 11, fontWeight: 600, cursor: 'pointer',
                           }}
                         >
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
