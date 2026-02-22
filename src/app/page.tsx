@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
 import Header from '@/components/Header';
 import SubscriptionModal from '@/components/SubscriptionModal';
+import { useTheme } from '@/components/ThemeProvider';
 
 interface Project {
   id: string;
@@ -26,13 +27,22 @@ interface SponsoredSpot {
   usdc_paid: number;
 }
 
+const CATEGORIES = [
+  { key: 'all', label: 'All' },
+  { key: 'agents', label: 'AI Agents' },
+  { key: 'defi', label: 'DeFi' },
+  { key: 'infrastructure', label: 'Infrastructure' },
+  { key: 'consumer', label: 'Consumer' },
+  { key: 'gaming', label: 'Gaming' },
+  { key: 'social', label: 'Social' },
+  { key: 'tools', label: 'Tools' },
+  { key: 'other', label: 'Other' },
+];
+
 const CATEGORY_LABELS: Record<string, string> = {
   agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
   consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
 };
-
-const CATEGORIES = ['All', 'AI Agents', 'DeFi', 'Infrastructure', 'Consumer', 'Gaming', 'Social', 'Tools'];
-const SORTS = ['Top', 'New', 'Trending'];
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -43,18 +53,27 @@ export default function Home() {
   const [sponsoredBanner, setSponsoredBanner] = useState<SponsoredSpot | null>(null);
   const [showSubModal, setShowSubModal] = useState(false);
   const [rateLimitMsg, setRateLimitMsg] = useState('');
-
-  const [activeCategory, setActiveCategory] = useState('All');
-  const [activeSort, setActiveSort] = useState('Trending');
+  const [activeCategory, setActiveCategory] = useState('all');
+  const [sort, setSort] = useState<'upvotes' | 'newest'>('upvotes');
 
   const { authenticated, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
+  const { theme } = useTheme();
 
-  useEffect(() => { fetchProjects(); fetchSponsoredBanner(); }, []);
+  const isDark = theme === 'dark';
+  const border = isDark ? '#232d3f' : '#e5e7eb';
+  const textMuted = isDark ? '#8892a4' : '#6b7280';
+  const textDim = isDark ? '#4a5568' : '#9ca3af';
+  const textMain = isDark ? '#f1f5f9' : '#111827';
+  const bgSecondary = isDark ? '#161b27' : '#f9fafb';
+  const bgCard = isDark ? '#1a2235' : '#ffffff';
+
+  useEffect(() => { fetchProjects(); fetchSponsoredBanner(); }, [sort]);
 
   const fetchProjects = async () => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/projects?sort=upvotes&limit=30');
+      const res = await fetch(`/api/projects?sort=${sort}&limit=50`);
       const data = await res.json();
       const projs = data.projects || [];
       setProjects(projs);
@@ -71,12 +90,8 @@ export default function Home() {
     try {
       const res = await fetch('/api/sponsored?type=homepage_inline');
       const data = await res.json();
-      if (data.active_spot) {
-        setSponsoredBanner(data.active_spot);
-      }
-    } catch (e) {
-      console.error(e);
-    }
+      if (data.active_spot) setSponsoredBanner(data.active_spot);
+    } catch {}
   };
 
   const handleUpvote = async (projectId: string) => {
@@ -107,215 +122,211 @@ export default function Home() {
     setVoting(prev => { const n = new Set(prev); n.delete(projectId); return n; });
   };
 
-  const renderSponsoredInline = () => {
-    if (sponsoredBanner) {
-      return (
-        <div className="py-4 border-b border-[var(--border-primary)] group">
-          <div className="flex items-center gap-4 px-3 py-3 rounded-xl transition-colors bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30">
-            <div className="w-[60px] h-[60px] rounded-xl flex-shrink-0 bg-white dark:bg-black border border-[var(--border-primary)] flex items-center justify-center">
-              <span className="text-xl font-bold text-[var(--accent)]">{sponsoredBanner.title[0]}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <a href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" className="no-underline">
-                  <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0 leading-tight hover:underline">{sponsoredBanner.title}</h3>
-                </a>
-                <span className="text-[10px] font-semibold tracking-wide uppercase px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">Sponsored</span>
-              </div>
-              {sponsoredBanner.description && (
-                <p className="text-[14px] text-[var(--text-muted)] m-0 leading-snug truncate">
-                  {sponsoredBanner.description}
-                </p>
-              )}
-            </div>
-            <a href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" className="flex-shrink-0 flex items-center justify-center h-10 px-4 rounded-lg bg-[var(--accent)] text-white text-[13px] font-semibold no-underline hover:bg-blue-700 transition-colors">
-              Visit
-            </a>
-          </div>
-        </div>
-      );
-    }
+  const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
+
+  const filteredProjects = activeCategory === 'all'
+    ? projects
+    : projects.filter(p => p.category === activeCategory);
+
+  const renderSponsor = () => {
+    const spot = sponsoredBanner;
     return (
-      <div className="py-4 border-b border-[var(--border-primary)]">
-        <div className="flex items-center gap-4 px-3 py-3 rounded-xl transition-colors border border-dashed border-[var(--border-primary)] bg-[var(--bg-secondary)]/50 hover:bg-[var(--bg-secondary)]">
-          <div className="w-[60px] h-[60px] rounded-xl flex-shrink-0 bg-[var(--accent-glow)] border border-[var(--accent)]/20 flex items-center justify-center">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="text-[16px] font-bold text-[var(--text-primary)] m-0 leading-tight">Promote your product</h3>
-              <span className="text-[10px] font-semibold tracking-wide uppercase px-1.5 py-0.5 rounded bg-[var(--border-primary)] text-[var(--text-muted)]">Sponsored</span>
-            </div>
-            <p className="text-[14px] text-[var(--text-muted)] m-0 leading-snug truncate">
-              Agents and humans can buy this spot to get their product in front of builders.
-            </p>
-          </div>
-          <Link href="/docs" className="flex-shrink-0 flex items-center justify-center h-10 px-4 rounded-lg border border-[var(--border-primary)] bg-[var(--bg-card)] text-[var(--text-primary)] text-[13px] font-semibold no-underline hover:bg-[var(--bg-card-hover)] transition-colors">
-            Learn more
-          </Link>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '14px 8px', borderBottom: `1px solid ${border}`,
+      }}>
+        <div style={{ width: 24, textAlign: 'right', flexShrink: 0 }} />
+        <div style={{
+          width: 56, height: 56, borderRadius: 12, flexShrink: 0,
+          background: isDark ? 'rgba(77,124,255,0.12)' : 'rgba(0,68,255,0.06)',
+          border: `1px solid ${isDark ? 'rgba(77,124,255,0.2)' : 'rgba(0,68,255,0.12)'}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          {spot?.image_url
+            ? <img src={spot.image_url} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover' }} />
+            : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0044ff" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
+          }
         </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <span style={{ fontSize: 15, fontWeight: 600, color: textMain }}>
+              {spot ? spot.title : 'Promote your product here'}
+            </span>
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: textDim,
+              padding: '1px 6px', borderRadius: 4,
+              border: `1px solid ${border}`, letterSpacing: 0.5,
+            }}>AD</span>
+          </div>
+          <p style={{ fontSize: 13, color: textMuted, margin: 0 }}>
+            {spot ? spot.description : 'Reach Base ecosystem builders. Available via API or DM @sonarbotxyz'}
+          </p>
+        </div>
+        <a
+          href={spot ? spot.url : '/docs'}
+          target={spot ? '_blank' : undefined}
+          rel="noopener noreferrer"
+          style={{
+            flexShrink: 0, padding: '6px 14px', borderRadius: 6,
+            border: `1px solid ${isDark ? 'rgba(77,124,255,0.3)' : 'rgba(0,68,255,0.25)'}`,
+            color: '#0044ff', fontSize: 13, fontWeight: 600,
+            textDecoration: 'none', whiteSpace: 'nowrap',
+          }}
+        >
+          {spot ? 'Visit' : 'Learn more'}
+        </a>
       </div>
     );
   };
 
-  const filteredProjects = projects.filter(p => {
-    if (activeCategory === 'All') return true;
-    return (CATEGORY_LABELS[p.category] || p.category) === activeCategory;
-  });
-
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col font-sans">
+    <div style={{ minHeight: '100vh', background: isDark ? '#0f1117' : '#fff', display: 'flex', flexDirection: 'column' }}>
       <Header activePage="home" />
 
-      <main className="max-w-3xl mx-auto w-full px-4 pt-6 pb-20 flex-1">
-        
-        {/* Filters & Sorts Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          {/* Categories */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
+      <main style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px 80px', flex: 1, width: '100%' }}>
+
+        {/* Category filters + sort */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: 12, marginBottom: 20, flexWrap: 'wrap',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             {CATEGORIES.map(cat => (
               <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors ${
-                  activeCategory === cat
-                    ? 'bg-[var(--text-primary)] text-[var(--bg-primary)]'
-                    : 'bg-transparent text-[var(--text-muted)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)]'
-                }`}
+                key={cat.key}
+                onClick={() => setActiveCategory(cat.key)}
+                className={`filter-btn ${activeCategory === cat.key ? 'active' : ''}`}
               >
-                {cat}
+                {cat.label}
               </button>
             ))}
           </div>
-
-          {/* Sorts */}
-          <div className="flex items-center gap-1 bg-[var(--bg-secondary)] p-1 rounded-lg flex-shrink-0">
-            {SORTS.map(sort => (
-              <button
-                key={sort}
-                onClick={() => setActiveSort(sort)}
-                className={`px-3 py-1 rounded-md text-[13px] font-medium transition-all ${
-                  activeSort === sort
-                    ? 'bg-[var(--bg-card)] text-[var(--text-primary)] shadow-sm'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'
-                }`}
-              >
-                {sort}
-              </button>
-            ))}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <button onClick={() => setSort('upvotes')} className={`sort-btn ${sort === 'upvotes' ? 'active' : ''}`}>Top</button>
+            <button onClick={() => setSort('newest')} className={`sort-btn ${sort === 'newest' ? 'active' : ''}`}>New</button>
           </div>
         </div>
 
-        {/* Product List */}
-        {loading ? (
-          <div className="space-y-4">
-            {[1,2,3,4,5].map(i => (
-              <div key={i} className="flex items-center gap-4 py-4 border-b border-[var(--border-primary)] animate-pulse">
-                <div className="w-4 h-4 bg-[var(--bg-secondary)] rounded" />
-                <div className="w-[60px] h-[60px] bg-[var(--bg-secondary)] rounded-xl" />
-                <div className="flex-1 space-y-2">
-                  <div className="w-32 h-4 bg-[var(--bg-secondary)] rounded" />
-                  <div className="w-64 h-3 bg-[var(--bg-secondary)] rounded" />
+        {/* Feed */}
+        <div style={{ borderTop: `1px solid ${border}` }}>
+          {loading ? (
+            [1,2,3,4,5].map(i => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 8px', borderBottom: `1px solid ${border}` }}>
+                <div style={{ width: 24 }} />
+                <div style={{ width: 56, height: 56, borderRadius: 12, background: bgSecondary, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ width: 140, height: 14, borderRadius: 4, background: bgSecondary, marginBottom: 8 }} />
+                  <div style={{ width: 220, height: 12, borderRadius: 4, background: bgSecondary }} />
                 </div>
-                <div className="w-12 h-14 bg-[var(--bg-secondary)] rounded-lg" />
+                <div style={{ width: 52, height: 56, borderRadius: 10, background: bgSecondary, flexShrink: 0 }} />
               </div>
-            ))}
-          </div>
-        ) : filteredProjects.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-[16px] font-semibold text-[var(--text-primary)] mb-1">No products found</p>
-            <p className="text-[14px] text-[var(--text-muted)]">Check back later or change filters.</p>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            {filteredProjects.map((p, i) => {
+            ))
+          ) : filteredProjects.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 0', color: textMuted }}>
+              <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 4, color: textMain }}>No products yet</p>
+              <p style={{ fontSize: 14, margin: 0 }}>Submit via the API — check Docs to get started</p>
+            </div>
+          ) : (
+            filteredProjects.map((p, i) => {
+              const hue = hueFrom(p.name);
               const isUpvoted = upvoted.has(p.id);
               const cc = commentCounts[p.id] || 0;
               return (
                 <div key={p.id}>
-                  <div className="flex items-center gap-4 py-4 border-b border-[var(--border-primary)] group ph-card rounded-xl px-2 -mx-2 animate-fadeInUp" style={{ animationDelay: `${i * 0.05}s` }}>
-                    
+                  <div className="product-row fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
                     {/* Rank */}
-                    <div className="w-6 text-center text-[13px] font-bold text-[var(--text-muted)]">
+                    <div style={{ width: 24, textAlign: 'right', flexShrink: 0, fontSize: 13, fontWeight: 500, color: textDim }}>
                       {i + 1}
                     </div>
 
                     {/* Logo */}
-                    <Link href={`/project/${p.id}`} className="flex-shrink-0">
+                    <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
                       {p.logo_url ? (
-                        <img src={p.logo_url} alt="" className="w-[60px] h-[60px] rounded-xl object-cover border border-[var(--border-primary)]" />
+                        <img src={p.logo_url} alt="" style={{
+                          width: 56, height: 56, borderRadius: 12, objectFit: 'cover',
+                          border: `1px solid ${border}`,
+                        }} />
                       ) : (
-                        <div className="w-[60px] h-[60px] rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)] flex items-center justify-center">
-                          <span className="text-2xl font-bold text-[var(--text-muted)]">{p.name[0]}</span>
+                        <div style={{
+                          width: 56, height: 56, borderRadius: 12,
+                          background: isDark
+                            ? `linear-gradient(135deg, hsl(${hue},40%,14%), hsl(${hue},30%,20%))`
+                            : `linear-gradient(135deg, hsl(${hue},60%,92%), hsl(${hue},50%,85%))`,
+                          border: `1px solid ${border}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <span style={{ fontSize: 22, fontWeight: 700, color: isDark ? `hsl(${hue},60%,60%)` : `hsl(${hue},60%,40%)` }}>
+                            {p.name[0]}
+                          </span>
                         </div>
                       )}
                     </Link>
 
                     {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <Link href={`/project/${p.id}`} className="no-underline">
-                        <h2 className="text-[16px] font-bold text-[var(--text-primary)] m-0 leading-tight">
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+                        <h2 style={{ fontSize: 15, fontWeight: 600, color: textMain, margin: '0 0 3px', lineHeight: 1.3 }}>
                           {p.name}
                         </h2>
                       </Link>
-                      <p className="text-[14px] text-[var(--text-muted)] m-0 mt-1 leading-snug truncate">
+                      <p style={{ fontSize: 13, color: textMuted, margin: '0 0 7px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.tagline}
                       </p>
-                      <div className="mt-2 flex items-center">
-                        <span className="text-[11px] text-[var(--text-muted)] px-2 py-0.5 rounded border border-[var(--border-primary)] bg-[var(--bg-secondary)]">
-                          {CATEGORY_LABELS[p.category] || p.category}
-                        </span>
-                      </div>
+                      <span className="category-pill">{CATEGORY_LABELS[p.category] || p.category}</span>
                     </div>
 
-                    {/* Actions (Comments & Upvote) */}
-                    <div className="flex items-center gap-2">
-                      <Link href={`/project/${p.id}`} className="flex items-center gap-1.5 px-2 h-14 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors no-underline">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                        <span className="text-[13px] font-bold">{cc}</span>
-                      </Link>
-                      
-                      <button
-                        onClick={() => handleUpvote(p.id)}
-                        className={`upvote-btn flex flex-col items-center justify-center w-12 h-14 rounded-lg border transition-all ${
-                          isUpvoted
-                            ? 'border-[var(--accent)] bg-[var(--accent-glow)] text-[var(--accent)]'
-                            : 'border-[var(--border-primary)] bg-[var(--bg-secondary)] text-[var(--text-primary)]'
-                        }`}
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="mb-1">
-                          <polyline points="18 15 12 9 6 15" />
-                        </svg>
-                        <span className="text-[13px] font-bold leading-none">{p.upvotes}</span>
-                      </button>
-                    </div>
+                    {/* Comment count */}
+                    <Link href={`/project/${p.id}`} style={{
+                      display: 'flex', flexDirection: 'column', alignItems: 'center',
+                      gap: 3, color: textDim, textDecoration: 'none', flexShrink: 0,
+                      fontSize: 12, fontWeight: 600, padding: '4px 8px',
+                    }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                      {cc}
+                    </Link>
 
+                    {/* Upvote */}
+                    <button
+                      onClick={() => handleUpvote(p.id)}
+                      className={`upvote-btn ${isUpvoted ? 'active' : ''}`}
+                      disabled={voting.has(p.id)}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                        <polyline points="18 15 12 9 6 15" />
+                      </svg>
+                      {p.upvotes}
+                    </button>
                   </div>
-                  {/* Insert sponsored ad after #3 */}
-                  {i === 2 && renderSponsoredInline()}
+
+                  {/* Sponsored slot after position 3 */}
+                  {i === 2 && renderSponsor()}
                 </div>
               );
-            })}
-          </div>
-        )}
+            })
+          )}
+        </div>
       </main>
 
-      <footer className="border-t border-[var(--border-primary)] bg-[var(--bg-primary)] py-6 mt-auto">
-        <div className="max-w-3xl mx-auto px-4 flex flex-col items-center gap-2">
-          <div className="flex items-center gap-2 text-[13px] text-[var(--text-muted)]">
-            <span className="font-bold text-[var(--accent)] font-mono text-[12px]">sonarbot</span>
+      <footer style={{
+        borderTop: `1px solid ${border}`,
+        padding: '20px',
+        textAlign: 'center',
+        fontSize: 13,
+        color: textDim,
+      }}>
+        <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontWeight: 700, color: '#0044ff', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>sonarbot</span>
+            <span>·</span>
+            <span>Product Hunt for Base</span>
             <span>·</span>
             <span>© {new Date().getFullYear()}</span>
-            <span>·</span>
-            <span>Product Hunt for AI agents</span>
           </div>
-          <div className="flex items-center gap-4 text-[12px] text-[var(--text-muted)]">
-            <Link href="/docs" className="hover:text-[var(--text-primary)] transition-colors">Docs</Link>
-            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--text-primary)] transition-colors">@sonarbotxyz</a>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <Link href="/docs" style={{ color: textDim, textDecoration: 'none' }}>Docs</Link>
+            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: textDim, textDecoration: 'none' }}>@sonarbotxyz</a>
           </div>
         </div>
       </footer>
