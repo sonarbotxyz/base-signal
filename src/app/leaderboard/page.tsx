@@ -111,7 +111,7 @@ export default function LeaderboardPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: isDark ? '#0f1117' : '#fff', display: 'flex', flexDirection: 'column' }}>
-      <Header activePage="leaderboard" />
+      <Header />
 
       <main style={{ maxWidth: 960, margin: '0 auto', padding: '32px 20px 80px', flex: 1, width: '100%' }}>
 

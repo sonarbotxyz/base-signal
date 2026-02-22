@@ -1,35 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  --accent: #0044ff;
-  --accent-light: #3366ff;
+  --accent: #0044FF;
+  --accent-hover: #0036CC;
   --accent-glow: rgba(0, 68, 255, 0.08);
-  --bg: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-card: #ffffff;
-  --border: #e5e7eb;
-  --text: #111827;
-  --text-muted: #6b7280;
-  --text-dim: #9ca3af;
-  --upvote-active-bg: #eff6ff;
-  --upvote-active-border: #0044ff;
-  --upvote-active-text: #0044ff;
+  --bg: #F8FAFC;
+  --bg-secondary: #F1F5F9;
+  --bg-card: #FFFFFF;
+  --border: #E2E8F0;
+  --text: #0F172A;
+  --text-muted: #475569;
+  --text-dim: #94A3B8;
+  --upvote-active-bg: #E6EDFF;
+  --upvote-active-border: #0044FF;
+  --upvote-active-text: #0044FF;
+  --status-live: #10B981;
+  --status-live-bg: rgba(16, 185, 129, 0.15);
+  --status-upcoming: #F59E0B;
+  --status-upcoming-bg: rgba(245, 158, 11, 0.15);
+  --status-featured: #8B5CF6;
+  --status-featured-bg: rgba(139, 92, 246, 0.15);
 }
 
 [data-theme="dark"] {
-  --accent: #4d7cff;
-  --accent-light: #6699ff;
-  --accent-glow: rgba(77, 124, 255, 0.1);
-  --bg: #0f1117;
-  --bg-secondary: #161b27;
-  --bg-card: #1a2235;
-  --border: #232d3f;
-  --text: #f1f5f9;
-  --text-muted: #8892a4;
-  --text-dim: #4a5568;
-  --upvote-active-bg: rgba(77, 124, 255, 0.12);
-  --upvote-active-border: #4d7cff;
-  --upvote-active-text: #4d7cff;
+  --accent: #0044FF;
+  --accent-hover: #0036CC;
+  --accent-glow: rgba(0, 68, 255, 0.1);
+  --bg: #0B0F19;
+  --bg-secondary: #1E2638;
+  --bg-card: #151B2B;
+  --border: #2D3748;
+  --text: #F8FAFC;
+  --text-muted: #94A3B8;
+  --text-dim: #475569;
+  --upvote-active-bg: rgba(0, 68, 255, 0.15);
+  --upvote-active-border: #0044FF;
+  --upvote-active-text: #6690FF;
+  --status-live: #10B981;
+  --status-live-bg: rgba(16, 185, 129, 0.15);
+  --status-upcoming: #F59E0B;
+  --status-upcoming-bg: rgba(245, 158, 11, 0.15);
+  --status-featured: #8B5CF6;
+  --status-featured-bg: rgba(139, 92, 246, 0.15);
 }
 
 html, body {
@@ -41,7 +53,7 @@ body {
   color: var(--text);
   margin: 0;
   -webkit-font-smoothing: antialiased;
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -67,9 +79,9 @@ a { color: inherit; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  min-height: 56px;
-  border-radius: 10px;
+  width: 56px;
+  min-height: 64px;
+  border-radius: 12px;
   border: 1.5px solid var(--border);
   background: transparent;
   color: var(--text-muted);
@@ -158,6 +170,59 @@ a { color: inherit; }
   background: var(--bg-secondary);
   color: var(--text);
   font-weight: 600;
+}
+
+.status-badge-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--status-live-bg);
+  color: var(--status-live);
+  white-space: nowrap;
+}
+
+.status-badge-upcoming {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--status-upcoming-bg);
+  color: var(--status-upcoming);
+  white-space: nowrap;
+}
+
+.status-badge-featured {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--status-featured-bg);
+  color: var(--status-featured);
+  white-space: nowrap;
+}
+
+.countdown-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--status-upcoming-bg);
+  color: var(--status-upcoming);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
 }
 
 ::-webkit-scrollbar { width: 6px; }

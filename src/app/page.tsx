@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
 import Header from '@/components/Header';
@@ -15,6 +15,15 @@ interface Project {
   twitter_handle?: string;
   category: string;
   upvotes: number;
+}
+
+interface UpcomingProject {
+  id: string;
+  name: string;
+  tagline: string;
+  logo_url?: string;
+  category: string;
+  scheduled_for: string;
 }
 
 interface SponsoredSpot {
@@ -44,8 +53,28 @@ const CATEGORY_LABELS: Record<string, string> = {
   consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
 };
 
+function UpcomingCountdown({ target }: { target: string }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const diff = new Date(target).getTime() - now;
+  if (diff <= 0) return <span className="status-badge-live">Live</span>;
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (days > 0) return <span className="countdown-badge">{days}d {hours}h</span>;
+  return <span className="countdown-badge">{hours}h {mins}m</span>;
+}
+
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [upcoming, setUpcoming] = useState<UpcomingProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
   const [voting, setVoting] = useState<Set<string>>(new Set());
@@ -61,14 +90,14 @@ export default function Home() {
   const { theme } = useTheme();
 
   const isDark = theme === 'dark';
-  const border = isDark ? '#232d3f' : '#e5e7eb';
-  const textMuted = isDark ? '#8892a4' : '#6b7280';
-  const textDim = isDark ? '#4a5568' : '#9ca3af';
-  const textMain = isDark ? '#f1f5f9' : '#111827';
-  const bgSecondary = isDark ? '#161b27' : '#f9fafb';
-  const bgCard = isDark ? '#1a2235' : '#ffffff';
+  const border = isDark ? '#2D3748' : '#E2E8F0';
+  const textMuted = isDark ? '#94A3B8' : '#475569';
+  const textDim = isDark ? '#475569' : '#94A3B8';
+  const textMain = isDark ? '#F8FAFC' : '#0F172A';
+  const bgSecondary = isDark ? '#1E2638' : '#F1F5F9';
+  const cardBg = isDark ? '#151B2B' : '#FFFFFF';
 
-  useEffect(() => { fetchProjects(); fetchSponsoredBanner(); }, [sort]);
+  useEffect(() => { fetchProjects(); fetchSponsoredBanner(); fetchUpcoming(); }, [sort]);
 
   const fetchProjects = async () => {
     setLoading(true);
@@ -84,6 +113,14 @@ export default function Home() {
       }
     } catch (e) { console.error(e); }
     setLoading(false);
+  };
+
+  const fetchUpcoming = async () => {
+    try {
+      const res = await fetch('/api/projects?status=upcoming&sort=launch_date&limit=6');
+      const data = await res.json();
+      setUpcoming(data.projects || []);
+    } catch {}
   };
 
   const fetchSponsoredBanner = async () => {
@@ -138,13 +175,13 @@ export default function Home() {
         <div style={{ width: 24, textAlign: 'right', flexShrink: 0 }} />
         <div style={{
           width: 56, height: 56, borderRadius: 12, flexShrink: 0,
-          background: isDark ? 'rgba(77,124,255,0.12)' : 'rgba(0,68,255,0.06)',
-          border: `1px solid ${isDark ? 'rgba(77,124,255,0.2)' : 'rgba(0,68,255,0.12)'}`,
+          background: isDark ? 'rgba(0,68,255,0.1)' : 'rgba(0,68,255,0.06)',
+          border: `1px solid ${isDark ? 'rgba(0,68,255,0.2)' : 'rgba(0,68,255,0.12)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           {spot?.image_url
             ? <img src={spot.image_url} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover' }} />
-            : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0044ff" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
+            : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0044FF" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
           }
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -167,9 +204,9 @@ export default function Home() {
           target={spot ? '_blank' : undefined}
           rel="noopener noreferrer"
           style={{
-            flexShrink: 0, padding: '6px 14px', borderRadius: 6,
-            border: `1px solid ${isDark ? 'rgba(77,124,255,0.3)' : 'rgba(0,68,255,0.25)'}`,
-            color: '#0044ff', fontSize: 13, fontWeight: 600,
+            flexShrink: 0, padding: '6px 14px', borderRadius: 8,
+            border: `1px solid ${isDark ? 'rgba(0,68,255,0.3)' : 'rgba(0,68,255,0.25)'}`,
+            color: '#0044FF', fontSize: 13, fontWeight: 600,
             textDecoration: 'none', whiteSpace: 'nowrap',
           }}
         >
@@ -180,10 +217,13 @@ export default function Home() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: isDark ? '#0f1117' : '#fff', display: 'flex', flexDirection: 'column' }}>
-      <Header activePage="home" />
+    <div style={{ minHeight: '100vh', background: isDark ? '#0B0F19' : '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
+      <Header />
 
-      <main style={{ maxWidth: 960, margin: '0 auto', padding: '24px 20px 80px', flex: 1, width: '100%' }}>
+      <main style={{ maxWidth: 720, margin: '0 auto', padding: '24px 20px 80px', flex: 1, width: '100%' }}>
+
+        {/* Section title */}
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: textMain, margin: '0 0 16px' }}>Today on Base</h1>
 
         {/* Category filters + sort */}
         <div style={{
@@ -218,13 +258,19 @@ export default function Home() {
                   <div style={{ width: 140, height: 14, borderRadius: 4, background: bgSecondary, marginBottom: 8 }} />
                   <div style={{ width: 220, height: 12, borderRadius: 4, background: bgSecondary }} />
                 </div>
-                <div style={{ width: 52, height: 56, borderRadius: 10, background: bgSecondary, flexShrink: 0 }} />
+                <div style={{ width: 56, height: 64, borderRadius: 12, background: bgSecondary, flexShrink: 0 }} />
               </div>
             ))
           ) : filteredProjects.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: textMuted }}>
               <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 4, color: textMain }}>No products yet</p>
-              <p style={{ fontSize: 14, margin: 0 }}>Submit via the API — check Docs to get started</p>
+              <p style={{ fontSize: 14, margin: '0 0 20px' }}>Be the first to launch on Base today.</p>
+              <Link href="/submit" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10,
+                background: '#0044FF', color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none',
+              }}>
+                Launch on sonarbot
+              </Link>
             </div>
           ) : (
             filteredProjects.map((p, i) => {
@@ -307,6 +353,81 @@ export default function Home() {
             })
           )}
         </div>
+
+        {/* Incoming Signals section */}
+        {upcoming.length > 0 && (
+          <section style={{ marginTop: 48 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B', boxShadow: '0 0 8px rgba(245,158,11,0.5)' }} />
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: textMain, margin: 0 }}>Incoming Signals</h2>
+              </div>
+              <Link href="/upcoming" style={{ fontSize: 13, fontWeight: 600, color: '#0044FF', textDecoration: 'none' }}>
+                View all →
+              </Link>
+            </div>
+
+            <div style={{
+              display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8,
+              scrollbarWidth: 'none',
+            }}>
+              {upcoming.map((p, i) => {
+                const hue = hueFrom(p.name);
+                return (
+                  <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
+                    <div className="fade-in" style={{
+                      animationDelay: `${i * 0.06}s`,
+                      width: 240, padding: 16, borderRadius: 14,
+                      border: `1px solid ${border}`, background: cardBg,
+                      transition: 'border-color 0.15s ease',
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(245,158,11,0.4)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = border; }}
+                    >
+                      <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                        {p.logo_url ? (
+                          <img src={p.logo_url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', border: `1px solid ${border}` }} />
+                        ) : (
+                          <div style={{
+                            width: 36, height: 36, borderRadius: 8,
+                            background: isDark
+                              ? `linear-gradient(135deg, hsl(${hue},40%,14%), hsl(${hue},30%,20%))`
+                              : `linear-gradient(135deg, hsl(${hue},60%,92%), hsl(${hue},50%,85%))`,
+                            border: `1px solid ${border}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <span style={{ fontSize: 14, fontWeight: 700, color: isDark ? `hsl(${hue},60%,60%)` : `hsl(${hue},60%,40%)` }}>
+                              {p.name[0]}
+                            </span>
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h3 style={{ fontSize: 14, fontWeight: 600, color: textMain, margin: '0 0 2px', lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</h3>
+                          <p style={{ fontSize: 12, color: textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <UpcomingCountdown target={p.scheduled_for} />
+                        <button
+                          onClick={e => { e.preventDefault(); e.stopPropagation(); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 4,
+                            padding: '4px 8px', borderRadius: 6,
+                            border: `1px solid ${border}`, background: 'transparent',
+                            color: textDim, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                          }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+                          Notify
+                        </button>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        )}
       </main>
 
       <footer style={{
@@ -316,11 +437,11 @@ export default function Home() {
         fontSize: 13,
         color: textDim,
       }}>
-        <div style={{ maxWidth: 960, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+        <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontWeight: 700, color: '#0044ff', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>sonarbot</span>
+            <span style={{ fontWeight: 700, color: '#0044FF', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>sonarbot</span>
             <span>·</span>
-            <span>Product Hunt for Base</span>
+            <span>The launchpad for Base</span>
             <span>·</span>
             <span>© {new Date().getFullYear()}</span>
           </div>

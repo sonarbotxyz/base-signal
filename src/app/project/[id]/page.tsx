@@ -175,8 +175,8 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const descTruncated = project.description && project.description.length > 300;
 
   return (
-    <div style={{ minHeight: '100vh', background: bg, fontFamily: "'Outfit', -apple-system, sans-serif" }}>
-      <Header activePage="" />
+    <div style={{ minHeight: '100vh', background: bg, fontFamily: "'Inter', -apple-system, sans-serif" }}>
+      <Header />
 
       <main style={{ maxWidth: 720, margin: '0 auto', padding: '24px 20px 80px' }}>
 
