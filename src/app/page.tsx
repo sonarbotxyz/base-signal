@@ -32,7 +32,6 @@ export default function Home() {
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [showSubModal, setShowSubModal] = useState(false);
   const [rateLimitMsg, setRateLimitMsg] = useState('');
-  
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortBy, setSortBy] = useState<'top' | 'new'>('top');
 
@@ -88,52 +87,43 @@ export default function Home() {
   };
 
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
-
   const filteredProjects = projects.filter(p => activeCategory === 'All' || p.category === CATEGORY_MAP[activeCategory]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--background)', color: 'var(--foreground)' }}>
       <Header />
 
       <main className="max-w-5xl mx-auto px-5 pt-16 pb-24 w-full flex-1">
         
-        {/* Hero Section */}
-        <div className="text-center mb-16 animate-[fadeInUp_0.5s_ease-out]">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+        {/* Hero */}
+        <div className="text-center mb-16 animate-fade-in-up">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tighter">
             Discover what's launching on Base
           </h1>
-          <p className="text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
+          <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--muted-foreground)' }}>
             The launchpad for the next generation of onchain products. AI agents, DeFi protocols, and infrastructure.
           </p>
         </div>
 
-        {/* Filters & Sorting */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 animate-[fadeInUp_0.6s_ease-out]">
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto scrollbar-hide">
             {CATEGORIES.map(c => (
-              <button 
-                key={c} 
-                onClick={() => setActiveCategory(c)} 
-                className={`filter-btn ${activeCategory === c ? 'active' : ''}`}
-              >
+              <button key={c} onClick={() => setActiveCategory(c)} className={`filter-btn ${activeCategory === c ? 'active' : ''}`}>
                 {c}
               </button>
             ))}
           </div>
           
-          <div className="flex bg-[var(--bg-card)] rounded-full p-1 border border-[var(--border-primary)] flex-shrink-0 backdrop-blur-xl">
-            <button 
-              onClick={() => setSortBy('top')} 
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${sortBy === 'top' ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-            >
-              Top
-            </button>
-            <button 
-              onClick={() => setSortBy('new')} 
-              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${sortBy === 'new' ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
-            >
-              New
-            </button>
+          <div className="flex rounded-full p-1 flex-shrink-0 backdrop-blur-xl" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+            <button onClick={() => setSortBy('top')}
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150"
+              style={{ background: sortBy === 'top' ? 'var(--foreground)' : 'transparent', color: sortBy === 'top' ? 'var(--background)' : 'var(--muted-foreground)' }}
+            >Top</button>
+            <button onClick={() => setSortBy('new')}
+              className="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-150"
+              style={{ background: sortBy === 'new' ? 'var(--foreground)' : 'transparent', color: sortBy === 'new' ? 'var(--background)' : 'var(--muted-foreground)' }}
+            >New</button>
           </div>
         </div>
 
@@ -142,7 +132,7 @@ export default function Home() {
           {loading ? (
             <div>
               {[1,2,3,4,5].map(i => (
-                <div key={i} className="flex items-center gap-4 p-5 border-b border-[var(--border-primary)] last:border-0">
+                <div key={i} className="flex items-center gap-4 p-5" style={{ borderBottom: '1px solid var(--border)' }}>
                   <div className="w-14 h-14 rounded-xl shimmer" />
                   <div className="flex-1">
                     <div className="w-32 h-5 rounded shimmer mb-2" />
@@ -154,9 +144,9 @@ export default function Home() {
             </div>
           ) : filteredProjects.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[var(--border-primary)] flex items-center justify-center mb-4 text-2xl">🚀</div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 text-2xl" style={{ background: 'var(--border)' }}>🚀</div>
               <h3 className="text-lg font-semibold mb-1">No products found</h3>
-              <p className="text-[var(--text-muted)] text-sm">Be the first to launch in this category.</p>
+              <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>Be the first to launch in this category.</p>
             </div>
           ) : (
             <div>
@@ -166,13 +156,16 @@ export default function Home() {
                 const cc = commentCounts[p.id] || 0;
                 
                 return (
-                  <div key={p.id} className="product-row" style={{ animationDelay: `${i * 0.05}s` }}>
+                  <div key={p.id} className="product-row animate-fade-in-up" style={{ animationDelay: `${i * 50}ms` }}>
                     <Link href={`/project/${p.id}`} className="flex-shrink-0">
                       {p.logo_url ? (
-                        <img src={p.logo_url} alt="" className="w-14 h-14 rounded-xl object-cover border border-[var(--border-primary)] shadow-sm" />
+                        <img src={p.logo_url} alt="" className="w-14 h-14 rounded-xl object-cover shadow-sm" style={{ border: '1px solid var(--border)' }} />
                       ) : (
-                        <div className="w-14 h-14 rounded-xl border border-[var(--border-primary)] shadow-sm flex items-center justify-center"
-                             style={{ background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 15%), hsl(${hue}, 30%, 20%))` : `linear-gradient(135deg, hsl(${hue}, 60%, 90%), hsl(${hue}, 50%, 85%))` }}>
+                        <div className="w-14 h-14 rounded-xl shadow-sm flex items-center justify-center"
+                          style={{
+                            border: '1px solid var(--border)',
+                            background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 15%), hsl(${hue}, 30%, 20%))` : `linear-gradient(135deg, hsl(${hue}, 60%, 90%), hsl(${hue}, 50%, 85%))`
+                          }}>
                           <span className="text-xl font-bold" style={{ color: theme === 'dark' ? `hsl(${hue}, 60%, 65%)` : `hsl(${hue}, 60%, 40%)` }}>
                             {p.name[0]}
                           </span>
@@ -182,29 +175,26 @@ export default function Home() {
                     
                     <div className="flex-1 min-w-0">
                       <Link href={`/project/${p.id}`} className="block group">
-                        <h2 className="text-base font-semibold text-[var(--text-primary)] mb-1 flex items-center gap-2 flex-wrap">
-                          <span className="group-hover:text-[var(--accent)] transition-colors">{p.name}</span>
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-[var(--border-primary)] bg-[var(--bg-primary)] text-[var(--text-muted)] tracking-wide">
+                        <h2 className="text-base font-semibold mb-1 flex items-center gap-2 flex-wrap">
+                          <span className="group-hover:opacity-80 transition-opacity">{p.name}</span>
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full" style={{ border: '1px solid var(--border)', background: 'var(--background)', color: 'var(--muted-foreground)' }}>
                             {REVERSE_CATEGORY_MAP[p.category] || p.category}
                           </span>
                         </h2>
                       </Link>
-                      <p className="text-sm text-[var(--text-muted)] truncate">{p.tagline}</p>
+                      <p className="text-sm truncate" style={{ color: 'var(--muted-foreground)' }}>{p.tagline}</p>
                     </div>
 
                     <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-                      <Link href={`/project/${p.id}`} className="flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors px-2">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <Link href={`/project/${p.id}`} className="flex items-center gap-1.5 px-2 transition-colors" style={{ color: 'var(--muted-foreground)' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
                         <span className="text-sm font-semibold">{cc}</span>
                       </Link>
                       
-                      <button 
-                        onClick={() => handleUpvote(p.id)}
-                        className={`upvote-btn ${isUpvoted ? 'active' : ''}`}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="mb-1">
+                      <button onClick={() => handleUpvote(p.id)} className={`upvote-btn ${isUpvoted ? 'active' : ''}`}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="mb-1">
                           <polyline points="18 15 12 9 6 15" />
                         </svg>
                         <span className="text-sm font-bold">{p.upvotes}</span>
@@ -217,11 +207,11 @@ export default function Home() {
           )}
         </div>
 
-        {/* Upcoming Section */}
-        <div className="mt-16 animate-[fadeInUp_0.8s_ease-out]">
+        {/* Upcoming */}
+        <div className="mt-16 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
           <div className="flex items-center gap-3 mb-6">
             <h2 className="text-2xl font-bold tracking-tight">Upcoming Launches</h2>
-            <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-[pulse-glow_2s_infinite]"></div>
+            <div className="w-2 h-2 rounded-full" style={{ background: 'var(--primary)', boxShadow: '0 0 8px var(--primary)' }} />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -232,48 +222,42 @@ export default function Home() {
             ].map((item, idx) => (
               <div key={idx} className="glass-card glass-card-hover p-5 flex flex-col">
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-2xl shadow-sm">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl shadow-sm" style={{ background: 'var(--background)', border: '1px solid var(--border)' }}>
                     {item.icon}
                   </div>
-                  <div className="px-2.5 py-1 rounded-md bg-[var(--accent-glow)] border border-[var(--accent)] border-opacity-20 text-[var(--accent)] text-xs font-bold tracking-wide uppercase flex items-center gap-1.5">
+                  <div className="px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase flex items-center gap-1.5"
+                    style={{ background: 'color-mix(in oklch, var(--primary) 15%, transparent)', border: '1px solid color-mix(in oklch, var(--primary) 30%, transparent)', color: 'var(--primary)' }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     {item.days} Days
                   </div>
                 </div>
                 <h3 className="text-lg font-semibold mb-1.5">{item.title}</h3>
-                <p className="text-sm text-[var(--text-muted)] flex-1">{item.desc}</p>
-                <div className="mt-4 pt-4 border-t border-[var(--border-primary)]">
-                  <button className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors flex items-center gap-1">
-                    Notify me <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                <p className="text-sm flex-1" style={{ color: 'var(--muted-foreground)' }}>{item.desc}</p>
+                <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+                  <button className="text-sm font-medium flex items-center gap-1 transition-colors" style={{ color: 'var(--foreground)' }}>
+                    Notify me <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                   </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
-
       </main>
 
-      {/* Footer */}
-      <footer className="border-t border-[var(--border-primary)] bg-[var(--bg-card)] mt-auto backdrop-blur-xl">
+      <footer style={{ borderTop: '1px solid var(--border)', background: 'var(--card)' }} className="mt-auto backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-5 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-            <span className="font-bold text-[var(--accent)]">sonarbot</span>
+          <div className="flex items-center gap-2 text-sm" style={{ color: 'var(--muted-foreground)' }}>
+            <span className="font-bold" style={{ color: 'var(--primary)' }}>sonarbot</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
           <div className="flex items-center gap-6 text-sm">
-            <Link href="/docs" className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Docs</Link>
-            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Twitter</a>
+            <Link href="/docs" style={{ color: 'var(--muted-foreground)' }}>Docs</Link>
+            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--muted-foreground)' }}>Twitter</a>
           </div>
         </div>
       </footer>
 
-      <SubscriptionModal
-        isOpen={showSubModal}
-        onClose={() => setShowSubModal(false)}
-        limitMessage={rateLimitMsg}
-        getAccessToken={getAccessToken}
-      />
+      <SubscriptionModal isOpen={showSubModal} onClose={() => setShowSubModal(false)} limitMessage={rateLimitMsg} getAccessToken={getAccessToken} />
     </div>
   );
 }
