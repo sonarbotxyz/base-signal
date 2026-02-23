@@ -90,12 +90,6 @@ export default function Home() {
   const { theme } = useTheme();
 
   const isDark = theme === 'dark';
-  const border = isDark ? '#2D3748' : '#E2E8F0';
-  const textMuted = isDark ? '#94A3B8' : '#475569';
-  const textDim = isDark ? '#475569' : '#94A3B8';
-  const textMain = isDark ? '#F8FAFC' : '#0F172A';
-  const bgSecondary = isDark ? '#1E2638' : '#F1F5F9';
-  const cardBg = isDark ? '#151B2B' : '#FFFFFF';
 
   useEffect(() => { fetchProjects(); fetchSponsoredBanner(); fetchUpcoming(); }, [sort]);
 
@@ -168,34 +162,31 @@ export default function Home() {
   const renderSponsor = () => {
     const spot = sponsoredBanner;
     return (
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 14,
-        padding: '14px 8px', borderBottom: `1px solid ${border}`,
-      }}>
-        <div style={{ width: 24, textAlign: 'right', flexShrink: 0 }} />
+      <div className="product-row" style={{ borderColor: 'var(--border)', opacity: 0.85 }}>
+        <div className="rank" />
         <div style={{
-          width: 56, height: 56, borderRadius: 12, flexShrink: 0,
-          background: isDark ? 'rgba(0,68,255,0.1)' : 'rgba(0,68,255,0.06)',
-          border: `1px solid ${isDark ? 'rgba(0,68,255,0.2)' : 'rgba(0,68,255,0.12)'}`,
+          width: 56, height: 56, borderRadius: 14, flexShrink: 0,
+          background: 'var(--accent-glow)',
+          border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           {spot?.image_url
-            ? <img src={spot.image_url} alt="" style={{ width: 56, height: 56, borderRadius: 12, objectFit: 'cover' }} />
-            : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0044FF" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
+            ? <img src={spot.image_url} alt="" className="logo" />
+            : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" /></svg>
           }
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: textMain }}>
+        <div className="content" style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)', margin: 0, lineHeight: 1.3 }}>
               {spot ? spot.title : 'Promote your product here'}
-            </span>
+            </h2>
             <span style={{
-              fontSize: 10, fontWeight: 700, color: textDim,
+              fontSize: 10, fontWeight: 700, color: 'var(--text-dim)',
               padding: '1px 6px', borderRadius: 4,
-              border: `1px solid ${border}`, letterSpacing: 0.5,
+              border: '1px solid var(--border)', letterSpacing: 0.5,
             }}>AD</span>
           </div>
-          <p style={{ fontSize: 13, color: textMuted, margin: 0 }}>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {spot ? spot.description : 'Reach Base ecosystem builders. Available via API or DM @sonarbotxyz'}
           </p>
         </div>
@@ -203,12 +194,8 @@ export default function Home() {
           href={spot ? spot.url : '/docs'}
           target={spot ? '_blank' : undefined}
           rel="noopener noreferrer"
-          style={{
-            flexShrink: 0, padding: '6px 14px', borderRadius: 8,
-            border: `1px solid ${isDark ? 'rgba(0,68,255,0.3)' : 'rgba(0,68,255,0.25)'}`,
-            color: '#0044FF', fontSize: 13, fontWeight: 600,
-            textDecoration: 'none', whiteSpace: 'nowrap',
-          }}
+          className="btn-gradient"
+          style={{ padding: '6px 14px', fontSize: 13, borderRadius: 8, textDecoration: 'none' }}
         >
           {spot ? 'Visit' : 'Learn more'}
         </a>
@@ -217,58 +204,63 @@ export default function Home() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: isDark ? '#0B0F19' : '#F8FAFC', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Header />
 
-      <main style={{ maxWidth: 720, margin: '0 auto', padding: '24px 20px 80px', flex: 1, width: '100%' }}>
+      <main className="main-container" style={{ paddingTop: 100 }}>
 
-        {/* Section title */}
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: textMain, margin: '0 0 16px' }}>Today on Base</h1>
+        {/* Hero heading */}
+        <h1 style={{
+          fontSize: 28, fontWeight: 800, margin: '0 0 24px', lineHeight: 1.2,
+        }}>
+          <span style={{
+            background: 'var(--accent-gradient)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}>Today on Base</span>
+        </h1>
 
         {/* Category filters + sort */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          gap: 12, marginBottom: 20, flexWrap: 'wrap',
+          gap: 12, marginBottom: 24, flexWrap: 'wrap',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             {CATEGORIES.map(cat => (
               <button
                 key={cat.key}
                 onClick={() => setActiveCategory(cat.key)}
-                className={`filter-btn ${activeCategory === cat.key ? 'active' : ''}`}
+                className={`filter-btn${activeCategory === cat.key ? ' active' : ''}`}
               >
                 {cat.label}
               </button>
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <button onClick={() => setSort('upvotes')} className={`sort-btn ${sort === 'upvotes' ? 'active' : ''}`}>Top</button>
-            <button onClick={() => setSort('newest')} className={`sort-btn ${sort === 'newest' ? 'active' : ''}`}>New</button>
+            <button onClick={() => setSort('upvotes')} className={`sort-btn${sort === 'upvotes' ? ' active' : ''}`}>Top</button>
+            <button onClick={() => setSort('newest')} className={`sort-btn${sort === 'newest' ? ' active' : ''}`}>New</button>
           </div>
         </div>
 
         {/* Feed */}
-        <div style={{ borderTop: `1px solid ${border}` }}>
+        <div>
           {loading ? (
-            [1,2,3,4,5].map(i => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 8px', borderBottom: `1px solid ${border}` }}>
-                <div style={{ width: 24 }} />
-                <div style={{ width: 56, height: 56, borderRadius: 12, background: bgSecondary, flexShrink: 0 }} />
+            [1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="product-row fade-in" style={{ animationDelay: `${i * 0.08}s` }}>
+                <div className="rank"><div className="shimmer" style={{ width: 20, height: 14, borderRadius: 4 }} /></div>
+                <div className="shimmer" style={{ width: 56, height: 56, borderRadius: 14, flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ width: 140, height: 14, borderRadius: 4, background: bgSecondary, marginBottom: 8 }} />
-                  <div style={{ width: 220, height: 12, borderRadius: 4, background: bgSecondary }} />
+                  <div className="shimmer" style={{ width: 140, height: 16, borderRadius: 6, marginBottom: 8 }} />
+                  <div className="shimmer" style={{ width: 220, height: 14, borderRadius: 6 }} />
                 </div>
-                <div style={{ width: 56, height: 64, borderRadius: 12, background: bgSecondary, flexShrink: 0 }} />
+                <div className="shimmer" style={{ width: 60, height: 68, borderRadius: 14, flexShrink: 0 }} />
               </div>
             ))
           ) : filteredProjects.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 0', color: textMuted }}>
-              <p style={{ fontSize: 16, fontWeight: 600, marginBottom: 4, color: textMain }}>No products yet</p>
-              <p style={{ fontSize: 14, margin: '0 0 20px' }}>Be the first to launch on Base today.</p>
-              <Link href="/submit" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 10,
-                background: '#0044FF', color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none',
-              }}>
+            <div style={{ textAlign: 'center', padding: '80px 0' }}>
+              <p style={{ fontSize: 18, fontWeight: 700, marginBottom: 6, color: 'var(--text)' }}>No products yet</p>
+              <p style={{ fontSize: 14, color: 'var(--text-muted)', margin: '0 0 24px' }}>Be the first to launch on Base today.</p>
+              <Link href="/submit" className="btn-gradient">
                 Launch on sonarbot
               </Link>
             </div>
@@ -281,27 +273,19 @@ export default function Home() {
                 <div key={p.id}>
                   <div className="product-row fade-in" style={{ animationDelay: `${i * 0.04}s` }}>
                     {/* Rank */}
-                    <div style={{ width: 24, textAlign: 'right', flexShrink: 0, fontSize: 13, fontWeight: 500, color: textDim }}>
-                      {i + 1}
-                    </div>
+                    <div className="rank">{i + 1}</div>
 
                     {/* Logo */}
                     <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
                       {p.logo_url ? (
-                        <img src={p.logo_url} alt="" style={{
-                          width: 56, height: 56, borderRadius: 12, objectFit: 'cover',
-                          border: `1px solid ${border}`,
-                        }} />
+                        <img src={p.logo_url} alt="" className="logo" />
                       ) : (
-                        <div style={{
-                          width: 56, height: 56, borderRadius: 12,
+                        <div className="logo-placeholder" style={{
                           background: isDark
                             ? `linear-gradient(135deg, hsl(${hue},40%,14%), hsl(${hue},30%,20%))`
                             : `linear-gradient(135deg, hsl(${hue},60%,92%), hsl(${hue},50%,85%))`,
-                          border: `1px solid ${border}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
                         }}>
-                          <span style={{ fontSize: 22, fontWeight: 700, color: isDark ? `hsl(${hue},60%,60%)` : `hsl(${hue},60%,40%)` }}>
+                          <span style={{ color: isDark ? `hsl(${hue},60%,60%)` : `hsl(${hue},60%,40%)` }}>
                             {p.name[0]}
                           </span>
                         </div>
@@ -309,15 +293,11 @@ export default function Home() {
                     </Link>
 
                     {/* Content */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="content">
                       <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                        <h2 style={{ fontSize: 15, fontWeight: 600, color: textMain, margin: '0 0 3px', lineHeight: 1.3 }}>
-                          {p.name}
-                        </h2>
+                        <h2>{p.name}</h2>
                       </Link>
-                      <p style={{ fontSize: 13, color: textMuted, margin: '0 0 7px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {p.tagline}
-                      </p>
+                      <p>{p.tagline}</p>
                       <span className="category-pill">{CATEGORY_LABELS[p.category] || p.category}</span>
                     </div>
 
@@ -332,7 +312,7 @@ export default function Home() {
                     {/* Upvote */}
                     <button
                       onClick={(e) => { e.stopPropagation(); handleUpvote(p.id); }}
-                      className={`upvote-btn ${isUpvoted ? 'active' : ''}`}
+                      className={`upvote-btn${isUpvoted ? ' active' : ''}`}
                       disabled={voting.has(p.id)}
                     >
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
@@ -352,47 +332,44 @@ export default function Home() {
 
         {/* Incoming Signals section */}
         {upcoming.length > 0 && (
-          <section style={{ marginTop: 48 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#F59E0B', boxShadow: '0 0 8px rgba(245,158,11,0.5)' }} />
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', margin: 0 }}>Incoming Signals</h2>
+          <section style={{ marginTop: 56 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{
+                  width: 10, height: 10, borderRadius: '50%',
+                  background: 'var(--status-upcoming)',
+                  animation: 'pulse-glow 2.5s ease-out infinite',
+                  boxShadow: '0 0 8px rgba(245,158,11,0.5)',
+                }} />
+                <h2 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text)', margin: 0 }}>Incoming Signals</h2>
               </div>
-              <Link href="/upcoming" style={{ fontSize: 13, fontWeight: 600, color: '#0044FF', textDecoration: 'none' }}>
-                View all →
+              <Link href="/upcoming" style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
+                View all &rarr;
               </Link>
             </div>
 
             <div style={{
-              display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8,
+              display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 8,
               scrollbarWidth: 'none',
             }}>
               {upcoming.map((p, i) => {
                 const hue = hueFrom(p.name);
                 return (
                   <Link key={p.id} href={`/project/${p.id}`} style={{ textDecoration: 'none', flexShrink: 0 }}>
-                    <div className="fade-in" style={{
-                      animationDelay: `${i * 0.06}s`,
-                      width: 240, padding: 16, borderRadius: 14,
-                      border: '1px solid var(--border)', background: 'var(--bg-card)',
-                      transition: 'border-color 0.15s ease',
-                    }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(245,158,11,0.4)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border)'; }}
-                    >
-                      <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
+                    <div className="upcoming-card fade-in" style={{ animationDelay: `${i * 0.06}s` }}>
+                      <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
                         {p.logo_url ? (
-                          <img src={p.logo_url} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--border)' }} />
+                          <img src={p.logo_url} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', border: '1px solid var(--border)' }} />
                         ) : (
                           <div style={{
-                            width: 36, height: 36, borderRadius: 8,
+                            width: 40, height: 40, borderRadius: 10,
                             background: isDark
                               ? `linear-gradient(135deg, hsl(${hue},40%,14%), hsl(${hue},30%,20%))`
                               : `linear-gradient(135deg, hsl(${hue},60%,92%), hsl(${hue},50%,85%))`,
                             border: '1px solid var(--border)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
-                            <span style={{ fontSize: 14, fontWeight: 700, color: isDark ? `hsl(${hue},60%,60%)` : `hsl(${hue},60%,40%)` }}>
+                            <span style={{ fontSize: 16, fontWeight: 700, color: isDark ? `hsl(${hue},60%,60%)` : `hsl(${hue},60%,40%)` }}>
                               {p.name[0]}
                             </span>
                           </div>
@@ -408,9 +385,10 @@ export default function Home() {
                           onClick={e => { e.preventDefault(); e.stopPropagation(); }}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 4,
-                            padding: '4px 8px', borderRadius: 6,
+                            padding: '4px 10px', borderRadius: 8,
                             border: '1px solid var(--border)', background: 'transparent',
                             color: 'var(--text-dim)', fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                            transition: 'all 0.2s ease',
                           }}
                         >
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
@@ -427,23 +405,28 @@ export default function Home() {
       </main>
 
       <footer style={{
-        borderTop: `1px solid ${border}`,
-        padding: '20px',
+        borderTop: '1px solid var(--border)',
+        padding: 24,
         textAlign: 'center',
         fontSize: 13,
-        color: textDim,
+        color: 'var(--text-dim)',
       }}>
-        <div style={{ maxWidth: 720, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+        <div style={{ maxWidth: 800, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontWeight: 700, color: '#0044FF', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>sonarbot</span>
-            <span>·</span>
+            <span style={{
+              fontWeight: 800, fontFamily: 'var(--font-mono)', fontSize: 12,
+              background: 'var(--accent-gradient)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>sonarbot</span>
+            <span>&middot;</span>
             <span>The launchpad for Base</span>
-            <span>·</span>
-            <span>© {new Date().getFullYear()}</span>
+            <span>&middot;</span>
+            <span>&copy; {new Date().getFullYear()}</span>
           </div>
           <div style={{ display: 'flex', gap: 16 }}>
-            <Link href="/docs" style={{ color: textDim, textDecoration: 'none' }}>Docs</Link>
-            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: textDim, textDecoration: 'none' }}>@sonarbotxyz</a>
+            <Link href="/docs" style={{ color: 'var(--text-dim)' }}>Docs</Link>
+            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--text-dim)' }}>@sonarbotxyz</a>
           </div>
         </div>
       </footer>
