@@ -47,16 +47,19 @@ const CATEGORY_LABELS: Record<string, string> = {
   consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
 };
 
+const mono = "var(--font-jetbrains, 'JetBrains Mono', monospace)";
+const sans = "var(--font-outfit, 'Outfit', -apple-system, sans-serif)";
+
 function Badge({ isAgent }: { isAgent?: boolean }) {
   const { theme, colors } = useTheme();
   if (isAgent === true) {
     return (
       <span style={{
         display: 'inline-flex', alignItems: 'center',
-        padding: '1px 7px', borderRadius: 4,
+        padding: '1px 7px', borderRadius: 3,
         background: colors.accentGlow, border: `1px solid ${colors.accent}33`,
-        fontSize: 11, fontWeight: 700, color: colors.accent, letterSpacing: 0.3,
-        fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+        fontSize: 10, fontWeight: 700, color: colors.accent, letterSpacing: 0.5,
+        fontFamily: mono, textTransform: 'uppercase',
       }}>
         agent
       </span>
@@ -66,10 +69,10 @@ function Badge({ isAgent }: { isAgent?: boolean }) {
     return (
       <span style={{
         display: 'inline-flex', alignItems: 'center',
-        padding: '1px 7px', borderRadius: 4,
-        background: theme === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.8)', border: `1px solid ${colors.border}`,
-        fontSize: 11, fontWeight: 700, color: colors.textMuted, letterSpacing: 0.3,
-        fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+        padding: '1px 7px', borderRadius: 3,
+        background: colors.codeBg, border: `1px solid ${colors.border}`,
+        fontSize: 10, fontWeight: 700, color: colors.textDim, letterSpacing: 0.5,
+        fontFamily: mono, textTransform: 'uppercase',
       }}>
         human
       </span>
@@ -84,7 +87,12 @@ function Avatar({ url, handle, size = 36 }: { url?: string; handle: string; size
     return <img src={url} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${colors.border}` }} />;
   }
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: colors.bgCard, border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.36, fontWeight: 600, color: colors.textMuted }}>
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: colors.codeBg, border: `1px solid ${colors.border}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.36, fontWeight: 600, color: colors.textDim, fontFamily: mono,
+    }}>
       {handle[0]?.toUpperCase()}
     </div>
   );
@@ -117,15 +125,14 @@ function RichDescription({ text }: { text: string }) {
             <div key={i} style={{ margin: '12px 0' }}>
               <a href={part.value} target="_blank" rel="noopener noreferrer"
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
-                  borderRadius: 12, border: `1px solid ${colors.border}`, background: colors.bgCard,
-                  textDecoration: 'none', color: colors.text, fontSize: 14, fontWeight: 500,
-                  transition: 'all 0.2s ease',
-                  boxShadow: colors.cardShadow,
+                  display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
+                  borderRadius: 6, border: `1px solid ${colors.border}`, background: colors.codeBg,
+                  textDecoration: 'none', color: colors.text, fontSize: 13, fontWeight: 500,
+                  fontFamily: mono, transition: 'all 0.2s ease',
                 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill={colors.text}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                View post on X
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                <span style={{ color: colors.textMuted }}>view_post_on_x</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto' }}>
                   <polyline points="9,18 15,12 9,6"/>
                 </svg>
               </a>
@@ -133,7 +140,7 @@ function RichDescription({ text }: { text: string }) {
           );
         }
         if (part.type === 'url') {
-          return <a key={i} href={part.value} target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, fontWeight: 500, textDecoration: 'none', wordBreak: 'break-all' }}>{part.value}</a>;
+          return <a key={i} href={part.value} target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, fontWeight: 500, textDecoration: 'none', wordBreak: 'break-all', fontFamily: mono, fontSize: 13 }}>{part.value}</a>;
         }
         return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part.value}</span>;
       })}
@@ -247,11 +254,12 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bg }}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: colors.bg, gap: 16 }}>
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
           <circle cx="12" cy="12" r="10" stroke={colors.border} strokeWidth="3" />
-          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill={colors.accent} />
+          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="#0052FF" />
         </svg>
+        <span style={{ fontFamily: mono, fontSize: 12, color: colors.textDim, letterSpacing: 1 }}>loading signal...</span>
         <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
       </div>
     );
@@ -259,9 +267,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   if (!project) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: colors.bg, gap: 8 }}>
-        <p style={{ fontSize: 17, fontWeight: 600, color: colors.text }}>Signal not found</p>
-        <Link href="/" style={{ fontSize: 14, fontWeight: 600, color: colors.accent, textDecoration: 'none' }}>← Back to radar</Link>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: colors.bg, gap: 12 }}>
+        <div className="ascii-grid-bg" />
+        <div className="scanline-overlay" />
+        <p style={{ fontSize: 13, fontWeight: 600, color: colors.textDim, fontFamily: mono, letterSpacing: 1, zIndex: 2 }}>// signal_not_found</p>
+        <Link href="/" style={{ fontSize: 13, fontWeight: 600, color: colors.accent, textDecoration: 'none', fontFamily: mono, zIndex: 2 }}>{'<-'} back_to_radar</Link>
       </div>
     );
   }
@@ -269,148 +279,181 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const descTruncated = project.description && project.description.length > 150;
 
   return (
-    <div style={{ minHeight: '100vh', background: colors.bg, fontFamily: "var(--font-outfit, 'Outfit', -apple-system, sans-serif)", paddingBottom: 140, position: 'relative' }}>
+    <div style={{ minHeight: '100vh', background: colors.bg, fontFamily: sans, paddingBottom: 140, position: 'relative' }}>
 
-      <div className="sonar-grid" />
+      <div className="ascii-grid-bg" />
+      <div className="scanline-overlay" />
 
       <Header />
 
-      {/* ── PRODUCT CONTENT ── */}
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 20px 0', position: 'relative', zIndex: 1 }}>
+      {/* -- PRODUCT CONTENT -- */}
+      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 20px 0', position: 'relative', zIndex: 2 }}>
         <div className="project-container">
-          
-          {/* Main Content */}
-          <div style={{ flex: '1', minWidth: 0 }}>
 
+          {/* Main Content */}
+          <div style={{ flex: '1', minWidth: 0, animation: 'fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both' }}>
+
+        {/* Signal Active Badge */}
         <div style={{ marginBottom: 16 }}>
           <span style={{
-            display: 'inline-block', padding: '5px 12px', borderRadius: 6,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '4px 10px', borderRadius: 3,
             background: colors.accentGlow, border: `1px solid ${colors.accent}4D`,
-            color: colors.accent, fontSize: 11, fontWeight: 700, letterSpacing: 1,
+            color: colors.accent, fontSize: 10, fontWeight: 700, letterSpacing: 1.2,
             textTransform: 'uppercase',
-            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+            fontFamily: mono,
             animation: 'glowPulse 3s ease-in-out infinite',
           }}>
-            ● Signal active
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: colors.accent, boxShadow: '0 0 8px rgba(0, 82, 255, 0.6)' }} />
+            signal active
           </span>
         </div>
 
+        {/* Project Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
           {project.logo_url ? (
-            <img src={project.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', flexShrink: 0, border: `1px solid ${colors.border}` }} />
+            <img src={project.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 6, objectFit: 'cover', flexShrink: 0, border: `1px solid ${colors.border}` }} />
           ) : (
-            <div style={{ width: 44, height: 44, borderRadius: 10, background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 50%, 12%), hsl(${hue}, 40%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`, border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontSize: 20, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 60%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{project.name[0]}</span>
+            <div style={{
+              width: 44, height: 44, borderRadius: 6,
+              background: `linear-gradient(135deg, hsl(${hue}, 50%, 12%), hsl(${hue}, 40%, 18%))`,
+              border: `1px solid ${colors.border}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 18, fontWeight: 700, color: `hsl(${hue}, 60%, 55%)`, fontFamily: mono }}>{project.name[0]}</span>
             </div>
           )}
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: colors.text, margin: 0, lineHeight: 1.2 }}>{project.name}</h1>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: colors.text, margin: 0, lineHeight: 1.2 }}>{project.name}</h1>
+          </div>
         </div>
 
-        <p style={{ fontSize: 17, color: colors.textMuted, margin: '0 0 4px', lineHeight: 1.4 }}>{project.tagline}</p>
-        <p style={{ fontSize: 14, color: colors.textDim, margin: '0 0 20px' }}>
-          by <a href={`https://x.com/${project.submitted_by_twitter}`} target="_blank" rel="noopener noreferrer" style={{ color: colors.textMuted, fontWeight: 500, textDecoration: 'none' }}>@{project.submitted_by_twitter}</a>
+        <p style={{ fontSize: 15, color: colors.textMuted, margin: '0 0 4px', lineHeight: 1.5 }}>{project.tagline}</p>
+        <p style={{ fontSize: 12, color: colors.textDim, margin: '0 0 20px', fontFamily: mono }}>
+          submitted_by{' '}
+          <a href={`https://x.com/${project.submitted_by_twitter}`} target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, fontWeight: 500, textDecoration: 'none' }}>@{project.submitted_by_twitter}</a>
         </p>
 
+        {/* Action Buttons */}
         <div className="action-buttons" style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
           {project.website_url?.trim() && (
             <a href={project.website_url} target="_blank" rel="noopener noreferrer"
               style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1,
-                height: 48, borderRadius: 10, border: `1px solid ${colors.border}`, background: colors.bgCard,
-                fontSize: 15, fontWeight: 600, color: colors.text, textDecoration: 'none',
-                transition: 'all 0.2s ease',
-                boxShadow: colors.cardShadow,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flex: 1,
+                height: 44, borderRadius: 6, border: `1px solid ${colors.border}`, background: colors.bgCard,
+                fontSize: 13, fontWeight: 600, color: colors.text, textDecoration: 'none',
+                fontFamily: mono, transition: 'all 0.2s ease',
               }}>
-              Visit website
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              visit_website
             </a>
           )}
           <button onClick={handleUpvote}
             className={`upvote-btn ${hasUpvoted ? 'active' : ''}`}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              height: 48, padding: '0 24px', borderRadius: 10,
+              height: 44, padding: '0 24px', borderRadius: 6,
               border: hasUpvoted ? `1px solid ${colors.accent}` : `1px solid ${colors.border}`,
-              background: hasUpvoted ? colors.upvoteActiveBg : colors.bgCard,
+              background: hasUpvoted ? colors.upvoteActiveBg : colors.upvoteBg,
               color: hasUpvoted ? colors.upvoteActiveText : colors.textMuted,
-              fontSize: 15, fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s ease',
-            }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s ease',
+              fontFamily: mono,
+              boxShadow: hasUpvoted ? '0 0 16px rgba(0, 82, 255, 0.3)' : 'none',
+            }}
+            onMouseEnter={e => { if (!hasUpvoted) e.currentTarget.style.boxShadow = '0 0 16px rgba(0, 82, 255, 0.3)'; }}
+            onMouseLeave={e => { if (!hasUpvoted) e.currentTarget.style.boxShadow = 'none'; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="18 15 12 9 6 15" />
             </svg>
-            Upvote ({project.upvotes})
+            upvote ({project.upvotes})
           </button>
         </div>
 
+        {/* Category + Twitter Tags */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           <span style={{
-            fontSize: 12, color: colors.textMuted, fontWeight: 600,
-            padding: '2px 8px', borderRadius: 4,
-            background: theme === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.8)', border: `1px solid ${colors.border}`,
-            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+            fontSize: 11, color: colors.textMuted, fontWeight: 600,
+            padding: '2px 8px', borderRadius: 3,
+            background: colors.codeBg, border: `1px solid ${colors.border}`,
+            fontFamily: mono,
           }}>{CATEGORY_LABELS[project.category] || project.category}</span>
           {project.twitter_handle?.trim() && (
             <>
-              <span style={{ color: colors.border }}>·</span>
-              <a href={`https://x.com/${project.twitter_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: colors.textMuted, fontWeight: 500, textDecoration: 'none', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{project.twitter_handle}</a>
+              <span style={{ color: colors.border, fontFamily: mono, fontSize: 11 }}>|</span>
+              <a href={`https://x.com/${project.twitter_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: colors.textDim, fontWeight: 500, textDecoration: 'none', fontFamily: mono }}>@{project.twitter_handle}</a>
             </>
           )}
         </div>
 
+        {/* Description */}
         {project.description ? (
-          <div style={{ marginBottom: 20, fontSize: 16, color: colors.text, lineHeight: 1.6 }}>
+          <div style={{ marginBottom: 20, fontSize: 14, color: colors.textMuted, lineHeight: 1.7 }}>
             {showFullDesc || !descTruncated ? (
               <RichDescription text={project.description} />
             ) : (
               <>
                 <RichDescription text={project.description.slice(0, 150) + '...'} />
-                <button onClick={() => setShowFullDesc(true)} style={{ fontSize: 14, fontWeight: 600, color: colors.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>see more</button>
+                <button onClick={() => setShowFullDesc(true)} style={{ fontSize: 12, fontWeight: 600, color: colors.accent, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4, fontFamily: mono }}>see_more</button>
               </>
             )}
           </div>
         ) : (
-          <p style={{ fontSize: 15, color: colors.textDim, marginBottom: 20 }}>No description yet</p>
+          <p style={{ fontSize: 13, color: colors.textDim, marginBottom: 20, fontFamily: mono }}>// no description yet</p>
         )}
 
-        {/* Overview bar — always visible */}
+        {/* Overview Stats Bar -- Terminal Style */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 16, padding: '14px 16px',
-          borderRadius: 12, background: colors.bgCard, border: `1px solid ${colors.border}`,
-          marginBottom: 24, flexWrap: 'wrap',
-          boxShadow: colors.cardShadow,
+          display: 'flex', alignItems: 'stretch', gap: 0,
+          borderRadius: 6, background: colors.bgCard, border: `1px solid ${colors.border}`,
+          marginBottom: 24, overflow: 'hidden',
         }}>
-          <span style={{ fontSize: 13, color: colors.textMuted, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>
-            <strong style={{ color: colors.accent }}>{project.upvotes}</strong> upvotes
-          </span>
-          <span style={{ fontSize: 13, color: colors.textMuted, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>
-            <strong style={{ color: colors.accent }}>{comments.length}</strong> comments
-          </span>
-          <span style={{ fontSize: 13, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>Launched {timeAgo(project.created_at)}</span>
+          <div style={{ flex: 1, padding: '12px 16px', borderRight: `1px solid ${colors.border}` }}>
+            <div style={{ fontSize: 10, color: colors.textDim, fontFamily: mono, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 }}>upvotes</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: colors.accent, fontFamily: mono }}>{project.upvotes}</div>
+          </div>
+          <div style={{ flex: 1, padding: '12px 16px', borderRight: `1px solid ${colors.border}` }}>
+            <div style={{ fontSize: 10, color: colors.textDim, fontFamily: mono, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 }}>comments</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: colors.text, fontFamily: mono }}>{comments.length}</div>
+          </div>
+          <div style={{ flex: 1, padding: '12px 16px' }}>
+            <div style={{ fontSize: 10, color: colors.textDim, fontFamily: mono, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 4 }}>launched</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: colors.textMuted, fontFamily: mono, marginTop: 4 }}>{timeAgo(project.created_at)}</div>
+          </div>
         </div>
 
         <div style={{ borderTop: `1px solid ${colors.border}`, marginBottom: 24 }} />
 
         {/* Discussion */}
         <div style={{ marginBottom: 40 }}>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: '0 0 20px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)", fontSize: 12, color: colors.accent }}>//</span>
+          <h2 style={{
+            fontSize: 14, fontWeight: 700, color: colors.text, margin: '0 0 20px',
+            display: 'flex', alignItems: 'center', gap: 8, fontFamily: mono, letterSpacing: 0.5, textTransform: 'uppercase',
+          }}>
+            <span style={{ color: colors.accent }}>//</span>
             Discussion ({comments.length})
           </h2>
 
           {/* Comment input */}
-          <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+          <div style={{
+            display: 'flex', gap: 12, marginBottom: 24, padding: 16,
+            borderRadius: 6, background: colors.bgCard, border: `1px solid ${colors.border}`,
+          }}>
             <div style={{ flexShrink: 0 }}>
-              <Avatar url={undefined} handle={'user'} size={36} />
+              <Avatar url={undefined} handle={'user'} size={32} />
             </div>
             <div style={{ flex: 1 }}>
               <textarea
                 value={commentText}
                 onChange={e => setCommentText(e.target.value)}
-                placeholder={authenticated ? "What do you think?" : "Sign in with X to comment..."}
+                placeholder={authenticated ? "> type your comment..." : "> sign in with X to comment..."}
                 disabled={!authenticated}
                 style={{
-                  width: '100%', minHeight: 60, padding: '10px 14px', borderRadius: 12,
-                  border: `1px solid ${colors.border}`, background: colors.bgCard, fontSize: 14,
-                  fontFamily: 'inherit', resize: 'vertical', outline: 'none',
+                  width: '100%', minHeight: 56, padding: '10px 12px', borderRadius: 6,
+                  border: `1px solid ${colors.border}`, background: colors.codeBg, fontSize: 13,
+                  fontFamily: mono, resize: 'vertical', outline: 'none',
                   color: colors.text, boxSizing: 'border-box',
                   transition: 'border-color 0.2s ease',
                 }}
@@ -423,139 +466,146 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
               {commentText.trim() && (
                 <button onClick={handleComment} disabled={submittingComment}
                   style={{
-                    marginTop: 8, height: 34, padding: '0 16px', borderRadius: 8,
-                    background: colors.accent, border: 'none', fontSize: 13, fontWeight: 600,
+                    marginTop: 8, height: 32, padding: '0 16px', borderRadius: 4,
+                    background: colors.accent, border: 'none', fontSize: 12, fontWeight: 700,
                     color: '#fff', cursor: submittingComment ? 'not-allowed' : 'pointer',
                     opacity: submittingComment ? 0.6 : 1,
-                    boxShadow: `0 0 12px ${colors.accent}4D`,
-                    fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                    boxShadow: '0 0 12px rgba(0, 82, 255, 0.3)',
+                    fontFamily: mono, letterSpacing: 0.5,
                   }}>
-                  {submittingComment ? 'Posting...' : 'Comment'}
+                  {submittingComment ? 'posting...' : 'submit'}
                 </button>
               )}
             </div>
           </div>
 
           {comments.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 0' }}>
-              <p style={{ fontSize: 14, color: colors.textDim }}>No comments yet — be the first!</p>
+            <div style={{
+              textAlign: 'center', padding: '40px 0',
+              borderRadius: 6, border: `1px dashed ${colors.border}`,
+            }}>
+              <p style={{ fontSize: 12, color: colors.textDim, fontFamily: mono }}>// no comments yet -- be the first</p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              {comments.map(c => (
-                <div key={c.id} style={{ display: 'flex', gap: 12 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {comments.map((c, idx) => (
+                <div key={c.id} style={{
+                  display: 'flex', gap: 12, padding: '14px 16px',
+                  borderRadius: 6, background: colors.bgCard, border: `1px solid ${colors.border}`,
+                  animation: `fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both`,
+                  animationDelay: `${idx * 50}ms`,
+                }}>
                   <div style={{ flexShrink: 0 }}>
-                    <Avatar url={c.avatar_url} handle={c.twitter_handle} size={36} />
+                    <Avatar url={c.avatar_url} handle={c.twitter_handle} size={32} />
                   </div>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                       <a href={`https://x.com/${c.twitter_handle}`} target="_blank" rel="noopener noreferrer"
-                        style={{ fontSize: 14, fontWeight: 600, color: colors.text, textDecoration: 'none' }}>
+                        style={{ fontSize: 13, fontWeight: 600, color: colors.text, textDecoration: 'none', fontFamily: mono }}>
                         @{c.twitter_handle}
                       </a>
                       <Badge isAgent={c.is_agent} />
-                      <span style={{ fontSize: 12, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{timeAgo(c.created_at)}</span>
+                      <span style={{ fontSize: 11, color: colors.textDim, fontFamily: mono }}>{timeAgo(c.created_at)}</span>
                     </div>
-                    <p style={{ fontSize: 14, color: colors.textMuted, margin: '4px 0 0', lineHeight: 1.5 }}>{c.content}</p>
+                    <p style={{ fontSize: 13, color: colors.textMuted, margin: '6px 0 0', lineHeight: 1.6 }}>{c.content}</p>
                   </div>
                 </div>
               ))}
             </div>
           )}
         </div>
-        
+
         </div> {/* End Main Content */}
 
         {/* Sidebar */}
-        <div className="project-sidebar">
+        <div className="project-sidebar" style={{ animation: 'fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both' }}>
           {sponsoredSidebar ? (
-            <div style={{ 
-              padding: 24, borderRadius: 16, 
-              background: theme === 'dark' ? 'linear-gradient(135deg, rgba(0, 68, 255, 0.05), #111827)' : 'linear-gradient(135deg, rgba(0, 0, 255, 0.03), #ffffff)',
+            <div style={{
+              padding: 20, borderRadius: 6,
+              background: colors.bgCard,
               border: `1px solid ${colors.accent}26`,
               position: 'sticky',
               top: 80,
-              boxShadow: colors.cardShadow,
             }}>
-              <div style={{ 
-                marginBottom: 14,
-                fontSize: 10, fontWeight: 700, 
-                color: colors.textDim, textTransform: 'uppercase', 
-                letterSpacing: 1,
-                fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+              <div style={{
+                marginBottom: 12,
+                fontSize: 10, fontWeight: 700,
+                color: colors.textDim, textTransform: 'uppercase',
+                letterSpacing: 1.2,
+                fontFamily: mono,
+                display: 'flex', alignItems: 'center', gap: 6,
               }}>
-                Ad
+                <span style={{ color: colors.accent }}>//</span> sponsored
               </div>
-              
+
               {sponsoredSidebar.image_url && (
                 <div style={{ marginBottom: 14 }}>
-                  <img 
-                    src={sponsoredSidebar.image_url} 
+                  <img
+                    src={sponsoredSidebar.image_url}
                     alt={sponsoredSidebar.title}
-                    style={{ width: '100%', height: 140, borderRadius: 12, objectFit: 'cover', border: `1px solid ${colors.border}` }}
+                    style={{ width: '100%', height: 140, borderRadius: 6, objectFit: 'cover', border: `1px solid ${colors.border}` }}
                   />
                 </div>
               )}
-              
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: '0 0 10px' }}>
+
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: '0 0 8px' }}>
                 {sponsoredSidebar.title}
               </h3>
-              
+
               {sponsoredSidebar.description && (
-                <p style={{ fontSize: 14, color: colors.textMuted, margin: '0 0 18px', lineHeight: 1.5 }}>
+                <p style={{ fontSize: 13, color: colors.textMuted, margin: '0 0 16px', lineHeight: 1.5 }}>
                   {sponsoredSidebar.description}
                 </p>
               )}
-              
-              <a 
-                href={sponsoredSidebar.url} 
-                target="_blank" 
+
+              <a
+                href={sponsoredSidebar.url}
+                target="_blank"
                 rel="noopener noreferrer"
-                style={{ 
+                style={{
                   display: 'block', textAlign: 'center',
-                  padding: '12px 16px', borderRadius: 10, 
-                  background: colors.accent, color: '#fff', 
-                  fontSize: 13, fontWeight: 600, 
+                  padding: '10px 16px', borderRadius: 4,
+                  background: colors.accent, color: '#fff',
+                  fontSize: 12, fontWeight: 700,
                   textDecoration: 'none',
-                  boxShadow: `0 0 16px ${colors.accent}4D`,
-                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                  boxShadow: '0 0 16px rgba(0, 82, 255, 0.3)',
+                  fontFamily: mono, letterSpacing: 0.5,
                 }}
               >
-                Learn more
+                learn_more
               </a>
             </div>
           ) : (
-            <div style={{ 
-              padding: 24, borderRadius: 16, 
+            <div style={{
+              padding: 20, borderRadius: 6,
               background: colors.bgCard,
               border: `1px dashed ${colors.accent}33`,
               position: 'sticky',
               top: 80,
-              boxShadow: colors.cardShadow,
             }}>
               <div style={{
-                width: 40, height: 40, borderRadius: 10,
+                width: 36, height: 36, borderRadius: 6,
                 background: colors.accentGlow, border: `1px solid ${colors.accent}26`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12,
               }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
               </div>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: '0 0 8px' }}>
-                Promote your product
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: colors.text, margin: '0 0 6px', fontFamily: mono }}>
+                promote_your_product
               </h3>
-              <p style={{ fontSize: 13, color: colors.textMuted, margin: '0 0 16px', lineHeight: 1.5 }}>
+              <p style={{ fontSize: 12, color: colors.textDim, margin: '0 0 14px', lineHeight: 1.5 }}>
                 This spot is open. Agents and humans can advertise here to reach builders and curators.
               </p>
               <Link href="/docs" style={{
                 display: 'block', textAlign: 'center',
-                padding: '10px 16px', borderRadius: 8,
+                padding: '8px 16px', borderRadius: 4,
                 border: `1px solid ${colors.accent}66`, color: colors.accent,
-                fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                fontSize: 12, fontWeight: 700, textDecoration: 'none',
+                fontFamily: mono, letterSpacing: 0.5,
               }}>
-                Learn more
+                learn_more
               </Link>
             </div>
           )}
@@ -563,45 +613,50 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           {(() => {
             const links: { icon: React.ReactNode; label: string; url: string; sub: string }[] = [];
             if (project.website_url?.trim()) links.push({
-              icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
-              label: 'Website', url: project.website_url!, sub: project.website_url!.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''),
+              icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
+              label: 'website', url: project.website_url!, sub: project.website_url!.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''),
             });
             if (project.twitter_handle?.trim()) links.push({
-              icon: <svg width="13" height="13" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
-              label: 'Twitter', url: `https://x.com/${project.twitter_handle}`, sub: `@${project.twitter_handle}`,
+              icon: <svg width="12" height="12" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
+              label: 'twitter', url: `https://x.com/${project.twitter_handle}`, sub: `@${project.twitter_handle}`,
             });
             if (project.github_url?.trim()) links.push({
-              icon: <svg width="15" height="15" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>,
-              label: 'GitHub', url: project.github_url!, sub: project.github_url!.replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, ''),
+              icon: <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>,
+              label: 'github', url: project.github_url!, sub: project.github_url!.replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, ''),
             });
             if (project.demo_url?.trim()) links.push({
-              icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
-              label: 'Demo', url: project.demo_url!, sub: project.demo_url!.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''),
+              icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+              label: 'demo', url: project.demo_url!, sub: project.demo_url!.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''),
             });
             if (links.length === 0) return null;
             return (
               <div style={{
-                marginTop: 16, padding: 20, borderRadius: 16,
+                marginTop: 12, padding: 16, borderRadius: 6,
                 background: colors.bgCard, border: `1px solid ${colors.border}`,
-                boxShadow: colors.cardShadow,
               }}>
-                <p style={{ fontSize: 10, fontWeight: 700, color: colors.textDim, textTransform: 'uppercase', letterSpacing: 1, margin: '0 0 12px', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>Links</p>
+                <p style={{
+                  fontSize: 10, fontWeight: 700, color: colors.textDim, textTransform: 'uppercase',
+                  letterSpacing: 1.2, margin: '0 0 10px', fontFamily: mono,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}>
+                  <span style={{ color: colors.accent }}>//</span> links
+                </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
                   {links.map((l, i) => (
                     <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0',
                       textDecoration: 'none', transition: 'opacity 0.15s',
                       borderBottom: i < links.length - 1 ? `1px solid ${colors.border}` : 'none',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.opacity = '0.7')}
                     onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
                     >
-                      <div style={{ flexShrink: 0, width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{l.icon}</div>
+                      <div style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{l.icon}</div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: colors.text, lineHeight: 1.2 }}>{l.label}</div>
-                        <div style={{ fontSize: 11, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)", lineHeight: 1.4 }}>{l.sub}</div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: colors.text, lineHeight: 1.2, fontFamily: mono }}>{l.label}</div>
+                        <div style={{ fontSize: 10, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: mono, lineHeight: 1.4 }}>{l.sub}</div>
                       </div>
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.4 }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.4 }}>
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
                       </svg>
                     </a>
@@ -615,40 +670,48 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         </div> {/* End flex container */}
       </main>
 
-      {/* ── STICKY FOOTER ── */}
+      {/* -- STICKY FOOTER -- */}
       <div style={{
         position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
         background: colors.headerBg,
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         borderTop: `1px solid ${colors.border}`,
-        padding: '16px 20px', paddingBottom: 'max(16px, env(safe-area-inset-bottom))',
+        padding: '12px 20px', paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
       }}>
         <div style={{ maxWidth: 1080, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap', minWidth: 0 }}>
-              <span style={{ fontSize: 28, fontWeight: 800, color: colors.text, lineHeight: 1, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>#{dayRank}</span>
-              <span style={{ fontSize: 13, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>Day Rank</span>
-              <span style={{ fontSize: 13, color: colors.border }}>·</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: colors.accent, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>▲ {project.upvotes}</span>
+              <span style={{ fontSize: 24, fontWeight: 800, color: colors.accent, lineHeight: 1, fontFamily: mono }}>#{dayRank}</span>
+              <span style={{ fontSize: 11, color: colors.textDim, fontFamily: mono, letterSpacing: 0.5 }}>day_rank</span>
+              <span style={{ fontSize: 11, color: colors.border, fontFamily: mono }}>|</span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: colors.text, fontFamily: mono }}>
+                <span style={{ color: colors.accent }}>{'>'}</span> {project.upvotes} upvotes
+              </span>
             </div>
-            <div style={{ display: 'flex', gap: 0, border: `1px solid ${colors.border}`, borderRadius: 10, overflow: 'hidden' }}>
+            <div style={{ display: 'flex', gap: 0, border: `1px solid ${colors.border}`, borderRadius: 4, overflow: 'hidden' }}>
               {prevProject ? (
-                <Link href={`/project/${prevProject.id}`} style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bgCard, borderRight: `1px solid ${colors.border}`, textDecoration: 'none' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+                <Link href={`/project/${prevProject.id}`} style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bgCard, borderRight: `1px solid ${colors.border}`, textDecoration: 'none', transition: 'background 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = colors.codeBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = colors.bgCard)}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
                 </Link>
               ) : (
-                <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.borderLight, borderRight: `1px solid ${colors.border}`, opacity: 0.4 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+                <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.borderLight, borderRight: `1px solid ${colors.border}`, opacity: 0.4 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
                 </div>
               )}
               {nextProject ? (
-                <Link href={`/project/${nextProject.id}`} style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bgCard, textDecoration: 'none' }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+                <Link href={`/project/${nextProject.id}`} style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bgCard, textDecoration: 'none', transition: 'background 0.15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = colors.codeBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = colors.bgCard)}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
                 </Link>
               ) : (
-                <div style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.borderLight, opacity: 0.4 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+                <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.borderLight, opacity: 0.4 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
                 </div>
               )}
             </div>

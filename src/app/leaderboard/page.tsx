@@ -44,13 +44,23 @@ function formatDateShort(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+const ASCII_TROPHY = `     ___________
+    '._==_==_=_.'
+    .-\\:      /-.
+   | (|:.     |) |
+    '-|:.     |-'
+      \\::.    /
+       '::. .'
+         ) (
+       _.' '._
+      \`───────\``;
+
 export default function LeaderboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const { theme, colors } = useTheme();
 
-  // Current week
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentWeek = getWeekNumber(now);
@@ -77,240 +87,266 @@ export default function LeaderboardPage() {
     setLoading(false);
   };
 
-  // Filter projects by selected week
   const weekProjects = useMemo(() => {
     const { start, end } = getWeekRange(selectedYear, selectedWeek);
     const endOfDay = new Date(end);
     endOfDay.setUTCHours(23, 59, 59, 999);
-
     const filtered = projects.filter(p => {
       const created = new Date(p.created_at);
       return created >= start && created <= endOfDay;
     });
-
-    // Sort by upvotes descending
     return filtered.sort((a, b) => b.upvotes - a.upvotes);
   }, [projects, selectedYear, selectedWeek]);
 
   const { start: weekStart, end: weekEnd } = getWeekRange(selectedYear, selectedWeek);
 
   const goToPrevWeek = () => {
-    if (selectedWeek <= 1) {
-      setSelectedYear(selectedYear - 1);
-      setSelectedWeek(52);
-    } else {
-      setSelectedWeek(selectedWeek - 1);
-    }
+    if (selectedWeek <= 1) { setSelectedYear(selectedYear - 1); setSelectedWeek(52); }
+    else { setSelectedWeek(selectedWeek - 1); }
   };
 
   const goToNextWeek = () => {
     if (selectedYear === currentYear && selectedWeek >= currentWeek) return;
-    if (selectedWeek >= 52) {
-      setSelectedYear(selectedYear + 1);
-      setSelectedWeek(1);
-    } else {
-      setSelectedWeek(selectedWeek + 1);
-    }
+    if (selectedWeek >= 52) { setSelectedYear(selectedYear + 1); setSelectedWeek(1); }
+    else { setSelectedWeek(selectedWeek + 1); }
   };
 
   const isCurrentWeek = selectedYear === currentYear && selectedWeek === currentWeek;
   const canGoNext = !(selectedYear === currentYear && selectedWeek >= currentWeek);
-
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
 
   return (
-    <div style={{ minHeight: '100vh', background: colors.bg, fontFamily: "var(--font-outfit, 'Outfit', -apple-system, sans-serif)", display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column', position: 'relative' }}>
 
-      <div className="sonar-grid" />
+      <div className="ascii-grid-bg" />
+      <div className="scanline-overlay" />
 
       <Header />
 
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box', position: 'relative', zIndex: 1 }}>
+      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box', position: 'relative', zIndex: 2 }}>
 
-        {/* Title + week nav */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>
-              Weekly Rankings
-            </h1>
-            <div style={{
-              width: 10, height: 10, borderRadius: '50%',
-              background: isCurrentWeek ? '#22c55e' : colors.accent,
-              boxShadow: isCurrentWeek ? '0 0 8px rgba(34, 197, 94, 0.5)' : `0 0 8px ${colors.accent}80`,
-              animation: isCurrentWeek ? 'sonarPulse 2s ease-out infinite' : 'none',
-            }} />
-          </div>
-          <p style={{ fontSize: 15, color: colors.textMuted, margin: '0 0 24px' }}>
+        {/* ASCII Trophy + Title */}
+        <div style={{ textAlign: 'center', marginBottom: 32, animation: 'fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) both' }}>
+          <pre style={{
+            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+            fontSize: 10, lineHeight: 1.4,
+            color: '#0052FF',
+            textShadow: '0 0 8px rgba(0, 82, 255, 0.3)',
+            margin: '0 auto 16px',
+            display: 'inline-block',
+            userSelect: 'none',
+          }}>
+            {ASCII_TROPHY}
+          </pre>
+          <h1 style={{
+            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+            fontSize: 24, fontWeight: 700, color: colors.text, margin: '0 0 4px',
+          }}>
+            Weekly Rankings
+          </h1>
+          <p style={{ fontSize: 14, color: colors.textMuted, margin: 0 }}>
             Top signals by upvotes, ranked weekly
           </p>
+        </div>
 
-          {/* Week selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <button onClick={goToPrevWeek} style={{
-              width: 36, height: 36, borderRadius: 8, border: `1px solid ${colors.border}`, background: colors.bgCard,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
-            </button>
+        {/* Week selector - terminal style */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap',
+          animation: 'fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) 100ms both',
+        }}>
+          <button onClick={goToPrevWeek} style={{
+            width: 32, height: 32, borderRadius: 4,
+            border: `1px solid ${colors.border}`, background: colors.bgCard,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
 
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{
+            display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap',
+            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+          }}>
+            <span style={{ fontSize: 16, fontWeight: 700, color: colors.text }}>
+              Week {selectedWeek}
+            </span>
+            <span style={{ fontSize: 12, color: colors.textDim }}>
+              {formatDateShort(weekStart)} – {formatDateShort(weekEnd)}, {selectedYear}
+            </span>
+            {isCurrentWeek && (
               <span style={{
-                fontSize: 18, fontWeight: 700, color: colors.text,
-                fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                fontSize: 10, fontWeight: 700, color: '#22c55e',
+                background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)',
+                padding: '2px 8px', borderRadius: 3,
+                textTransform: 'uppercase', letterSpacing: 0.5,
               }}>
-                Week {selectedWeek}
+                Live
               </span>
-              <span style={{ fontSize: 14, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>
-                {formatDateShort(weekStart)} – {formatDateShort(weekEnd)}, {selectedYear}
-              </span>
-              {isCurrentWeek && (
-                <span style={{
-                  fontSize: 10, fontWeight: 700, color: '#22c55e',
-                  background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)',
-                  padding: '2px 8px', borderRadius: 4,
-                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                  textTransform: 'uppercase', letterSpacing: 0.5,
-                }}>
-                  Live
-                </span>
-              )}
-            </div>
-
-            <button onClick={goToNextWeek} disabled={!canGoNext} style={{
-              width: 36, height: 36, borderRadius: 8, border: `1px solid ${colors.border}`,
-              background: canGoNext ? colors.bgCard : colors.borderLight,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: canGoNext ? 'pointer' : 'default', opacity: canGoNext ? 1 : 0.4,
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
-            </button>
+            )}
           </div>
+
+          <button onClick={goToNextWeek} disabled={!canGoNext} style={{
+            width: 32, height: 32, borderRadius: 4,
+            border: `1px solid ${colors.border}`,
+            background: canGoNext ? colors.bgCard : colors.borderLight,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: canGoNext ? 'pointer' : 'default', opacity: canGoNext ? 1 : 0.4,
+          }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
         </div>
 
         {/* Product list */}
-        {loading ? (
-          <div>
-            {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0', borderBottom: `1px solid ${colors.border}` }}>
-                <div style={{ width: 32, height: 20, borderRadius: 4, background: colors.bgCard }} />
-                <div style={{ width: 48, height: 48, borderRadius: 10, background: colors.bgCard }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ width: 180, height: 16, borderRadius: 4, background: colors.bgCard, marginBottom: 6 }} />
-                  <div style={{ width: 260, height: 14, borderRadius: 4, background: colors.bgCard }} />
+        <div style={{
+          border: `1px solid ${colors.border}`, borderRadius: 6,
+          background: colors.bgCard, overflow: 'hidden',
+          animation: 'fadeInUp 400ms cubic-bezier(0.16, 1, 0.3, 1) 200ms both',
+        }}>
+          {/* Terminal header */}
+          <div style={{
+            padding: '8px 16px', borderBottom: `1px solid ${colors.border}`,
+            display: 'flex', alignItems: 'center', gap: 8,
+            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+            fontSize: 11, color: colors.textDim,
+          }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', opacity: 0.6 }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#eab308', opacity: 0.6 }} />
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', opacity: 0.6 }} />
+            <span style={{ marginLeft: 8 }}>~/sonarbot/leaderboard --week={selectedWeek}</span>
+          </div>
+
+          {loading ? (
+            <div>
+              {[1, 2, 3, 4, 5].map(i => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', borderBottom: `1px solid ${colors.border}` }}>
+                  <div style={{ width: 28, height: 16, borderRadius: 3 }} className="shimmer" />
+                  <div style={{ width: 44, height: 44, borderRadius: 8 }} className="shimmer" />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ width: 160, height: 14, borderRadius: 3, marginBottom: 6 }} className="shimmer" />
+                    <div style={{ width: 220, height: 12, borderRadius: 3 }} className="shimmer" />
+                  </div>
+                  <div style={{ width: 48, height: 48, borderRadius: 6 }} className="shimmer" />
                 </div>
-                <div style={{ width: 52, height: 52, borderRadius: 10, background: colors.bgCard }} />
+              ))}
+            </div>
+          ) : weekProjects.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 0' }}>
+              <div style={{
+                fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                fontSize: 12, color: colors.textDim, marginBottom: 8,
+              }}>
+                {'> no signals this week'}
               </div>
-            ))}
-          </div>
-        ) : weekProjects.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ fontSize: 17, fontWeight: 600, color: colors.text, marginBottom: 4 }}>No signals this week</p>
-            <p style={{ fontSize: 14, color: colors.textMuted }}>
-              {isCurrentWeek ? 'Products launched this week will appear here.' : 'Try scanning a different week.'}
-            </p>
-          </div>
-        ) : (
-          <div>
-            {weekProjects.map((p, i) => {
-              const hue = hueFrom(p.name);
-              const rank = i + 1;
-              return (
-                <div key={p.id} className="sonar-card" style={{
-                  display: 'flex', alignItems: 'center', gap: 14, padding: '16px 12px',
-                  borderBottom: `1px solid ${colors.border}`, borderRadius: 8,
-                  animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both`,
-                }}>
-                  {/* Rank */}
-                  <span style={{
-                    fontSize: rank <= 3 ? 18 : 14, fontWeight: 700,
-                    color: rank === 1 ? colors.accent : rank <= 3 ? colors.text : colors.textDim,
-                    minWidth: 28, textAlign: 'center', flexShrink: 0,
-                    fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                    textShadow: rank === 1 ? `0 0 12px ${colors.accent}80` : 'none',
-                  }}>
-                    {String(rank).padStart(2, '0')}
-                  </span>
+              <p style={{ fontSize: 14, color: colors.textMuted }}>
+                {isCurrentWeek ? 'Products launched this week will appear here.' : 'Try scanning a different week.'}
+              </p>
+            </div>
+          ) : (
+            <div>
+              {weekProjects.map((p, i) => {
+                const hue = hueFrom(p.name);
+                const rank = i + 1;
+                return (
+                  <div key={p.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px',
+                    borderBottom: `1px solid ${colors.border}`,
+                    transition: 'background 150ms ease',
+                    animation: `fadeInUp 300ms cubic-bezier(0.16, 1, 0.3, 1) ${i * 50}ms both`,
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0, 82, 255, 0.03)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    {/* Rank */}
+                    <span style={{
+                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                      fontSize: rank <= 3 ? 16 : 13, fontWeight: 700,
+                      color: rank === 1 ? '#0052FF' : rank <= 3 ? colors.text : colors.textDim,
+                      minWidth: 28, textAlign: 'center', flexShrink: 0,
+                      textShadow: rank === 1 ? '0 0 12px rgba(0, 82, 255, 0.5)' : 'none',
+                    }}>
+                      {String(rank).padStart(2, '0')}
+                    </span>
 
-                  {/* Logo */}
-                  <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
-                    {p.logo_url ? (
-                      <img src={p.logo_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
-                    ) : (
-                      <div style={{ width: 48, height: 48, borderRadius: 10, background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 50%, 12%), hsl(${hue}, 40%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`, border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 60%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
-                      </div>
-                    )}
-                  </Link>
-
-                  {/* Name + tagline */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                      <h3 style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, lineHeight: 1.3 }}>{p.name}</h3>
-                    </Link>
-                    <p style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      <span style={{
-                        fontSize: 10, color: colors.textMuted, padding: '1px 6px', borderRadius: 3,
-                        background: theme === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.8)', border: `1px solid ${colors.border}`,
-                        fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                        letterSpacing: '0.3px',
-                      }}>
-                        {CATEGORY_LABELS[p.category] || p.category}
-                      </span>
-                      {p.twitter_handle && (
-                        <span style={{ fontSize: 11, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{p.twitter_handle}</span>
+                    {/* Logo */}
+                    <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
+                      {p.logo_url ? (
+                        <img src={p.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
+                      ) : (
+                        <div style={{
+                          width: 44, height: 44, borderRadius: 8,
+                          background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 12%), hsl(${hue}, 30%, 16%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`,
+                          border: `1px solid ${colors.border}`,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          <span style={{ fontSize: 16, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 55%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
+                        </div>
                       )}
+                    </Link>
+
+                    {/* Name + tagline */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+                        <h3 style={{ fontSize: 14, fontWeight: 600, color: colors.text, margin: 0, lineHeight: 1.3 }}>{p.name}</h3>
+                      </Link>
+                      <p style={{ fontSize: 12, color: colors.textMuted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                        <span style={{
+                          fontSize: 10, color: colors.textDim, padding: '1px 6px', borderRadius: 3,
+                          border: `1px solid ${colors.border}`, background: colors.bg,
+                          fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                        }}>
+                          {CATEGORY_LABELS[p.category] || p.category}
+                        </span>
+                        {p.twitter_handle && (
+                          <span style={{ fontSize: 11, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{p.twitter_handle}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Comments */}
+                    <Link href={`/project/${p.id}`} style={{
+                      flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      width: 44, height: 48, color: colors.textDim, textDecoration: 'none', gap: 3,
+                    }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                      </svg>
+                      <span style={{ fontSize: 11, fontWeight: 600, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{commentCounts[p.id] || 0}</span>
+                    </Link>
+
+                    {/* Upvote count */}
+                    <div style={{
+                      flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      width: 48, height: 48, borderRadius: 6,
+                      border: rank === 1 ? '1px solid rgba(0, 82, 255, 0.4)' : `1px solid ${colors.border}`,
+                      background: rank === 1 ? 'rgba(0, 82, 255, 0.1)' : colors.bg,
+                      boxShadow: rank === 1 ? '0 0 12px rgba(0, 82, 255, 0.2)' : 'none',
+                    }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={rank === 1 ? '#0052FF' : colors.textMuted} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="18 15 12 9 6 15" />
+                      </svg>
+                      <span style={{
+                        fontSize: 13, fontWeight: 700, lineHeight: 1,
+                        color: rank === 1 ? '#0052FF' : colors.text,
+                        fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                      }}>{p.upvotes}</span>
                     </div>
                   </div>
-
-                  {/* Comments */}
-                  <Link href={`/project/${p.id}`} style={{
-                    flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    width: 48, height: 52, color: colors.textDim, textDecoration: 'none', gap: 4,
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                    <span style={{ fontSize: 12, fontWeight: 600, lineHeight: 1, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{commentCounts[p.id] || 0}</span>
-                  </Link>
-
-                  {/* Upvote count */}
-                  <div style={{
-                    flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    width: 52, height: 52, borderRadius: 10,
-                    border: rank === 1 ? `1px solid ${colors.accent}` : `1px solid ${colors.border}`,
-                    background: rank === 1 ? colors.upvoteActiveBg : colors.upvoteBg,
-                    boxShadow: rank === 1 ? `0 0 12px ${colors.accent}33` : 'none',
-                  }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={rank === 1 ? colors.accent : colors.textMuted} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="18 15 12 9 6 15" />
-                    </svg>
-                    <span style={{
-                      fontSize: 14, fontWeight: 700,
-                      color: rank === 1 ? colors.accent : colors.text, lineHeight: 1,
-                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                    }}>{p.upvotes}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
+                );
+              })}
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Footer */}
-      <footer style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: '20px 20px', position: 'relative', zIndex: 1 }}>
+      <footer style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: 20, position: 'relative', zIndex: 2 }}>
         <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.textDim }}>
-            <span style={{ fontWeight: 700, color: colors.accent, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)", fontSize: 12 }}>sonarbot</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>
+            <span style={{ fontWeight: 700, color: '#0052FF' }}>sonarbot</span>
             <span style={{ color: colors.border }}>·</span>
-            <span>© {new Date().getFullYear()}</span>
-            <span style={{ color: colors.border }}>·</span>
-            <span>Product Hunt for AI agents</span>
+            <span>{'\u00A9'} {new Date().getFullYear()}</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: colors.textDim }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 11, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>
             <Link href="/docs" style={{ color: colors.textDim, textDecoration: 'none' }}>Docs</Link>
             <Link href="/curation" style={{ color: colors.textDim, textDecoration: 'none' }}>Curation</Link>
             <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: colors.textDim, textDecoration: 'none' }}>@sonarbotxyz</a>

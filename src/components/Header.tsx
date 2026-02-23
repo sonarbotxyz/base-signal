@@ -22,7 +22,7 @@ export default function Header() {
 
   const { ready, authenticated, logout, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, colors } = useTheme();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -56,114 +56,222 @@ export default function Header() {
 
   return (
     <header className="glass-header">
-      <div className="max-w-5xl mx-auto px-5 h-16 flex items-center gap-4">
-        
-        <Link href="/" className="flex-shrink-0 flex items-center gap-2.5">
-          <div className="w-2.5 h-2.5 rounded-full" style={{ background: 'var(--primary)', boxShadow: '0 0 12px var(--primary)' }} />
-          <span className="font-bold text-lg tracking-tight" style={{ color: 'var(--foreground)' }}>sonarbot</span>
-        </Link>
-        
-        <div className="flex-1" />
+      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', gap: 16 }}>
 
-        <nav className="hidden md:flex items-center gap-1.5">
+        {/* Logo */}
+        <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <div style={{
+            width: 8, height: 8, borderRadius: '50%',
+            background: '#0052FF',
+            boxShadow: '0 0 12px rgba(0, 82, 255, 0.6), 0 0 4px rgba(0, 82, 255, 0.8)',
+            animation: 'sonarPulse 3s ease-out infinite',
+          }} />
+          <span style={{
+            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+            fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em',
+            color: colors.text,
+          }}>
+            sonarbot
+          </span>
+        </Link>
+
+        <div style={{ flex: 1 }} />
+
+        {/* Desktop nav */}
+        <nav style={{ alignItems: 'center', gap: 2 }} className="header-desktop-nav">
           {navLinks.map(link => {
             const isActive = pathname === link.href || (pathname !== '/' && link.href !== '/' && pathname?.startsWith(link.href));
             return (
               <Link key={link.label} href={link.href}
-                className={`h-9 px-4 flex items-center rounded-full text-sm font-medium transition-all duration-150 ease-out`}
                 style={{
-                  background: isActive ? 'var(--foreground)' : 'transparent',
-                  color: isActive ? 'var(--background)' : 'var(--muted-foreground)',
+                  display: 'flex', alignItems: 'center',
+                  height: 32, padding: '0 12px',
+                  borderRadius: 4,
+                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                  fontSize: 13, fontWeight: 500, letterSpacing: '-0.01em',
+                  textDecoration: 'none',
+                  transition: 'all 150ms ease-out',
+                  background: isActive ? 'rgba(0, 82, 255, 0.12)' : 'transparent',
+                  color: isActive ? '#0052FF' : colors.textMuted,
+                  border: isActive ? '1px solid rgba(0, 82, 255, 0.25)' : '1px solid transparent',
                 }}
               >
+                <span style={{ color: isActive ? 'rgba(0, 82, 255, 0.5)' : colors.borderLight, marginRight: 4, fontSize: 11 }}>[</span>
                 {link.label}
+                <span style={{ color: isActive ? 'rgba(0, 82, 255, 0.5)' : colors.borderLight, marginLeft: 4, fontSize: 11 }}>]</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Theme toggle */}
           <button onClick={toggleTheme}
-            className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors duration-150"
-            style={{ border: '1px solid var(--border)', color: 'var(--muted-foreground)' }}
+            style={{
+              width: 32, height: 32, borderRadius: 4,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              border: `1px solid ${colors.border}`, background: 'transparent',
+              color: colors.textDim, cursor: 'pointer',
+              transition: 'all 150ms ease-out',
+            }}
           >
             {theme === 'dark' ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             ) : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
             )}
           </button>
 
-          <Link href="/docs" className="hidden md:flex items-center justify-center h-9 px-4 rounded-lg bg-gradient-primary text-sm font-medium shadow-sm" style={{ color: 'var(--primary-foreground)' }}>
-            Launch
+          {/* Launch button - desktop */}
+          <Link href="/docs" className="header-desktop-launch" style={{
+            alignItems: 'center', justifyContent: 'center',
+            height: 32, padding: '0 16px', borderRadius: 4,
+            background: '#0052FF', color: '#fff',
+            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+            fontSize: 12, fontWeight: 600, letterSpacing: '0.02em',
+            textDecoration: 'none',
+            boxShadow: '0 0 16px rgba(0, 82, 255, 0.3)',
+            transition: 'all 200ms ease-out',
+          }}>
+            Launch_
           </Link>
 
+          {/* Auth */}
           {ready && (
             authenticated && userInfo ? (
-              <div ref={menuRef} className="relative">
+              <div ref={menuRef} style={{ position: 'relative' }}>
                 <button onClick={() => setMenuOpen(!menuOpen)}
-                  className="flex items-center gap-2 h-9 px-2 rounded-lg transition-colors duration-150 cursor-pointer text-sm font-medium"
-                  style={{ border: '1px solid var(--border)' }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    height: 32, padding: '0 10px', borderRadius: 4,
+                    border: `1px solid ${colors.border}`, background: 'transparent',
+                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
+                    fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                    color: colors.textMuted,
+                  }}
                 >
                   {userInfo.avatar ? (
-                    <img src={userInfo.avatar} alt="" className="w-5 h-5 rounded-full" />
+                    <img src={userInfo.avatar} alt="" style={{ width: 18, height: 18, borderRadius: '50%' }} />
                   ) : (
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" style={{ background: 'var(--border)' }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: '50%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 9, fontWeight: 700, background: colors.border, color: colors.text,
+                    }}>
                       {userInfo.twitter_handle[0]?.toUpperCase()}
                     </div>
                   )}
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 top-11 rounded-xl p-1 min-w-[160px] shadow-sm z-50 backdrop-blur-xl" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
-                    <div className="px-3 py-2 text-sm font-semibold" style={{ borderBottom: '1px solid var(--border)', color: 'var(--foreground)' }}>@{userInfo.twitter_handle}</div>
+                  <div style={{
+                    position: 'absolute', right: 0, top: 38,
+                    borderRadius: 6, padding: 4, minWidth: 160,
+                    background: colors.bgCard, border: `1px solid ${colors.border}`,
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                    zIndex: 50,
+                  }}>
+                    <div style={{
+                      padding: '8px 12px', fontSize: 12, fontWeight: 600,
+                      borderBottom: `1px solid ${colors.border}`,
+                      color: colors.text,
+                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                    }}>
+                      @{userInfo.twitter_handle}
+                    </div>
                     <button onClick={() => { logout(); setMenuOpen(false); }}
-                      className="w-full mt-1 px-3 py-2 text-sm font-medium rounded-lg text-left transition-colors duration-150"
-                      style={{ color: '#ef4444' }}
+                      style={{
+                        width: '100%', marginTop: 4, padding: '8px 12px',
+                        fontSize: 12, fontWeight: 500, borderRadius: 4,
+                        border: 'none', background: 'transparent',
+                        textAlign: 'left', cursor: 'pointer',
+                        color: '#ef4444',
+                        fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                      }}
                     >
-                      Sign out
+                      sign_out
                     </button>
                   </div>
                 )}
               </div>
             ) : (
               <button onClick={() => initOAuth({ provider: 'twitter' })}
-                className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg text-sm font-medium transition-transform duration-150 hover:scale-105"
-                style={{ background: 'var(--foreground)', color: 'var(--background)' }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  height: 32, padding: '0 14px', borderRadius: 4,
+                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                  fontSize: 12, fontWeight: 600,
+                  background: colors.text, color: colors.bg,
+                  border: 'none', cursor: 'pointer',
+                  transition: 'all 150ms ease-out',
+                }}
               >
-                Sign in
+                sign_in
               </button>
             )
           )}
 
-          <div ref={mobileMenuRef} className="md:hidden relative ml-1">
+          {/* Mobile menu */}
+          <div ref={mobileMenuRef} className="header-mobile-menu" style={{ position: 'relative', marginLeft: 4 }}>
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors duration-150"
-              style={{ border: '1px solid var(--border)', color: 'var(--muted-foreground)' }}
+              style={{
+                width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                borderRadius: 4, border: `1px solid ${colors.border}`,
+                background: 'transparent', color: colors.textMuted, cursor: 'pointer',
+              }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
               </svg>
             </button>
             {mobileMenuOpen && (
-              <div className="absolute right-0 top-11 rounded-xl p-2 min-w-[180px] shadow-sm z-50 flex flex-col gap-1 backdrop-blur-xl" style={{ background: 'var(--card)', border: '1px solid var(--border)' }}>
+              <div style={{
+                position: 'absolute', right: 0, top: 38,
+                borderRadius: 6, padding: 4, minWidth: 180,
+                background: colors.bgCard, border: `1px solid ${colors.border}`,
+                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                zIndex: 50,
+                display: 'flex', flexDirection: 'column', gap: 2,
+              }}>
                 {navLinks.map(link => (
                   <Link key={link.label} href={link.href} onClick={() => setMobileMenuOpen(false)}
-                    className="block px-3 py-2.5 text-sm font-medium rounded-lg transition-colors duration-150"
-                    style={{ color: 'var(--foreground)' }}
+                    style={{
+                      display: 'block', padding: '10px 12px', borderRadius: 4,
+                      fontSize: 13, fontWeight: 500,
+                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                      textDecoration: 'none', color: colors.text,
+                    }}
                   >
-                    {link.label}
+                    {'> '}{link.label}
                   </Link>
                 ))}
-                <Link href="/docs" onClick={() => setMobileMenuOpen(false)}
-                  className="mt-2 block px-3 py-2.5 text-center text-sm font-medium rounded-lg bg-gradient-primary shadow-sm"
-                  style={{ color: 'var(--primary-foreground)' }}
-                >
-                  Launch Product
-                </Link>
+                <div style={{ borderTop: `1px solid ${colors.border}`, marginTop: 4, paddingTop: 4 }}>
+                  <Link href="/docs" onClick={() => setMobileMenuOpen(false)}
+                    style={{
+                      display: 'block', padding: '10px 12px', borderRadius: 4,
+                      textAlign: 'center', fontSize: 12, fontWeight: 600,
+                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                      background: '#0052FF', color: '#fff', textDecoration: 'none',
+                      boxShadow: '0 0 12px rgba(0, 82, 255, 0.3)',
+                    }}
+                  >
+                    Launch_
+                  </Link>
+                </div>
               </div>
             )}
           </div>
+
+          <style>{`
+            .header-desktop-nav { display: none; }
+            .header-desktop-launch { display: none; }
+            .header-mobile-menu { display: block; }
+            @media (min-width: 768px) {
+              .header-desktop-nav { display: flex !important; }
+              .header-desktop-launch { display: flex !important; }
+              .header-mobile-menu { display: none !important; }
+            }
+          `}</style>
         </div>
       </div>
     </header>
