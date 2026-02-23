@@ -59,16 +59,13 @@ export default function Header() {
       <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', gap: 16 }}>
 
         {/* Logo */}
-        <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+        <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
           <div style={{
             width: 8, height: 8, borderRadius: '50%',
             background: '#0052FF',
-            boxShadow: '0 0 12px rgba(0, 82, 255, 0.6), 0 0 4px rgba(0, 82, 255, 0.8)',
-            animation: 'sonarPulse 3s ease-out infinite',
           }} />
           <span style={{
-            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em',
+            fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em',
             color: colors.text,
           }}>
             sonarbot
@@ -78,7 +75,7 @@ export default function Header() {
         <div style={{ flex: 1 }} />
 
         {/* Desktop nav */}
-        <nav style={{ alignItems: 'center', gap: 2 }} className="header-desktop-nav">
+        <nav style={{ alignItems: 'center', gap: 4 }} className="header-desktop-nav">
           {navLinks.map(link => {
             const isActive = pathname === link.href || (pathname !== '/' && link.href !== '/' && pathname?.startsWith(link.href));
             return (
@@ -86,19 +83,15 @@ export default function Header() {
                 style={{
                   display: 'flex', alignItems: 'center',
                   height: 32, padding: '0 12px',
-                  borderRadius: 4,
-                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                  fontSize: 13, fontWeight: 500, letterSpacing: '-0.01em',
+                  borderRadius: 6,
+                  fontSize: 14, fontWeight: 500,
                   textDecoration: 'none',
                   transition: 'all 150ms ease-out',
-                  background: isActive ? 'rgba(0, 82, 255, 0.12)' : 'transparent',
+                  background: isActive ? colors.accentGlow : 'transparent',
                   color: isActive ? '#0052FF' : colors.textMuted,
-                  border: isActive ? '1px solid rgba(0, 82, 255, 0.25)' : '1px solid transparent',
                 }}
               >
-                <span style={{ color: isActive ? 'rgba(0, 82, 255, 0.5)' : colors.borderLight, marginRight: 4, fontSize: 11 }}>[</span>
                 {link.label}
-                <span style={{ color: isActive ? 'rgba(0, 82, 255, 0.5)' : colors.borderLight, marginLeft: 4, fontSize: 11 }}>]</span>
               </Link>
             );
           })}
@@ -108,7 +101,7 @@ export default function Header() {
           {/* Theme toggle */}
           <button onClick={toggleTheme}
             style={{
-              width: 32, height: 32, borderRadius: 4,
+              width: 32, height: 32, borderRadius: 6,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               border: `1px solid ${colors.border}`, background: 'transparent',
               color: colors.textDim, cursor: 'pointer',
@@ -125,15 +118,13 @@ export default function Header() {
           {/* Launch button - desktop */}
           <Link href="/docs" className="header-desktop-launch" style={{
             alignItems: 'center', justifyContent: 'center',
-            height: 32, padding: '0 16px', borderRadius: 4,
+            height: 32, padding: '0 16px', borderRadius: 6,
             background: '#0052FF', color: '#fff',
-            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            fontSize: 12, fontWeight: 600, letterSpacing: '0.02em',
+            fontSize: 13, fontWeight: 600,
             textDecoration: 'none',
-            boxShadow: '0 0 16px rgba(0, 82, 255, 0.3)',
-            transition: 'all 200ms ease-out',
+            transition: 'all 150ms ease-out',
           }}>
-            Launch_
+            Launch
           </Link>
 
           {/* Auth */}
@@ -143,20 +134,19 @@ export default function Header() {
                 <button onClick={() => setMenuOpen(!menuOpen)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
-                    height: 32, padding: '0 10px', borderRadius: 4,
+                    height: 32, padding: '0 10px', borderRadius: 6,
                     border: `1px solid ${colors.border}`, background: 'transparent',
-                    cursor: 'pointer', fontSize: 12, fontWeight: 500,
-                    fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                    cursor: 'pointer', fontSize: 13, fontWeight: 500,
                     color: colors.textMuted,
                   }}
                 >
                   {userInfo.avatar ? (
-                    <img src={userInfo.avatar} alt="" style={{ width: 18, height: 18, borderRadius: '50%' }} />
+                    <img src={userInfo.avatar} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />
                   ) : (
                     <div style={{
-                      width: 18, height: 18, borderRadius: '50%',
+                      width: 20, height: 20, borderRadius: '50%',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 9, fontWeight: 700, background: colors.border, color: colors.text,
+                      fontSize: 10, fontWeight: 700, background: colors.border, color: colors.text,
                     }}>
                       {userInfo.twitter_handle[0]?.toUpperCase()}
                     </div>
@@ -165,31 +155,29 @@ export default function Header() {
                 </button>
                 {menuOpen && (
                   <div style={{
-                    position: 'absolute', right: 0, top: 38,
-                    borderRadius: 6, padding: 4, minWidth: 160,
+                    position: 'absolute', right: 0, top: 40,
+                    borderRadius: 8, padding: 4, minWidth: 160,
                     background: colors.bgCard, border: `1px solid ${colors.border}`,
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                     zIndex: 50,
                   }}>
                     <div style={{
-                      padding: '8px 12px', fontSize: 12, fontWeight: 600,
+                      padding: '8px 12px', fontSize: 13, fontWeight: 600,
                       borderBottom: `1px solid ${colors.border}`,
                       color: colors.text,
-                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
                     }}>
                       @{userInfo.twitter_handle}
                     </div>
                     <button onClick={() => { logout(); setMenuOpen(false); }}
                       style={{
                         width: '100%', marginTop: 4, padding: '8px 12px',
-                        fontSize: 12, fontWeight: 500, borderRadius: 4,
+                        fontSize: 13, fontWeight: 500, borderRadius: 6,
                         border: 'none', background: 'transparent',
                         textAlign: 'left', cursor: 'pointer',
                         color: '#ef4444',
-                        fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
                       }}
                     >
-                      sign_out
+                      Sign out
                     </button>
                   </div>
                 )}
@@ -198,15 +186,14 @@ export default function Header() {
               <button onClick={() => initOAuth({ provider: 'twitter' })}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
-                  height: 32, padding: '0 14px', borderRadius: 4,
-                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                  fontSize: 12, fontWeight: 600,
+                  height: 32, padding: '0 14px', borderRadius: 6,
+                  fontSize: 13, fontWeight: 600,
                   background: colors.text, color: colors.bg,
                   border: 'none', cursor: 'pointer',
                   transition: 'all 150ms ease-out',
                 }}
               >
-                sign_in
+                Sign in
               </button>
             )
           )}
@@ -216,7 +203,7 @@ export default function Header() {
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               style={{
                 width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                borderRadius: 4, border: `1px solid ${colors.border}`,
+                borderRadius: 6, border: `1px solid ${colors.border}`,
                 background: 'transparent', color: colors.textMuted, cursor: 'pointer',
               }}
             >
@@ -226,36 +213,33 @@ export default function Header() {
             </button>
             {mobileMenuOpen && (
               <div style={{
-                position: 'absolute', right: 0, top: 38,
-                borderRadius: 6, padding: 4, minWidth: 180,
+                position: 'absolute', right: 0, top: 40,
+                borderRadius: 8, padding: 4, minWidth: 180,
                 background: colors.bgCard, border: `1px solid ${colors.border}`,
-                boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
                 zIndex: 50,
                 display: 'flex', flexDirection: 'column', gap: 2,
               }}>
                 {navLinks.map(link => (
                   <Link key={link.label} href={link.href} onClick={() => setMobileMenuOpen(false)}
                     style={{
-                      display: 'block', padding: '10px 12px', borderRadius: 4,
-                      fontSize: 13, fontWeight: 500,
-                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                      display: 'block', padding: '10px 12px', borderRadius: 6,
+                      fontSize: 14, fontWeight: 500,
                       textDecoration: 'none', color: colors.text,
                     }}
                   >
-                    {'> '}{link.label}
+                    {link.label}
                   </Link>
                 ))}
                 <div style={{ borderTop: `1px solid ${colors.border}`, marginTop: 4, paddingTop: 4 }}>
                   <Link href="/docs" onClick={() => setMobileMenuOpen(false)}
                     style={{
-                      display: 'block', padding: '10px 12px', borderRadius: 4,
-                      textAlign: 'center', fontSize: 12, fontWeight: 600,
-                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
+                      display: 'block', padding: '10px 12px', borderRadius: 6,
+                      textAlign: 'center', fontSize: 13, fontWeight: 600,
                       background: '#0052FF', color: '#fff', textDecoration: 'none',
-                      boxShadow: '0 0 12px rgba(0, 82, 255, 0.3)',
                     }}
                   >
-                    Launch_
+                    Launch
                   </Link>
                 </div>
               </div>
