@@ -95,7 +95,7 @@ export default function Home() {
 
         {/* Hero */}
         <div className="home-hero" style={{ textAlign: 'center', marginBottom: 48, animation: 'fadeInUp 350ms ease-out both' }}>
-          <h1 style={{
+          <h1 className="home-hero-title" style={{
             fontSize: 'clamp(24px, 5vw, 44px)',
             fontWeight: 700,
             letterSpacing: '-0.03em',
@@ -119,36 +119,10 @@ export default function Home() {
         {/* Two column layout */}
         <div className="home-layout" style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
 
-          {/* Left: Filters + Product list */}
+          {/* Left: Product list */}
           <div style={{ flex: 1, minWidth: 0 }}>
 
-            {/* Sort toggle */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16, animation: 'fadeInUp 350ms ease-out 50ms both' }}>
-              <div style={{
-                display: 'flex', borderRadius: 8, overflow: 'hidden',
-                border: `1px solid ${colors.border}`, flexShrink: 0,
-              }}>
-                <button onClick={() => setSortBy('top')}
-                  style={{
-                    padding: '5px 14px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer',
-                    background: sortBy === 'top' ? '#0052FF' : 'transparent',
-                    color: sortBy === 'top' ? '#fff' : colors.textDim,
-                    transition: 'all 150ms',
-                  }}
-                >Top</button>
-                <button onClick={() => setSortBy('new')}
-                  style={{
-                    padding: '5px 14px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer',
-                    borderLeft: `1px solid ${colors.border}`,
-                    background: sortBy === 'new' ? '#0052FF' : 'transparent',
-                    color: sortBy === 'new' ? '#fff' : colors.textDim,
-                    transition: 'all 150ms',
-                  }}
-                >New</button>
-              </div>
-            </div>
-
-            {/* Product List */}
+            {/* Product List Card with header */}
             <div style={{
               border: `1px solid ${colors.border}`,
               borderRadius: 12,
@@ -157,6 +131,41 @@ export default function Home() {
               overflow: 'hidden',
               animation: 'fadeInUp 350ms ease-out 100ms both',
             }}>
+              {/* Card header: "Products" + Top/New toggle */}
+              <div className="product-card-header" style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 20px',
+                borderBottom: `1px solid ${colors.border}`,
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: colors.text }}>
+                  Products
+                </span>
+                <div style={{
+                  display: 'flex', borderRadius: 8, overflow: 'hidden',
+                  border: `1px solid ${colors.border}`, flexShrink: 0,
+                }}>
+                  <button onClick={() => setSortBy('top')}
+                    style={{
+                      padding: '5px 14px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer',
+                      background: sortBy === 'top' ? '#0052FF' : 'transparent',
+                      color: sortBy === 'top' ? '#fff' : colors.textDim,
+                      transition: 'all 150ms',
+                    }}
+                  >Top</button>
+                  <button onClick={() => setSortBy('new')}
+                    style={{
+                      padding: '5px 14px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer',
+                      borderLeft: `1px solid ${colors.border}`,
+                      background: sortBy === 'new' ? '#0052FF' : 'transparent',
+                      color: sortBy === 'new' ? '#fff' : colors.textDim,
+                      transition: 'all 150ms',
+                    }}
+                  >New</button>
+                </div>
+              </div>
+
               {loading ? (
                 <div>
                   {[1,2,3,4,5].map(i => (
@@ -185,7 +194,7 @@ export default function Home() {
                     return (
                       <div key={p.id} className="product-row" style={{ animation: `fadeInUp 300ms ease-out ${i * 30}ms both` }}>
                         {/* Rank */}
-                        <span style={{
+                        <span className="product-rank" style={{
                           fontSize: 14, fontWeight: 600, color: i < 3 ? '#0052FF' : colors.textDim,
                           minWidth: 24, textAlign: 'center', flexShrink: 0,
                         }}>
@@ -209,11 +218,11 @@ export default function Home() {
                           )}
                         </Link>
 
-                        <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="product-info" style={{ flex: 1, minWidth: 0 }}>
                           <Link href={`/project/${p.id}`} style={{ textDecoration: 'none', display: 'block' }}>
-                            <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 2px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', color: colors.text }}>
+                            <h2 className="product-name" style={{ fontSize: 15, fontWeight: 600, margin: '0 0 2px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', color: colors.text }}>
                               {p.name}
-                              <span style={{
+                              <span className="product-category" style={{
                                 fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 12,
                                 border: `1px solid ${colors.border}`, color: colors.textDim,
                               }}>
@@ -221,11 +230,11 @@ export default function Home() {
                               </span>
                             </h2>
                           </Link>
-                          <p style={{ fontSize: 14, color: colors.textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                          <p className="product-tagline" style={{ fontSize: 14, color: colors.textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                          <Link href={`/project/${p.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: colors.textDim, textDecoration: 'none' }}>
+                        <div className="product-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                          <Link href={`/project/${p.id}`} className="product-comments-link" style={{ display: 'flex', alignItems: 'center', gap: 4, color: colors.textDim, textDecoration: 'none' }}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                             </svg>
@@ -332,6 +341,89 @@ export default function Home() {
             </div>
           </div>
         </div>
+
+        {/* Mobile upcoming section - shown below feed on small screens */}
+        <div className="home-upcoming-mobile" style={{ marginTop: 24 }}>
+          <div style={{
+            border: `1px solid ${colors.border}`,
+            borderRadius: 12,
+            background: colors.bgCard,
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              padding: '14px 16px',
+              borderBottom: `1px solid ${colors.border}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>
+                Upcoming
+              </span>
+              <Link href="/upcoming" style={{ fontSize: 13, color: '#0052FF', textDecoration: 'none', fontWeight: 500 }}>
+                View all
+              </Link>
+            </div>
+
+            {/* Horizontal scroll on mobile */}
+            <div className="upcoming-scroll" style={{
+              display: 'flex', overflowX: 'auto', gap: 0,
+              WebkitOverflowScrolling: 'touch',
+            }}>
+              {[
+                { title: "BaseAgent v2", tagline: "Next-gen autonomous AI agents", days: 2, category: "AI Agents" },
+                { title: "YieldFlow", tagline: "Automated yield optimization", days: 5, category: "DeFi" },
+                { title: "SocialLink", tagline: "Decentralized social graph", days: 8, category: "Social" },
+              ].map((item, idx) => {
+                const launchDate = new Date();
+                launchDate.setDate(launchDate.getDate() + item.days);
+                return (
+                  <div key={idx} style={{
+                    minWidth: 220, padding: '14px 16px', flex: '0 0 auto',
+                    borderRight: idx < 2 ? `1px solid ${colors.border}` : 'none',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                        background: 'rgba(0, 82, 255, 0.08)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 14, fontWeight: 700, color: '#0052FF',
+                      }}>
+                        {item.title[0]}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <h4 style={{ fontSize: 13, fontWeight: 600, color: colors.text, margin: 0 }}>{item.title}</h4>
+                        <p style={{ fontSize: 11, color: colors.textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.tagline}</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, color: colors.textDim, display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {launchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span style={{
+                        fontSize: 10, padding: '1px 6px', borderRadius: 8,
+                        border: `1px solid ${colors.border}`, color: colors.textDim,
+                      }}>{item.category}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ padding: '12px 16px', borderTop: `1px solid ${colors.border}` }}>
+              <Link href="/docs" style={{
+                display: 'block', textAlign: 'center', padding: '10px 0',
+                borderRadius: 8,
+                background: '#0052FF',
+                fontSize: 13, fontWeight: 600, color: '#fff',
+                textDecoration: 'none',
+                minHeight: 44,
+                lineHeight: '24px',
+              }}>
+                Submit your product
+              </Link>
+            </div>
+          </div>
+        </div>
       </main>
 
       <Footer />
@@ -339,26 +431,78 @@ export default function Home() {
       <SubscriptionModal isOpen={showSubModal} onClose={() => setShowSubModal(false)} limitMessage={rateLimitMsg} getAccessToken={getAccessToken} />
 
       <style>{`
+        /* Desktop: sidebar visible, mobile upcoming hidden */
         .home-sidebar { display: none; }
+        .home-upcoming-mobile { display: none; }
+
         @media (min-width: 900px) {
           .home-sidebar { display: block !important; }
+          .home-upcoming-mobile { display: none !important; }
         }
+
         @media (max-width: 899px) {
           .home-layout { flex-direction: column !important; }
+          .home-sidebar { display: none !important; }
+          .home-upcoming-mobile { display: block !important; }
         }
+
+        /* Mobile: < 640px */
         @media (max-width: 640px) {
           .home-main {
             padding: 24px 16px 60px !important;
           }
           .home-hero {
-            margin-bottom: 28px !important;
+            margin-bottom: 24px !important;
+          }
+          .home-hero-title {
+            font-size: 24px !important;
           }
           .home-hero-sub {
-            font-size: 15px !important;
+            font-size: 14px !important;
+          }
+          .product-card-header {
+            padding: 12px 14px !important;
+          }
+          .product-card-header span:first-child {
+            font-size: 14px !important;
           }
           .product-logo {
             width: 40px !important;
             height: 40px !important;
+          }
+          .product-rank {
+            font-size: 13px !important;
+            min-width: 20px !important;
+          }
+          .product-name {
+            font-size: 14px !important;
+          }
+          .product-tagline {
+            font-size: 13px !important;
+          }
+          .product-category {
+            display: none !important;
+          }
+          .product-info {
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .upcoming-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .upcoming-scroll::-webkit-scrollbar {
+            display: none;
+          }
+        }
+
+        /* Tablet: 640px - 899px */
+        @media (min-width: 641px) and (max-width: 899px) {
+          .home-main {
+            padding: 32px 20px 80px !important;
+          }
+          .home-hero {
+            margin-bottom: 32px !important;
           }
         }
       `}</style>
