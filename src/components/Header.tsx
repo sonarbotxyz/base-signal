@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
 import { useTheme } from './ThemeProvider';
 
@@ -11,20 +12,17 @@ interface UserInfo {
   avatar: string | null;
 }
 
-interface HeaderProps {
-  activePage?: string;
-}
-
-export default function Header({ activePage }: HeaderProps) {
+export default function Header() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
 
   const { ready, authenticated, logout, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
-  const { theme, colors, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -59,167 +57,85 @@ export default function Header({ activePage }: HeaderProps) {
   }, [ready, authenticated]);
 
   const navLinks = [
-    { href: '/leaderboard', label: 'Leaderboard', key: 'leaderboard' },
-    { href: '/curation', label: 'Curation', key: 'curation' },
-    { href: '/docs', label: 'Docs', key: 'docs' },
+    { href: '/', label: 'Products' },
+    { href: '/upcoming', label: 'Upcoming' },
+    { href: '/leaderboard', label: 'Leaderboard' },
+    { href: '/docs', label: 'Docs' },
   ];
 
   return (
-    <header style={{
-      position: 'sticky', top: 0, zIndex: 50,
-      background: colors.headerBg,
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      borderBottom: `1px solid ${colors.border}60`,
-    }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', display: 'flex', alignItems: 'center', height: 56, gap: 10 }}>
+    <header className="glass-header">
+      <div className="max-w-5xl mx-auto px-5 h-16 flex items-center gap-4">
         
         {/* Logo */}
-        <Link href="/" style={{ flexShrink: 0, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%', background: colors.accent,
-            boxShadow: `0 0 8px ${colors.accent}99`,
-            animation: 'sonarPulse 2s ease-out infinite',
-          }} />
-          <span style={{
-            fontWeight: 800, fontSize: 18, color: colors.accent, lineHeight: 1, whiteSpace: 'nowrap',
-            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            letterSpacing: '-0.5px',
-          }}>sonarbot</span>
+        <Link href="/" className="flex-shrink-0 flex items-center gap-2.5">
+          <div className="w-2.5 h-2.5 rounded-full bg-[var(--accent)] shadow-[0_0_12px_rgba(59,130,246,0.6)] animate-[pulse-glow_2s_infinite]" />
+          <span className="font-bold text-lg tracking-tight">sonarbot</span>
         </Link>
         
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
 
         {/* Desktop Navigation */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Desktop nav links - hidden on mobile */}
-          <div className="desktop-nav">
-            {navLinks.map(link => (
+        <nav className="hidden md:flex items-center gap-1.5">
+          {navLinks.map(link => {
+            const isActive = pathname === link.href || (pathname !== '/' && link.href !== '/' && pathname?.startsWith(link.href));
+            return (
               <Link
-                key={link.key}
+                key={link.label}
                 href={link.href}
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  height: 34, 
-                  padding: '0 14px', 
-                  borderRadius: 8, 
-                  border: activePage === link.key ? `1px solid ${colors.accent}` : '1px solid transparent',
-                  background: activePage === link.key ? colors.accentGlow : 'transparent',
-                  fontSize: 13, 
-                  fontWeight: 600, 
-                  color: activePage === link.key ? colors.accent : colors.textMuted,
-                  textDecoration: 'none', 
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease',
-                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                  letterSpacing: '0.3px',
-                }}
+                className={`h-9 px-3.5 flex items-center rounded-lg text-sm font-medium transition-all ${
+                  isActive 
+                    ? 'bg-[var(--text-primary)] text-[var(--bg-primary)]' 
+                    : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-primary)]'
+                }`}
               >
                 {link.label}
               </Link>
-            ))}
-          </div>
+            );
+          })}
+        </nav>
 
-          {/* Mobile burger menu button - visible on mobile only */}
-          <div ref={mobileMenuRef} style={{ position: 'relative' }} className="mobile-nav">
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 34,
-                height: 34,
-                border: `1px solid ${colors.border}`,
-                borderRadius: 8,
-                background: colors.bgCard,
-                cursor: 'pointer'
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-            </button>
-
-            {/* Mobile dropdown menu */}
-            {mobileMenuOpen && (
-              <div style={{ 
-                position: 'absolute', 
-                right: 0, 
-                top: 40, 
-                background: colors.bgCard, 
-                border: `1px solid ${colors.border}`, 
-                borderRadius: 12, 
-                padding: 8, 
-                minWidth: 180, 
-                boxShadow: theme === 'dark' ? '0 8px 32px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 68, 255, 0.1)' : '0 8px 32px rgba(0, 0, 0, 0.12), 0 0 16px rgba(0, 0, 255, 0.05)', 
-                zIndex: 100 
-              }}>
-                {navLinks.map(link => (
-                  <Link
-                    key={link.key}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    style={{
-                      display: 'block',
-                      padding: '12px 16px',
-                      fontSize: 14,
-                      fontWeight: 600,
-                      color: activePage === link.key ? colors.accent : colors.text,
-                      textDecoration: 'none',
-                      borderRadius: 8,
-                      background: activePage === link.key ? colors.accentGlow : 'transparent',
-                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                    }}
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="theme-toggle"
+            className="w-9 h-9 rounded-lg border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--border-primary)] transition-colors"
             aria-label="Toggle theme"
           >
-            {theme === 'dark' ? '☀️' : '🌙'}
+            {theme === 'dark' ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+            )}
           </button>
 
-          {/* Auth button - always visible */}
+          {/* Launch Button */}
+          <Link href="/docs" className="hidden md:flex items-center justify-center h-9 px-4 rounded-lg bg-gradient-primary text-white text-sm font-medium shadow-[0_2px_10px_rgba(59,130,246,0.3)] hover:opacity-90 transition-opacity">
+            Launch
+          </Link>
+
+          {/* Auth button */}
           {ready && (
             authenticated && userInfo ? (
-              <div ref={menuRef} style={{ position: 'relative' }}>
+              <div ref={menuRef} className="relative">
                 <button onClick={() => setMenuOpen(!menuOpen)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 10px',
-                    borderRadius: 8, border: `1px solid ${colors.border}`, background: colors.bgCard,
-                    cursor: 'pointer', fontSize: 13, fontWeight: 600, color: colors.text,
-                    fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                  }}>
+                  className="flex items-center gap-2 h-9 px-2 rounded-lg border border-[var(--border-primary)] hover:bg-[var(--border-primary)] transition-colors cursor-pointer text-sm font-medium"
+                >
                   {userInfo.avatar ? (
-                    <img src={userInfo.avatar} alt="" style={{ width: 22, height: 22, borderRadius: '50%' }} />
+                    <img src={userInfo.avatar} alt="" className="w-5 h-5 rounded-full" />
                   ) : (
-                    <div style={{ width: 22, height: 22, borderRadius: '50%', background: colors.border, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 600, color: colors.textMuted }}>
+                    <div className="w-5 h-5 rounded-full bg-[var(--border-primary)] flex items-center justify-center text-[10px] font-bold">
                       {userInfo.twitter_handle[0]?.toUpperCase()}
                     </div>
                   )}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
                 </button>
                 {menuOpen && (
-                  <div style={{
-                    position: 'absolute', right: 0, top: 40, background: colors.bgCard,
-                    border: `1px solid ${colors.border}`, borderRadius: 12, padding: 4, minWidth: 160,
-                    boxShadow: theme === 'dark' ? '0 8px 32px rgba(0, 0, 0, 0.5)' : '0 8px 32px rgba(0, 0, 0, 0.12)', zIndex: 100,
-                  }}>
-                    <div style={{ padding: '8px 12px', fontSize: 13, fontWeight: 600, color: colors.text, borderBottom: `1px solid ${colors.border}`, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{userInfo.twitter_handle}</div>
+                  <div className="absolute right-0 top-11 bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl p-1 min-w-[160px] shadow-[var(--card-shadow)] z-50 backdrop-blur-xl">
+                    <div className="px-3 py-2 text-sm font-semibold border-b border-[var(--border-primary)]">@{userInfo.twitter_handle}</div>
                     <button onClick={() => { logout(); setMenuOpen(false); }}
-                      style={{ width: '100%', padding: '8px 12px', fontSize: 13, fontWeight: 500, color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', borderRadius: 8 }}>
+                      className="w-full mt-1 px-3 py-2 text-sm font-medium text-red-500 hover:bg-[var(--border-primary)] rounded-lg text-left transition-colors">
                       Sign out
                     </button>
                   </div>
@@ -227,41 +143,46 @@ export default function Header({ activePage }: HeaderProps) {
               </div>
             ) : (
               <button onClick={() => initOAuth({ provider: 'twitter' })}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, height: 34, padding: '0 14px',
-                  borderRadius: 8, background: colors.accent, border: 'none',
-                  fontSize: 13, fontWeight: 600, color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap',
-                  boxShadow: `0 0 16px ${colors.accent}4D`,
-                  transition: 'all 0.2s ease',
-                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                className="flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-[var(--text-primary)] text-[var(--bg-primary)] text-sm font-medium transition-transform hover:scale-105"
+              >
                 Sign in
               </button>
             )
           )}
-        </div>
-      </div>
 
-      {/* CSS for mobile responsive behavior */}
-      <style jsx>{`
-        .desktop-nav {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-        .mobile-nav {
-          display: none;
-        }
-        @media (max-width: 768px) {
-          .desktop-nav {
-            display: none;
-          }
-          .mobile-nav {
-            display: block;
-          }
-        }
-      `}</style>
+          {/* Mobile Menu Toggle */}
+          <div ref={mobileMenuRef} className="md:hidden relative ml-1">
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg border border-[var(--border-primary)] text-[var(--text-muted)]"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+            {mobileMenuOpen && (
+              <div className="absolute right-0 top-11 bg-[var(--bg-card)] border border-[var(--border-primary)] rounded-xl p-2 min-w-[180px] shadow-[var(--card-shadow)] z-50 flex flex-col gap-1 backdrop-blur-xl">
+                {navLinks.map(link => (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-[var(--border-primary)] transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className="mt-2 block px-3 py-2.5 text-center text-sm font-medium rounded-lg bg-gradient-primary text-white shadow-sm">
+                  Launch Product
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+      </div>
     </header>
   );
 }

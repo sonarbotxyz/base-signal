@@ -123,7 +123,7 @@ export default function LeaderboardPage() {
 
       <div className="sonar-grid" />
 
-      <Header activePage="leaderboard" />
+      <Header />
 
       <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box', position: 'relative', zIndex: 1 }}>
 

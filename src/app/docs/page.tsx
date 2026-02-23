@@ -40,7 +40,7 @@ export default function DocsPage() {
 
       <div className="sonar-grid" />
 
-      <Header activePage="docs" />
+      <Header />
 
       {/* Content */}
       <main style={{ flex: 1, maxWidth: 720, margin: '0 auto', padding: '40px 20px 80px', width: '100%', boxSizing: 'border-box', position: 'relative', zIndex: 1 }}>

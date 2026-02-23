@@ -273,7 +273,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
       <div className="sonar-grid" />
 
-      <Header activePage="" />
+      <Header />
 
       {/* ── PRODUCT CONTENT ── */}
       <main style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 20px 0', position: 'relative', zIndex: 1 }}>

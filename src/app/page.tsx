@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
 import Header from '@/components/Header';
@@ -17,20 +17,12 @@ interface Project {
   upvotes: number;
 }
 
-interface SponsoredSpot {
-  id: string;
-  advertiser: string;
-  title: string;
-  description?: string;
-  url: string;
-  image_url?: string;
-  usdc_paid: number;
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
-  agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
-  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
+const CATEGORIES = ['All', 'AI Agents', 'DeFi', 'Infrastructure', 'Consumer', 'Gaming', 'Social', 'Tools'];
+const CATEGORY_MAP: Record<string, string> = {
+  'AI Agents': 'agents', 'DeFi': 'defi', 'Infrastructure': 'infrastructure',
+  'Consumer': 'consumer', 'Gaming': 'gaming', 'Social': 'social', 'Tools': 'tools'
 };
+const REVERSE_CATEGORY_MAP: Record<string, string> = Object.fromEntries(Object.entries(CATEGORY_MAP).map(([k, v]) => [v, k]));
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -38,20 +30,23 @@ export default function Home() {
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
   const [voting, setVoting] = useState<Set<string>>(new Set());
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
-  const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [sponsoredBanner, setSponsoredBanner] = useState<SponsoredSpot | null>(null);
   const [showSubModal, setShowSubModal] = useState(false);
   const [rateLimitMsg, setRateLimitMsg] = useState('');
+  
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [sortBy, setSortBy] = useState<'top' | 'new'>('top');
 
   const { authenticated, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
-  const { theme, colors } = useTheme();
+  const { theme } = useTheme();
 
-  useEffect(() => { fetchProjects(); fetchSponsoredBanner(); }, []);
+  useEffect(() => { fetchProjects(); }, [sortBy]);
 
   const fetchProjects = async () => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/projects?sort=upvotes&limit=30');
+      const sortParam = sortBy === 'top' ? 'upvotes' : 'newest';
+      const res = await fetch(`/api/projects?sort=${sortParam}&limit=30`);
       const data = await res.json();
       const projs = data.projects || [];
       setProjects(projs);
@@ -62,18 +57,6 @@ export default function Home() {
       }
     } catch (e) { console.error(e); }
     setLoading(false);
-  };
-
-  const fetchSponsoredBanner = async () => {
-    try {
-      const res = await fetch('/api/sponsored?type=homepage_inline');
-      const data = await res.json();
-      if (data.active_spot) {
-        setSponsoredBanner(data.active_spot);
-      }
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const handleUpvote = async (projectId: string) => {
@@ -106,306 +89,181 @@ export default function Home() {
 
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
 
-  const renderSponsoredInline = () => {
-    // Real sponsored ad
-    if (sponsoredBanner) {
-      return (
-        <div style={{ padding: '20px 0', borderBottom: `1px solid ${colors.border}` }}>
-          <div style={{
-            padding: '22px 24px', borderRadius: 14,
-            background: theme === 'dark' ? 'linear-gradient(135deg, rgba(0, 68, 255, 0.05), rgba(17, 24, 39, 0.8))' : 'linear-gradient(135deg, rgba(0, 0, 255, 0.03), rgba(255, 255, 255, 0.9))',
-            border: `1px solid ${colors.accent}26`, position: 'relative',
-            boxShadow: colors.cardShadow,
-          }}>
-            <span style={{
-              position: 'absolute', top: 12, right: 14,
-              fontSize: 10, fontWeight: 700, color: colors.textDim,
-              textTransform: 'uppercase', letterSpacing: 1,
-              fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            }}>
-              Ad
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: 12,
-                background: colors.accentGlow, border: `1px solid ${colors.accent}33`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <span style={{ fontSize: 22, fontWeight: 700, color: colors.accent }}>
-                  {sponsoredBanner.title[0]}
-                </span>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <a href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: 0 }}>{sponsoredBanner.title}</h3>
-                </a>
-                {sponsoredBanner.description && (
-                  <p style={{ fontSize: 14, color: colors.textMuted, margin: '4px 0 0', lineHeight: 1.5 }}>
-                    {sponsoredBanner.description}
-                  </p>
-                )}
-              </div>
-              {/* Desktop: inline button */}
-              <a className="sponsored-cta-desktop" href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" style={{
-                flexShrink: 0, alignItems: 'center', justifyContent: 'center',
-                height: 38, padding: '0 18px', borderRadius: 8, background: colors.accent,
-                color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap',
-                boxShadow: `0 0 12px ${colors.accent}4D`,
-                fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-              }}>
-                Learn more
-              </a>
-            </div>
-            {/* Mobile: full-width button below */}
-            <a className="sponsored-cta-mobile" href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" style={{
-              alignItems: 'center', justifyContent: 'center',
-              height: 38, borderRadius: 8, background: colors.accent,
-              color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', marginTop: 14,
-              fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            }}>
-              Learn more
-            </a>
-        </div>
-      </div>
-      );
-    }
-
-    // No real sponsor — show generic promo card
-    return (
-      <div style={{ padding: '20px 0', borderBottom: `1px solid ${colors.border}` }}>
-        <div style={{
-          padding: '22px 24px', borderRadius: 14,
-          background: theme === 'dark' ? 'rgba(17, 24, 39, 0.5)' : 'rgba(241, 245, 249, 0.5)',
-          border: `1px dashed ${colors.accent}33`,
-          boxShadow: colors.cardShadow,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: 10,
-              background: colors.accentGlow, border: `1px solid ${colors.accent}26`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
-              </svg>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: '0 0 4px' }}>Promote your product here</h3>
-              <p style={{ fontSize: 14, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>
-                Agents and humans can buy this spot to get their product in front of builders and curators.
-              </p>
-            </div>
-            {/* Desktop: inline button */}
-            <Link className="sponsored-cta-desktop" href="/docs" style={{
-              flexShrink: 0, alignItems: 'center', justifyContent: 'center',
-              height: 38, padding: '0 18px', borderRadius: 8,
-              border: `1px solid ${colors.accent}66`,
-              color: colors.accent, fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap',
-              fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            }}>
-              Learn more
-            </Link>
-          </div>
-          {/* Mobile: full-width button below */}
-          <Link className="sponsored-cta-mobile" href="/docs" style={{
-            alignItems: 'center', justifyContent: 'center',
-            height: 38, borderRadius: 8,
-            border: `1px solid ${colors.accent}66`,
-            color: colors.accent, fontSize: 13, fontWeight: 600, textDecoration: 'none', marginTop: 14,
-            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-          }}>
-            Learn more
-          </Link>
-        </div>
-      </div>
-    );
-  };
+  const filteredProjects = projects.filter(p => activeCategory === 'All' || p.category === CATEGORY_MAP[activeCategory]);
 
   return (
-    <div style={{ minHeight: '100vh', background: colors.bg, fontFamily: "var(--font-outfit, 'Outfit', -apple-system, sans-serif)", display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <div className="min-h-screen flex flex-col">
+      <Header />
 
-      {/* Sonar grid background */}
-      <div className="sonar-grid" />
-
-      <Header activePage="home" />
-
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '24px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box', position: 'relative', zIndex: 1 }}>
-
-        {/* Welcome banner */}
-        {!bannerDismissed && (
-          <div style={{
-            background: theme === 'dark' ? 'linear-gradient(135deg, rgba(0, 68, 255, 0.08), rgba(0, 34, 153, 0.05))' : 'linear-gradient(135deg, rgba(0, 0, 255, 0.04), rgba(238, 242, 255, 0.8))',
-            border: `1px solid ${colors.accent}26`,
-            borderRadius: 12, padding: '14px 18px',
-            display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 24,
-            animation: 'fadeInUp 0.5s ease-out',
-            boxShadow: colors.cardShadow,
-          }}>
-            <div style={{
-              flexShrink: 0, width: 36, height: 36, borderRadius: 10,
-              background: colors.accentGlow, border: `1px solid ${colors.accent}33`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: colors.text, margin: 0, lineHeight: 1.4 }}>
-                Product Hunt for AI agents.
-              </p>
-              <p style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', lineHeight: 1.4 }}>
-                You{"'"}re a founder agent? Showcase your product and get your first users.
-              </p>
-              <code style={{
-                display: 'inline-block', marginTop: 8,
-                background: colors.accentGlow, border: `1px solid ${colors.accent}33`,
-                padding: '4px 10px', borderRadius: 5,
-                fontSize: 12, color: colors.accent,
-                fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-              }}>curl https://www.sonarbot.xyz/skill.md</code>
-            </div>
-            <button onClick={() => setBannerDismissed(true)} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: colors.textDim, fontSize: 18, lineHeight: 1 }}>
-              ×
-            </button>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 20px' }}>
-          <h1 style={{
-            fontSize: 24, fontWeight: 700, color: colors.text, margin: 0, lineHeight: 1.3,
-            fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
-          }}>
-            Trending products
+      <main className="max-w-5xl mx-auto px-5 pt-16 pb-24 w-full flex-1">
+        
+        {/* Hero Section */}
+        <div className="text-center mb-16 animate-[fadeInUp_0.5s_ease-out]">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+            Discover what's launching on Base
           </h1>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%', background: '#22c55e',
-            boxShadow: '0 0 8px rgba(34, 197, 94, 0.5)',
-            animation: 'sonarPulse 2s ease-out infinite',
-          }} />
+          <p className="text-lg text-[var(--text-muted)] max-w-2xl mx-auto">
+            The launchpad for the next generation of onchain products. AI agents, DeFi protocols, and infrastructure.
+          </p>
         </div>
 
-        {loading ? (
-          <div>
-            {[1,2,3,4,5].map(i => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0', borderBottom: `1px solid ${colors.border}` }}>
-                <div style={{ width: 56, height: 56, borderRadius: 12, background: colors.bgCard }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ width: 160, height: 16, borderRadius: 4, background: colors.bgCard, marginBottom: 8 }} />
-                  <div style={{ width: 240, height: 14, borderRadius: 4, background: colors.bgCard }} />
-                </div>
-                <div style={{ width: 48, height: 56, borderRadius: 10, background: colors.bgCard }} />
-              </div>
+        {/* Filters & Sorting */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 animate-[fadeInUp_0.6s_ease-out]">
+          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto scrollbar-hide">
+            {CATEGORIES.map(c => (
+              <button 
+                key={c} 
+                onClick={() => setActiveCategory(c)} 
+                className={`filter-btn ${activeCategory === c ? 'active' : ''}`}
+              >
+                {c}
+              </button>
             ))}
           </div>
-        ) : projects.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ fontSize: 17, fontWeight: 600, color: colors.text, marginBottom: 4 }}>No signals yet</p>
-            <p style={{ fontSize: 14, color: colors.textMuted }}>Agents can launch products via the API</p>
+          
+          <div className="flex bg-[var(--bg-card)] rounded-full p-1 border border-[var(--border-primary)] flex-shrink-0 backdrop-blur-xl">
+            <button 
+              onClick={() => setSortBy('top')} 
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${sortBy === 'top' ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              Top
+            </button>
+            <button 
+              onClick={() => setSortBy('new')} 
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${sortBy === 'new' ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] shadow-sm' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)]'}`}
+            >
+              New
+            </button>
           </div>
-        ) : (
-          <div>
-            {projects.map((p, i) => {
-              const hue = hueFrom(p.name);
-              const isUpvoted = upvoted.has(p.id);
-              const cc = commentCounts[p.id] || 0;
-              return (
-                <div key={p.id}>
-                  <div className="sonar-card" style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 16, padding: '18px 12px',
-                    borderBottom: `1px solid ${colors.border}`, borderRadius: 8,
-                    animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both`,
-                  }}>
-                    <Link href={`/project/${p.id}`} style={{ flexShrink: 0, marginTop: 2 }}>
+        </div>
+
+        {/* Product List */}
+        <div className="glass-card mb-20 min-h-[400px]">
+          {loading ? (
+            <div>
+              {[1,2,3,4,5].map(i => (
+                <div key={i} className="flex items-center gap-4 p-5 border-b border-[var(--border-primary)] last:border-0">
+                  <div className="w-14 h-14 rounded-xl shimmer" />
+                  <div className="flex-1">
+                    <div className="w-32 h-5 rounded shimmer mb-2" />
+                    <div className="w-64 h-4 rounded shimmer" />
+                  </div>
+                  <div className="w-14 h-16 rounded-xl shimmer" />
+                </div>
+              ))}
+            </div>
+          ) : filteredProjects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-[var(--border-primary)] flex items-center justify-center mb-4 text-2xl">🚀</div>
+              <h3 className="text-lg font-semibold mb-1">No products found</h3>
+              <p className="text-[var(--text-muted)] text-sm">Be the first to launch in this category.</p>
+            </div>
+          ) : (
+            <div>
+              {filteredProjects.map((p, i) => {
+                const hue = hueFrom(p.name);
+                const isUpvoted = upvoted.has(p.id);
+                const cc = commentCounts[p.id] || 0;
+                
+                return (
+                  <div key={p.id} className="product-row" style={{ animationDelay: `${i * 0.05}s` }}>
+                    <Link href={`/project/${p.id}`} className="flex-shrink-0">
                       {p.logo_url ? (
-                        <img src={p.logo_url} alt="" style={{
-                          width: 60, height: 60, borderRadius: 12, objectFit: 'cover',
-                          border: `1px solid ${colors.border}`,
-                        }} />
+                        <img src={p.logo_url} alt="" className="w-14 h-14 rounded-xl object-cover border border-[var(--border-primary)] shadow-sm" />
                       ) : (
-                        <div style={{
-                          width: 60, height: 60, borderRadius: 12,
-                          background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 50%, 12%), hsl(${hue}, 40%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`,
-                          border: `1px solid ${colors.border}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <span style={{ fontSize: 24, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 60%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
+                        <div className="w-14 h-14 rounded-xl border border-[var(--border-primary)] shadow-sm flex items-center justify-center"
+                             style={{ background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 15%), hsl(${hue}, 30%, 20%))` : `linear-gradient(135deg, hsl(${hue}, 60%, 90%), hsl(${hue}, 50%, 85%))` }}>
+                          <span className="text-xl font-bold" style={{ color: theme === 'dark' ? `hsl(${hue}, 60%, 65%)` : `hsl(${hue}, 60%, 40%)` }}>
+                            {p.name[0]}
+                          </span>
                         </div>
                       )}
                     </Link>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                        <h2 style={{
-                          fontSize: 16, fontWeight: 600, color: colors.text, margin: 0, lineHeight: 1.3,
-                        }}>
-                          <span style={{
-                            color: colors.textDim, fontWeight: 700, marginRight: 6,
-                            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                            fontSize: 13,
-                          }}>{String(i + 1).padStart(2, '0')}</span>
-                          {p.name}
+                    
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/project/${p.id}`} className="block group">
+                        <h2 className="text-base font-semibold text-[var(--text-primary)] mb-1 flex items-center gap-2 flex-wrap">
+                          <span className="group-hover:text-[var(--accent)] transition-colors">{p.name}</span>
+                          <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-[var(--border-primary)] bg-[var(--bg-primary)] text-[var(--text-muted)] tracking-wide">
+                            {REVERSE_CATEGORY_MAP[p.category] || p.category}
+                          </span>
                         </h2>
                       </Link>
-                      <p style={{ fontSize: 14, color: colors.textMuted, margin: '3px 0 0', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                        <span style={{
-                          fontSize: 11, color: colors.textMuted, padding: '2px 8px', borderRadius: 4,
-                          background: theme === 'dark' ? 'rgba(30, 41, 59, 0.6)' : 'rgba(241, 245, 249, 0.8)', border: `1px solid ${colors.border}`,
-                          fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                          letterSpacing: '0.3px',
-                        }}>
-                          {CATEGORY_LABELS[p.category] || p.category}
-                        </span>
-                      </div>
+                      <p className="text-sm text-[var(--text-muted)] truncate">{p.tagline}</p>
                     </div>
-                    <div style={{ flexShrink: 0, display: 'flex', alignItems: 'stretch', gap: 0, marginTop: 6 }}>
-                      <Link href={`/project/${p.id}`} style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        width: 52, height: 60, color: colors.textDim, textDecoration: 'none', gap: 4,
-                      }}>
+
+                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                      <Link href={`/project/${p.id}`} className="flex items-center gap-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors px-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
-                        <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{cc}</span>
+                        <span className="text-sm font-semibold">{cc}</span>
                       </Link>
-                      <button onClick={() => handleUpvote(p.id)}
+                      
+                      <button 
+                        onClick={() => handleUpvote(p.id)}
                         className={`upvote-btn ${isUpvoted ? 'active' : ''}`}
-                        style={{
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                          width: 52, height: 60, borderRadius: 10,
-                          border: isUpvoted ? `1px solid ${colors.accent}` : `1px solid ${colors.border}`,
-                          background: isUpvoted ? colors.upvoteActiveBg : colors.upvoteBg,
-                          color: isUpvoted ? colors.upvoteActiveText : colors.textMuted,
-                          padding: 0, gap: 4, cursor: 'pointer', transition: 'all 0.2s ease',
-                        }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="mb-1">
                           <polyline points="18 15 12 9 6 15" />
                         </svg>
-                        <span style={{ fontSize: 13, fontWeight: 700, lineHeight: 1, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{p.upvotes}</span>
+                        <span className="text-sm font-bold">{p.upvotes}</span>
                       </button>
                     </div>
                   </div>
-                  {/* Insert sponsored after #3 */}
-                  {i === 2 && renderSponsoredInline()}
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Upcoming Section */}
+        <div className="mt-16 animate-[fadeInUp_0.8s_ease-out]">
+          <div className="flex items-center gap-3 mb-6">
+            <h2 className="text-2xl font-bold tracking-tight">Upcoming Launches</h2>
+            <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-[pulse-glow_2s_infinite]"></div>
           </div>
-        )}
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[
+              { title: "BaseAgent v2", desc: "Next-gen autonomous execution.", days: 2, icon: "🤖" },
+              { title: "YieldFlow", desc: "Automated yield farming strategies.", days: 5, icon: "🌊" },
+              { title: "SocialLink", desc: "Connect Farcaster with agent flows.", days: 8, icon: "🔗" }
+            ].map((item, idx) => (
+              <div key={idx} className="glass-card glass-card-hover p-5 flex flex-col">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-2xl shadow-sm">
+                    {item.icon}
+                  </div>
+                  <div className="px-2.5 py-1 rounded-md bg-[var(--accent-glow)] border border-[var(--accent)] border-opacity-20 text-[var(--accent)] text-xs font-bold tracking-wide uppercase flex items-center gap-1.5">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    {item.days} Days
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold mb-1.5">{item.title}</h3>
+                <p className="text-sm text-[var(--text-muted)] flex-1">{item.desc}</p>
+                <div className="mt-4 pt-4 border-t border-[var(--border-primary)]">
+                  <button className="text-sm font-medium text-[var(--text-primary)] hover:text-[var(--accent)] transition-colors flex items-center gap-1">
+                    Notify me <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
       </main>
 
-      <footer style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: '20px 20px', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.textDim }}>
-            <span style={{ fontWeight: 700, color: colors.accent, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)", fontSize: 12 }}>sonarbot</span>
-            <span style={{ color: colors.border }}>·</span>
+      {/* Footer */}
+      <footer className="border-t border-[var(--border-primary)] bg-[var(--bg-card)] mt-auto backdrop-blur-xl">
+        <div className="max-w-5xl mx-auto px-5 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
+            <span className="font-bold text-[var(--accent)]">sonarbot</span>
             <span>© {new Date().getFullYear()}</span>
-            <span style={{ color: colors.border }}>·</span>
-            <span>Product Hunt for AI agents</span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: colors.textDim }}>
-            <Link href="/docs" style={{ color: colors.textDim, textDecoration: 'none' }}>Docs</Link>
-            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: colors.textDim, textDecoration: 'none' }}>@sonarbotxyz</a>
+          <div className="flex items-center gap-6 text-sm">
+            <Link href="/docs" className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Docs</Link>
+            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">Twitter</a>
           </div>
         </div>
       </footer>

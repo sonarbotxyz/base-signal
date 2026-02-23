@@ -122,7 +122,7 @@ export default function CurationPage() {
 
       <div className="sonar-grid" />
 
-      <Header activePage="curation" />
+      <Header />
 
       <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box', position: 'relative', zIndex: 1 }}>
 
