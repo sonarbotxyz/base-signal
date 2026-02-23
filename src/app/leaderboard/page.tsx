@@ -11,16 +11,10 @@ interface Project {
   name: string;
   tagline: string;
   logo_url?: string;
-  twitter_handle?: string;
   category: string;
   upvotes: number;
   created_at: string;
 }
-
-const CATEGORY_LABELS: Record<string, string> = {
-  agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
-  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
-};
 
 function getWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -47,7 +41,6 @@ function formatDateShort(d: Date): string {
 
 export default function LeaderboardPage() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const { theme, colors } = useTheme();
 
@@ -64,13 +57,7 @@ export default function LeaderboardPage() {
     try {
       const res = await fetch('/api/projects?sort=upvotes&limit=100');
       const data = await res.json();
-      const projs = data.projects || [];
-      setProjects(projs);
-      for (const p of projs) {
-        fetch(`/api/projects/${p.id}/comments`).then(r => r.json()).then(d => {
-          setCommentCounts(prev => ({ ...prev, [p.id]: (d.comments || []).length }));
-        }).catch(() => {});
-      }
+      setProjects(data.projects || []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -102,14 +89,13 @@ export default function LeaderboardPage() {
   const isCurrentWeek = selectedYear === currentYear && selectedWeek === currentWeek;
   const canGoNext = !(selectedYear === currentYear && selectedWeek >= currentWeek);
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
-  const rankEmoji = (rank: number) => rank === 1 ? '\uD83E\uDD47' : rank === 2 ? '\uD83E\uDD48' : rank === 3 ? '\uD83E\uDD49' : '';
 
   return (
     <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
 
       <Header />
 
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+      <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
 
         {/* Title */}
         <div style={{ marginBottom: 32, animation: 'fadeInUp 350ms ease-out both' }}>
@@ -117,7 +103,7 @@ export default function LeaderboardPage() {
             Weekly Rankings
           </h1>
           <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
-            Top products by upvotes, ranked weekly
+            Top products by upvotes this week
           </p>
         </div>
 
@@ -163,23 +149,33 @@ export default function LeaderboardPage() {
           </button>
         </div>
 
-        {/* Product list */}
+        {/* Clean table */}
         <div style={{
           border: `1px solid ${colors.border}`, borderRadius: 12,
           background: colors.bgCard, overflow: 'hidden',
           animation: 'fadeInUp 350ms ease-out 100ms both',
         }}>
+          {/* Table header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', padding: '10px 20px',
+            borderBottom: `1px solid ${colors.border}`,
+            fontSize: 12, fontWeight: 600, color: colors.textDim, textTransform: 'uppercase', letterSpacing: '0.05em',
+          }}>
+            <span style={{ width: 48 }}>#</span>
+            <span style={{ flex: 1 }}>Product</span>
+            <span style={{ width: 80, textAlign: 'right' }}>Upvotes</span>
+          </div>
+
           {loading ? (
             <div>
               {[1, 2, 3, 4, 5].map(i => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: `1px solid ${colors.border}` }}>
-                  <div style={{ width: 28, height: 16, borderRadius: 3 }} className="shimmer" />
-                  <div style={{ width: 44, height: 44, borderRadius: 10 }} className="shimmer" />
+                  <div style={{ width: 24, height: 16, borderRadius: 3 }} className="shimmer" />
+                  <div style={{ width: 40, height: 40, borderRadius: 10 }} className="shimmer" />
                   <div style={{ flex: 1 }}>
-                    <div style={{ width: 160, height: 14, borderRadius: 3, marginBottom: 6 }} className="shimmer" />
-                    <div style={{ width: 220, height: 12, borderRadius: 3 }} className="shimmer" />
+                    <div style={{ width: 140, height: 14, borderRadius: 3 }} className="shimmer" />
                   </div>
-                  <div style={{ width: 48, height: 48, borderRadius: 8 }} className="shimmer" />
+                  <div style={{ width: 40, height: 16, borderRadius: 3 }} className="shimmer" />
                 </div>
               ))}
             </div>
@@ -187,7 +183,7 @@ export default function LeaderboardPage() {
             <div style={{ textAlign: 'center', padding: '60px 0' }}>
               <p style={{ fontSize: 15, color: colors.textDim, marginBottom: 4 }}>No products this week</p>
               <p style={{ fontSize: 14, color: colors.textMuted }}>
-                {isCurrentWeek ? 'Products launched this week will appear here.' : 'Try a different week.'}
+                {isCurrentWeek ? 'Products will appear here as they get upvoted.' : 'Try a different week.'}
               </p>
             </div>
           ) : (
@@ -195,73 +191,57 @@ export default function LeaderboardPage() {
               {weekProjects.map((p, i) => {
                 const hue = hueFrom(p.name);
                 const rank = i + 1;
-                const emoji = rankEmoji(rank);
                 return (
                   <div key={p.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px',
+                    display: 'flex', alignItems: 'center', padding: '12px 20px',
                     borderBottom: `1px solid ${colors.border}`,
                     transition: 'background 150ms ease',
-                    animation: `fadeInUp 300ms ease-out ${i * 40}ms both`,
+                    animation: `fadeInUp 300ms ease-out ${i * 30}ms both`,
                   }}
                   onMouseEnter={e => (e.currentTarget.style.background = colors.bgCardHover)}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     {/* Rank */}
                     <span style={{
-                      fontSize: rank <= 3 ? 18 : 14, fontWeight: 700,
-                      color: rank === 1 ? '#0052FF' : rank <= 3 ? colors.text : colors.textDim,
-                      minWidth: 32, textAlign: 'center', flexShrink: 0,
+                      width: 48, fontSize: 14, fontWeight: 700, flexShrink: 0,
+                      color: rank <= 3 ? '#0052FF' : colors.textDim,
                     }}>
-                      {emoji || rank}
+                      {rank}
                     </span>
 
-                    {/* Logo */}
-                    <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
-                      {p.logo_url ? (
-                        <img src={p.logo_url} alt="" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
-                      ) : (
-                        <div style={{
-                          width: 44, height: 44, borderRadius: 10,
-                          background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`,
-                          border: `1px solid ${colors.border}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        }}>
-                          <span style={{ fontSize: 16, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 55%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
-                        </div>
-                      )}
-                    </Link>
-
-                    {/* Name + tagline */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                        <h3 style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, lineHeight: 1.3 }}>{p.name}</h3>
+                    {/* Product */}
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                      <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
+                        {p.logo_url ? (
+                          <img src={p.logo_url} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
+                        ) : (
+                          <div style={{
+                            width: 40, height: 40, borderRadius: 10,
+                            background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`,
+                            border: `1px solid ${colors.border}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <span style={{ fontSize: 15, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 55%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
+                          </div>
+                        )}
                       </Link>
-                      <p style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                        <span style={{
-                          fontSize: 11, color: colors.textDim, padding: '2px 8px', borderRadius: 12,
-                          border: `1px solid ${colors.border}`,
-                        }}>
-                          {CATEGORY_LABELS[p.category] || p.category}
-                        </span>
-                      </div>
+                      <Link href={`/project/${p.id}`} style={{ textDecoration: 'none', minWidth: 0 }}>
+                        <h3 style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</h3>
+                        <p style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                      </Link>
                     </div>
 
-                    {/* Upvote count */}
-                    <div style={{
-                      flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                      minWidth: 52, padding: '8px 12px', borderRadius: 8,
-                      border: rank === 1 ? '1px solid rgba(0, 82, 255, 0.3)' : `1px solid ${colors.border}`,
-                      background: rank === 1 ? 'rgba(0, 82, 255, 0.06)' : 'transparent',
+                    {/* Upvotes */}
+                    <span style={{
+                      width: 80, textAlign: 'right', fontSize: 15, fontWeight: 700, flexShrink: 0,
+                      color: rank <= 3 ? '#0052FF' : colors.text,
+                      display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4,
                     }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={rank === 1 ? '#0052FF' : colors.textMuted} strokeWidth="3" style={{ marginBottom: 2 }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ opacity: 0.6 }}>
                         <polyline points="18 15 12 9 6 15" />
                       </svg>
-                      <span style={{
-                        fontSize: 14, fontWeight: 700, lineHeight: 1,
-                        color: rank === 1 ? '#0052FF' : colors.text,
-                      }}>{p.upvotes}</span>
-                    </div>
+                      {p.upvotes}
+                    </span>
                   </div>
                 );
               })}

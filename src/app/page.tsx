@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
 import Header from '@/components/Header';
@@ -18,12 +18,10 @@ interface Project {
   upvotes: number;
 }
 
-const CATEGORIES = ['All', 'AI Agents', 'DeFi', 'Infrastructure', 'Consumer', 'Gaming', 'Social', 'Tools'];
-const CATEGORY_MAP: Record<string, string> = {
-  'AI Agents': 'agents', 'DeFi': 'defi', 'Infrastructure': 'infrastructure',
-  'Consumer': 'consumer', 'Gaming': 'gaming', 'Social': 'social', 'Tools': 'tools'
+const REVERSE_CATEGORY_MAP: Record<string, string> = {
+  agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
+  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools',
 };
-const REVERSE_CATEGORY_MAP: Record<string, string> = Object.fromEntries(Object.entries(CATEGORY_MAP).map(([k, v]) => [v, k]));
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -33,7 +31,6 @@ export default function Home() {
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [showSubModal, setShowSubModal] = useState(false);
   const [rateLimitMsg, setRateLimitMsg] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
   const [sortBy, setSortBy] = useState<'top' | 'new'>('top');
 
   const { authenticated, getAccessToken } = usePrivy();
@@ -88,7 +85,6 @@ export default function Home() {
   };
 
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
-  const filteredProjects = projects.filter(p => activeCategory === 'All' || p.category === CATEGORY_MAP[activeCategory]);
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: colors.bg, color: colors.text }}>
@@ -126,16 +122,8 @@ export default function Home() {
           {/* Left: Filters + Product list */}
           <div style={{ flex: 1, minWidth: 0 }}>
 
-            {/* Filters */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16, animation: 'fadeInUp 350ms ease-out 50ms both' }}>
-              <div className="scrollbar-hide" style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
-                {CATEGORIES.map(c => (
-                  <button key={c} onClick={() => setActiveCategory(c)} className={`filter-btn ${activeCategory === c ? 'active' : ''}`}>
-                    {c}
-                  </button>
-                ))}
-              </div>
-
+            {/* Sort toggle */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16, animation: 'fadeInUp 350ms ease-out 50ms both' }}>
               <div style={{
                 display: 'flex', borderRadius: 8, overflow: 'hidden',
                 border: `1px solid ${colors.border}`, flexShrink: 0,
@@ -182,14 +170,14 @@ export default function Home() {
                     </div>
                   ))}
                 </div>
-              ) : filteredProjects.length === 0 ? (
+              ) : projects.length === 0 ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 280, textAlign: 'center' }}>
                   <p style={{ fontSize: 15, color: colors.textDim, marginBottom: 4 }}>No products found</p>
                   <p style={{ fontSize: 14, color: colors.textMuted }}>Be the first to launch in this category.</p>
                 </div>
               ) : (
                 <div>
-                  {filteredProjects.map((p, i) => {
+                  {projects.map((p, i) => {
                     const hue = hueFrom(p.name);
                     const isUpvoted = upvoted.has(p.id);
                     const cc = commentCounts[p.id] || 0;
@@ -284,23 +272,50 @@ export default function Home() {
               </div>
 
               {[
-                { title: "BaseAgent v2", desc: "Next-gen autonomous execution.", days: 2 },
-                { title: "YieldFlow", desc: "Automated yield farming.", days: 5 },
-                { title: "SocialLink", desc: "Farcaster meets agent flows.", days: 8 },
-              ].map((item, idx) => (
-                <div key={idx} style={{
-                  padding: '14px 16px',
-                  borderBottom: idx < 2 ? `1px solid ${colors.border}` : 'none',
-                  transition: 'background 150ms ease',
-                }}>
-                  <h4 style={{ fontSize: 14, fontWeight: 600, color: colors.text, margin: '0 0 4px' }}>{item.title}</h4>
-                  <p style={{ fontSize: 13, color: colors.textDim, margin: '0 0 8px', lineHeight: 1.4 }}>{item.desc}</p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: colors.textDim }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    Launching in {item.days}d
+                { title: "BaseAgent v2", tagline: "Next-gen autonomous AI agents", desc: "Autonomous AI agents for on-chain operations with multi-step reasoning and wallet management.", days: 2, category: "AI Agents", maker: "BaseAI Team" },
+                { title: "YieldFlow", tagline: "Automated yield optimization", desc: "Automated yield optimization across Base DeFi protocols with risk-adjusted portfolio rebalancing.", days: 5, category: "DeFi", maker: "YieldFlow Labs" },
+                { title: "SocialLink", tagline: "Decentralized social graph", desc: "Connecting on-chain identity with Farcaster reputation scoring and social connections.", days: 8, category: "Social", maker: "SocialLink DAO" },
+              ].map((item, idx) => {
+                const launchDate = new Date();
+                launchDate.setDate(launchDate.getDate() + item.days);
+                return (
+                  <div key={idx} style={{
+                    padding: '14px 16px',
+                    borderBottom: idx < 2 ? `1px solid ${colors.border}` : 'none',
+                    transition: 'background 150ms ease',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{
+                        width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+                        background: 'rgba(0, 82, 255, 0.08)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 18, fontWeight: 700, color: '#0052FF',
+                      }}>
+                        {item.title[0]}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h4 style={{ fontSize: 14, fontWeight: 600, color: colors.text, margin: '0 0 2px' }}>{item.title}</h4>
+                        <p style={{ fontSize: 12, color: colors.textMuted, margin: '0 0 4px', lineHeight: 1.4 }}>{item.tagline}</p>
+                        <p style={{ fontSize: 12, color: colors.textDim, margin: '0 0 6px', lineHeight: 1.4 }}>
+                          {item.desc.slice(0, 100)}{item.desc.length > 100 ? '...' : ''}
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 11, color: colors.textDim, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {launchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                          <span style={{ fontSize: 11, color: colors.textDim }}>·</span>
+                          <span style={{ fontSize: 11, color: colors.textDim }}>{item.maker}</span>
+                          <span style={{
+                            fontSize: 10, padding: '1px 6px', borderRadius: 8,
+                            border: `1px solid ${colors.border}`, color: colors.textDim,
+                          }}>{item.category}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
 
               <div style={{ padding: '12px 16px', borderTop: `1px solid ${colors.border}` }}>
                 <Link href="/docs" style={{
