@@ -50,7 +50,7 @@ export default function Header() {
   const navLinks = [
     { href: '/', label: 'Products' },
     { href: '/upcoming', label: 'Upcoming' },
-    { href: '/leaderboard', label: 'Leaderboard' },
+    { href: '/leaderboard', label: 'Calendar' },
     { href: '/docs', label: 'Docs' },
   ];
 

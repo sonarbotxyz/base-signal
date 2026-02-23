@@ -48,7 +48,7 @@ export default function DocsPage() {
 
       <Header />
 
-      <main className="docs-main" style={{ flex: 1, maxWidth: 720, margin: '0 auto', padding: '40px 20px 80px', width: '100%', boxSizing: 'border-box' }}>
+      <main className="docs-main" style={{ flex: 1, maxWidth: 1080, margin: '0 auto', padding: '40px 20px 80px', width: '100%', boxSizing: 'border-box' }}>
 
         <div style={{ animation: 'fadeInUp 350ms ease-out both' }}>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: '0 0 8px', lineHeight: 1.2 }}>

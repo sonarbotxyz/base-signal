@@ -16,272 +16,270 @@ interface Project {
   created_at: string;
 }
 
-function getWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+function formatDateLabel(dateStr: string): string {
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
-function getWeekRange(year: number, week: number): { start: Date; end: Date } {
-  const jan1 = new Date(Date.UTC(year, 0, 1));
-  const jan1Day = jan1.getUTCDay() || 7;
-  const startOfWeek1 = new Date(jan1);
-  startOfWeek1.setUTCDate(jan1.getUTCDate() - jan1Day + 1);
-  const start = new Date(startOfWeek1);
-  start.setUTCDate(startOfWeek1.getUTCDate() + (week - 1) * 7);
-  const end = new Date(start);
-  end.setUTCDate(start.getUTCDate() + 6);
-  return { start, end };
+function getDateKey(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function formatDateShort(d: Date): string {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+function isToday(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
 }
 
-export default function LeaderboardPage() {
+function isFuture(dateStr: string): boolean {
+  const d = new Date(dateStr);
+  const now = new Date();
+  d.setHours(0, 0, 0, 0);
+  now.setHours(0, 0, 0, 0);
+  return d > now;
+}
+
+export default function CalendarPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const { theme, colors } = useTheme();
-
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentWeek = getWeekNumber(now);
-
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedWeek, setSelectedWeek] = useState(currentWeek);
 
   useEffect(() => { fetchProjects(); }, []);
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch('/api/projects?sort=upvotes&limit=100');
+      const res = await fetch('/api/projects?sort=newest&limit=200');
       const data = await res.json();
       setProjects(data.projects || []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
 
-  const weekProjects = useMemo(() => {
-    const { start, end } = getWeekRange(selectedYear, selectedWeek);
-    const endOfDay = new Date(end);
-    endOfDay.setUTCHours(23, 59, 59, 999);
-    const filtered = projects.filter(p => {
-      const created = new Date(p.created_at);
-      return created >= start && created <= endOfDay;
-    });
-    return filtered.sort((a, b) => b.upvotes - a.upvotes);
-  }, [projects, selectedYear, selectedWeek]);
+  const { upcoming, past } = useMemo(() => {
+    const up: Project[] = [];
+    const pa: Project[] = [];
+    for (const p of projects) {
+      if (isFuture(p.created_at)) up.push(p);
+      else pa.push(p);
+    }
+    // Upcoming: sorted by date ascending (soonest first)
+    up.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    // Past: sorted by date descending (most recent first)
+    pa.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return { upcoming: up, past: pa };
+  }, [projects]);
 
-  const { start: weekStart, end: weekEnd } = getWeekRange(selectedYear, selectedWeek);
+  function groupByDate(items: Project[]): { dateKey: string; label: string; projects: Project[] }[] {
+    const map = new Map<string, Project[]>();
+    for (const p of items) {
+      const key = getDateKey(p.created_at);
+      const existing = map.get(key) || [];
+      existing.push(p);
+      map.set(key, existing);
+    }
+    return Array.from(map.entries()).map(([key, prods]) => ({
+      dateKey: key,
+      label: formatDateLabel(prods[0].created_at),
+      projects: prods,
+    }));
+  }
 
-  const goToPrevWeek = () => {
-    if (selectedWeek <= 1) { setSelectedYear(selectedYear - 1); setSelectedWeek(52); }
-    else { setSelectedWeek(selectedWeek - 1); }
-  };
+  const upcomingGroups = groupByDate(upcoming);
+  const pastGroups = groupByDate(past);
 
-  const goToNextWeek = () => {
-    if (selectedYear === currentYear && selectedWeek >= currentWeek) return;
-    if (selectedWeek >= 52) { setSelectedYear(selectedYear + 1); setSelectedWeek(1); }
-    else { setSelectedWeek(selectedWeek + 1); }
-  };
-
-  const isCurrentWeek = selectedYear === currentYear && selectedWeek === currentWeek;
-  const canGoNext = !(selectedYear === currentYear && selectedWeek >= currentWeek);
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
+
+  function renderProduct(p: Project, i: number) {
+    const hue = hueFrom(p.name);
+    const launchDate = new Date(p.created_at);
+
+    return (
+      <div
+        key={p.id}
+        className="cal-row"
+        style={{
+          display: 'flex', alignItems: 'center', padding: '12px 20px', gap: 14,
+          borderBottom: `1px solid ${colors.border}`,
+          transition: 'background 150ms ease',
+          animation: `fadeInUp 300ms ease-out ${i * 30}ms both`,
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = colors.bgCardHover)}
+        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+      >
+        {/* Logo */}
+        <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
+          {p.logo_url ? (
+            <img src={p.logo_url} alt="" className="cal-logo" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
+          ) : (
+            <div className="cal-logo" style={{
+              width: 44, height: 44, borderRadius: 10,
+              background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`,
+              border: `1px solid ${colors.border}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 55%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
+            </div>
+          )}
+        </Link>
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+            <h3 className="cal-name" style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</h3>
+            <p className="cal-tagline" style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+          </Link>
+        </div>
+
+        {/* Date */}
+        <span className="cal-date" style={{ fontSize: 12, color: colors.textDim, flexShrink: 0, whiteSpace: 'nowrap' }}>
+          {launchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        </span>
+
+        {/* Upvotes */}
+        <span className="cal-upvotes" style={{
+          display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
+          fontSize: 14, fontWeight: 700, color: colors.text,
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ opacity: 0.6 }}>
+            <polyline points="18 15 12 9 6 15" />
+          </svg>
+          {p.upvotes}
+        </span>
+      </div>
+    );
+  }
+
+  function renderSection(title: string, subtitle: string, groups: { dateKey: string; label: string; projects: Project[] }[], emptyMsg: string) {
+    return (
+      <div style={{ marginBottom: 32 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: 0 }}>{title}</h2>
+          <span style={{ fontSize: 13, color: colors.textDim }}>{subtitle}</span>
+        </div>
+
+        <div style={{
+          border: `1px solid ${colors.border}`, borderRadius: 12,
+          background: colors.bgCard, overflow: 'hidden',
+        }}>
+          {groups.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '48px 20px' }}>
+              <p style={{ fontSize: 15, color: colors.textDim, margin: 0 }}>{emptyMsg}</p>
+            </div>
+          ) : (
+            groups.map((group) => (
+              <div key={group.dateKey}>
+                {/* Date header */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 20px',
+                  background: theme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+                  borderBottom: `1px solid ${colors.border}`,
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: colors.textDim }}>
+                    {group.label}
+                  </span>
+                  {isToday(group.projects[0].created_at) && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 600, color: '#22c55e',
+                      background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)',
+                      padding: '1px 8px', borderRadius: 10, marginLeft: 4,
+                    }}>
+                      Today
+                    </span>
+                  )}
+                </div>
+                {/* Products for this date */}
+                {group.projects.map((p, i) => renderProduct(p, i))}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
 
       <Header />
 
-      <main className="lb-main" style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+      <main className="cal-main" style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
 
         {/* Title */}
         <div style={{ marginBottom: 32, animation: 'fadeInUp 350ms ease-out both' }}>
-          <h1 className="lb-title" style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: '0 0 6px' }}>
-            Weekly Rankings
+          <h1 className="cal-title" style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: '0 0 6px' }}>
+            Launch Calendar
           </h1>
           <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
-            Top products by upvotes this week
+            Past and upcoming launches on Base
           </p>
         </div>
 
-        {/* Week selector */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap',
-          animation: 'fadeInUp 350ms ease-out 50ms both',
-        }}>
-          <button onClick={goToPrevWeek} style={{
-            width: 36, height: 36, borderRadius: 8,
-            border: `1px solid ${colors.border}`, background: colors.bgCard,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        {loading ? (
+          <div style={{
+            border: `1px solid ${colors.border}`, borderRadius: 12,
+            background: colors.bgCard, overflow: 'hidden',
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 17, fontWeight: 700, color: colors.text }}>
-              Week {selectedWeek}
-            </span>
-            <span style={{ fontSize: 14, color: colors.textDim }}>
-              {formatDateShort(weekStart)} – {formatDateShort(weekEnd)}, {selectedYear}
-            </span>
-            {isCurrentWeek && (
-              <span style={{
-                fontSize: 11, fontWeight: 600, color: '#22c55e',
-                background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)',
-                padding: '2px 10px', borderRadius: 12,
-              }}>
-                Live
-              </span>
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: `1px solid ${colors.border}` }}>
+                <div style={{ width: 44, height: 44, borderRadius: 10 }} className="shimmer" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ width: 140, height: 14, borderRadius: 3, marginBottom: 6 }} className="shimmer" />
+                  <div style={{ width: 200, height: 12, borderRadius: 3 }} className="shimmer" />
+                </div>
+                <div style={{ width: 50, height: 14, borderRadius: 3 }} className="shimmer" />
+                <div style={{ width: 40, height: 16, borderRadius: 3 }} className="shimmer" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{ animation: 'fadeInUp 350ms ease-out 100ms both' }}>
+            {renderSection(
+              'Upcoming Launches',
+              `${upcoming.length} scheduled`,
+              upcomingGroups,
+              'No upcoming launches scheduled yet.'
+            )}
+            {renderSection(
+              'Past Launches',
+              `${past.length} launched`,
+              pastGroups,
+              'No past launches yet.'
             )}
           </div>
-
-          <button onClick={goToNextWeek} disabled={!canGoNext} style={{
-            width: 36, height: 36, borderRadius: 8,
-            border: `1px solid ${colors.border}`,
-            background: canGoNext ? colors.bgCard : 'transparent',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: canGoNext ? 'pointer' : 'default', opacity: canGoNext ? 1 : 0.3,
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2"><polyline points="9 18 15 12 9 6" /></svg>
-          </button>
-        </div>
-
-        {/* Clean table */}
-        <div style={{
-          border: `1px solid ${colors.border}`, borderRadius: 12,
-          background: colors.bgCard, overflow: 'hidden',
-          animation: 'fadeInUp 350ms ease-out 100ms both',
-        }}>
-          {/* Table header */}
-          <div className="lb-table-header" style={{
-            display: 'flex', alignItems: 'center', padding: '10px 20px',
-            borderBottom: `1px solid ${colors.border}`,
-            fontSize: 12, fontWeight: 600, color: colors.textDim, textTransform: 'uppercase', letterSpacing: '0.05em',
-          }}>
-            <span className="lb-rank-col" style={{ width: 48 }}>#</span>
-            <span style={{ flex: 1 }}>Product</span>
-            <span className="lb-upvotes-col" style={{ width: 80, textAlign: 'right' }}>Upvotes</span>
-          </div>
-
-          {loading ? (
-            <div>
-              {[1, 2, 3, 4, 5].map(i => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: `1px solid ${colors.border}` }}>
-                  <div style={{ width: 24, height: 16, borderRadius: 3 }} className="shimmer" />
-                  <div style={{ width: 40, height: 40, borderRadius: 10 }} className="shimmer" />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ width: 140, height: 14, borderRadius: 3 }} className="shimmer" />
-                  </div>
-                  <div style={{ width: 40, height: 16, borderRadius: 3 }} className="shimmer" />
-                </div>
-              ))}
-            </div>
-          ) : weekProjects.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '60px 0' }}>
-              <p style={{ fontSize: 15, color: colors.textDim, marginBottom: 4 }}>No products this week</p>
-              <p style={{ fontSize: 14, color: colors.textMuted }}>
-                {isCurrentWeek ? 'Products will appear here as they get upvoted.' : 'Try a different week.'}
-              </p>
-            </div>
-          ) : (
-            <div>
-              {weekProjects.map((p, i) => {
-                const hue = hueFrom(p.name);
-                const rank = i + 1;
-                return (
-                  <div key={p.id} className="lb-row" style={{
-                    display: 'flex', alignItems: 'center', padding: '12px 20px',
-                    borderBottom: `1px solid ${colors.border}`,
-                    transition: 'background 150ms ease',
-                    animation: `fadeInUp 300ms ease-out ${i * 30}ms both`,
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = colors.bgCardHover)}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    {/* Rank */}
-                    <span className="lb-rank-col" style={{
-                      width: 48, fontSize: 14, fontWeight: 700, flexShrink: 0,
-                      color: rank <= 3 ? '#0052FF' : colors.textDim,
-                    }}>
-                      {rank}
-                    </span>
-
-                    {/* Product */}
-                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-                      <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
-                        {p.logo_url ? (
-                          <img src={p.logo_url} alt="" className="lb-logo" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
-                        ) : (
-                          <div className="lb-logo" style={{
-                            width: 40, height: 40, borderRadius: 10,
-                            background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`,
-                            border: `1px solid ${colors.border}`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>
-                            <span style={{ fontSize: 15, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 55%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
-                          </div>
-                        )}
-                      </Link>
-                      <Link href={`/project/${p.id}`} style={{ textDecoration: 'none', minWidth: 0 }}>
-                        <h3 className="lb-name" style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</h3>
-                        <p className="lb-tagline" style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
-                      </Link>
-                    </div>
-
-                    {/* Upvotes */}
-                    <span className="lb-upvotes-col" style={{
-                      width: 80, textAlign: 'right', fontSize: 15, fontWeight: 700, flexShrink: 0,
-                      color: rank <= 3 ? '#0052FF' : colors.text,
-                      display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4,
-                    }}>
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ opacity: 0.6 }}>
-                        <polyline points="18 15 12 9 6 15" />
-                      </svg>
-                      {p.upvotes}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        )}
       </main>
 
       <Footer />
 
       <style>{`
         @media (max-width: 640px) {
-          .lb-main {
+          .cal-main {
             padding: 24px 16px 60px !important;
           }
-          .lb-title {
+          .cal-title {
             font-size: 24px !important;
           }
-          .lb-table-header {
+          .cal-row {
             padding: 10px 14px !important;
+            gap: 10px !important;
           }
-          .lb-rank-col {
-            width: 32px !important;
+          .cal-logo {
+            width: 36px !important;
+            height: 36px !important;
           }
-          .lb-upvotes-col {
-            width: 60px !important;
-          }
-          .lb-row {
-            padding: 10px 14px !important;
-            gap: 10px;
-          }
-          .lb-logo {
-            width: 34px !important;
-            height: 34px !important;
-          }
-          .lb-name {
+          .cal-name {
             font-size: 14px !important;
           }
-          .lb-tagline {
+          .cal-tagline {
             font-size: 12px !important;
+          }
+          .cal-date {
+            display: none !important;
           }
         }
       `}</style>
