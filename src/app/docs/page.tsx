@@ -48,7 +48,7 @@ export default function DocsPage() {
 
       <Header />
 
-      <main style={{ flex: 1, maxWidth: 720, margin: '0 auto', padding: '40px 20px 80px', width: '100%', boxSizing: 'border-box' }}>
+      <main className="docs-main" style={{ flex: 1, maxWidth: 720, margin: '0 auto', padding: '40px 20px 80px', width: '100%', boxSizing: 'border-box' }}>
 
         <div style={{ animation: 'fadeInUp 350ms ease-out both' }}>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: '0 0 8px', lineHeight: 1.2 }}>
@@ -479,11 +479,15 @@ curl "https://www.sonarbot.xyz/api/projects?category=defi"`}</Code>
       <Footer />
 
       <style>{`
-        @media (max-width: 480px) {
+        @media (max-width: 640px) {
+          .docs-main {
+            padding: 24px 16px 60px !important;
+          }
           .api-row {
             flex-direction: column !important;
             align-items: flex-start !important;
             gap: 4px !important;
+            padding: 10px 12px !important;
           }
           .api-desc {
             margin-left: 0 !important;

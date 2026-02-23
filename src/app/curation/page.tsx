@@ -50,10 +50,10 @@ function WeekRow({ week, defaultExpanded }: { week: WeeklyDistribution; defaultE
         style={{
           width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '14px 16px', background: expanded ? 'rgba(0, 82, 255, 0.04)' : colors.bgCard,
-          border: 'none', cursor: 'pointer', textAlign: 'left',
+          border: 'none', cursor: 'pointer', textAlign: 'left', minHeight: 44,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ fontSize: 15, fontWeight: 700, color: colors.text }}>{week.epoch}</span>
           <span style={{ fontSize: 14, color: colors.textDim }}>{week.dateRange}</span>
         </div>
@@ -89,13 +89,14 @@ function WeekRow({ week, defaultExpanded }: { week: WeeklyDistribution; defaultE
               Top curators
             </p>
             {week.curators.map((c, i) => (
-              <div key={i} style={{
+              <div key={i} className="curator-row" style={{
                 display: 'flex', alignItems: 'center', padding: '8px 0',
                 borderBottom: i < week.curators.length - 1 ? `1px solid ${colors.border}` : 'none',
+                flexWrap: 'wrap', gap: '2px 0',
               }}>
                 <span style={{ fontSize: 13, fontWeight: 600, color: colors.textDim, width: 24 }}>{c.rank}.</span>
-                <span style={{ fontSize: 14, fontWeight: 600, color: colors.text, flex: 1 }}>{c.handle}</span>
-                <span style={{ fontSize: 13, color: colors.textDim, marginRight: 16 }}>{c.score} pts</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: colors.text, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.handle}</span>
+                <span className="curator-pts" style={{ fontSize: 13, color: colors.textDim, marginRight: 16 }}>{c.score} pts</span>
                 <span style={{ fontSize: 14, fontWeight: 700, color: colors.text }}>{c.amount}</span>
               </div>
             ))}
@@ -120,7 +121,7 @@ export default function CurationPage() {
 
       <Header />
 
-      <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+      <main className="curation-main" style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
 
         {/* Title */}
         <div style={{ marginBottom: 40, animation: 'fadeInUp 350ms ease-out both' }}>
@@ -381,12 +382,18 @@ export default function CurationPage() {
       <Footer />
 
       <style jsx>{`
-        @media (max-width: 600px) {
+        @media (max-width: 640px) {
+          .curation-main {
+            padding: 24px 16px 60px !important;
+          }
           .scoring-grid {
             grid-template-columns: 1fr !important;
           }
           .snr-grid {
             grid-template-columns: 1fr !important;
+          }
+          .curator-pts {
+            margin-right: 8px !important;
           }
         }
       `}</style>

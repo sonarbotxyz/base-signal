@@ -75,6 +75,7 @@ function ProductCard({ product, index }: { product: UpcomingProduct; index: numb
 
   return (
     <div
+      className="upcoming-card"
       style={{
         background: colors.bgCard,
         border: `1px solid ${colors.border}`,
@@ -90,7 +91,7 @@ function ProductCard({ product, index }: { product: UpcomingProduct; index: numb
       onMouseLeave={e => (e.currentTarget.style.borderColor = colors.border)}
     >
       {/* Logo */}
-      <div style={{
+      <div className="upcoming-logo" style={{
         width: 64, height: 64, borderRadius: 14, flexShrink: 0,
         background: theme === 'dark'
           ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))`
@@ -156,6 +157,7 @@ function ProductCard({ product, index }: { product: UpcomingProduct; index: numb
         {/* Notify button */}
         <button
           onClick={() => setNotified(!notified)}
+          className="upcoming-notify"
           style={{
             fontSize: 13, fontWeight: 600,
             color: notified ? '#0052FF' : colors.textMuted,
@@ -163,6 +165,7 @@ function ProductCard({ product, index }: { product: UpcomingProduct; index: numb
             border: `1px solid ${notified ? 'rgba(0, 82, 255, 0.3)' : colors.border}`,
             borderRadius: 8, padding: '8px 20px', cursor: 'pointer',
             transition: 'all 150ms ease-out',
+            minHeight: 44,
           }}
         >
           {notified ? 'Notified \u2713' : 'Notify me'}
@@ -192,7 +195,7 @@ export default function UpcomingPage() {
 
       <Header />
 
-      <main style={{ flex: 1, maxWidth: 1080, margin: '0 auto', padding: '40px 20px 80px', width: '100%' }}>
+      <main className="upcoming-main" style={{ flex: 1, maxWidth: 1080, margin: '0 auto', padding: '40px 20px 80px', width: '100%', boxSizing: 'border-box' }}>
 
         {/* Title */}
         <div style={{ marginBottom: 40, animation: 'fadeInUp 350ms ease-out both' }}>
@@ -261,6 +264,29 @@ export default function UpcomingPage() {
       </main>
 
       <Footer />
+
+      <style>{`
+        @media (max-width: 640px) {
+          .upcoming-main {
+            padding: 24px 16px 60px !important;
+          }
+          .upcoming-card {
+            padding: 16px !important;
+            gap: 12px !important;
+          }
+          .upcoming-logo {
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 12px !important;
+          }
+          .upcoming-logo span {
+            font-size: 20px !important;
+          }
+          .upcoming-notify {
+            width: 100%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

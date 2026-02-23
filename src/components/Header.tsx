@@ -56,7 +56,7 @@ export default function Header() {
 
   return (
     <header className="glass-header">
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div className="header-inner" style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', gap: 16 }}>
 
         {/* Logo */}
         <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
@@ -202,7 +202,7 @@ export default function Header() {
           <div ref={mobileMenuRef} className="header-mobile-menu" style={{ position: 'relative', marginLeft: 4 }}>
             <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               style={{
-                width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 borderRadius: 6, border: `1px solid ${colors.border}`,
                 background: 'transparent', color: colors.textMuted, cursor: 'pointer',
               }}
@@ -223,9 +223,10 @@ export default function Header() {
                 {navLinks.map(link => (
                   <Link key={link.label} href={link.href} onClick={() => setMobileMenuOpen(false)}
                     style={{
-                      display: 'block', padding: '10px 12px', borderRadius: 6,
-                      fontSize: 14, fontWeight: 500,
+                      display: 'block', padding: '12px 14px', borderRadius: 6,
+                      fontSize: 15, fontWeight: 500, minHeight: 44,
                       textDecoration: 'none', color: colors.text,
+                      lineHeight: '20px',
                     }}
                   >
                     {link.label}
@@ -234,9 +235,10 @@ export default function Header() {
                 <div style={{ borderTop: `1px solid ${colors.border}`, marginTop: 4, paddingTop: 4 }}>
                   <Link href="/docs" onClick={() => setMobileMenuOpen(false)}
                     style={{
-                      display: 'block', padding: '10px 12px', borderRadius: 6,
-                      textAlign: 'center', fontSize: 13, fontWeight: 600,
+                      display: 'block', padding: '12px 14px', borderRadius: 6,
+                      textAlign: 'center', fontSize: 14, fontWeight: 600, minHeight: 44,
                       background: '#0052FF', color: '#fff', textDecoration: 'none',
+                      lineHeight: '20px',
                     }}
                   >
                     Launch
@@ -247,9 +249,19 @@ export default function Header() {
           </div>
 
           <style>{`
+            .header-inner {
+              padding: 0 16px;
+              gap: 10px;
+            }
             .header-desktop-nav { display: none; }
             .header-desktop-launch { display: none; }
             .header-mobile-menu { display: block; }
+            @media (min-width: 640px) {
+              .header-inner {
+                padding: 0 20px;
+                gap: 16px;
+              }
+            }
             @media (min-width: 768px) {
               .header-desktop-nav { display: flex !important; }
               .header-desktop-launch { display: flex !important; }

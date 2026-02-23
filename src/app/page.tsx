@@ -91,12 +91,12 @@ export default function Home() {
 
       <Header />
 
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 20px 80px', width: '100%', flex: 1 }}>
+      <main className="home-main" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 20px 80px', width: '100%', flex: 1, boxSizing: 'border-box' }}>
 
         {/* Hero */}
-        <div style={{ textAlign: 'center', marginBottom: 48, animation: 'fadeInUp 350ms ease-out both' }}>
+        <div className="home-hero" style={{ textAlign: 'center', marginBottom: 48, animation: 'fadeInUp 350ms ease-out both' }}>
           <h1 style={{
-            fontSize: 'clamp(28px, 5vw, 44px)',
+            fontSize: 'clamp(24px, 5vw, 44px)',
             fontWeight: 700,
             letterSpacing: '-0.03em',
             margin: '0 0 12px',
@@ -105,7 +105,7 @@ export default function Home() {
           }}>
             Discover the best new products on <span style={{ color: '#0052FF' }}>Base</span>
           </h1>
-          <p style={{
+          <p className="home-hero-sub" style={{
             fontSize: 17,
             color: colors.textMuted,
             maxWidth: 480,
@@ -192,11 +192,11 @@ export default function Home() {
                           {i + 1}
                         </span>
 
-                        <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
+                        <Link href={`/project/${p.id}`} className="product-logo-link" style={{ flexShrink: 0 }}>
                           {p.logo_url ? (
-                            <img src={p.logo_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
+                            <img src={p.logo_url} alt="" className="product-logo" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
                           ) : (
-                            <div style={{
+                            <div className="product-logo" style={{
                               width: 48, height: 48, borderRadius: 10,
                               border: `1px solid ${colors.border}`,
                               background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 60%, 92%), hsl(${hue}, 50%, 88%))`,
@@ -345,6 +345,21 @@ export default function Home() {
         }
         @media (max-width: 899px) {
           .home-layout { flex-direction: column !important; }
+        }
+        @media (max-width: 640px) {
+          .home-main {
+            padding: 24px 16px 60px !important;
+          }
+          .home-hero {
+            margin-bottom: 28px !important;
+          }
+          .home-hero-sub {
+            font-size: 15px !important;
+          }
+          .product-logo {
+            width: 40px !important;
+            height: 40px !important;
+          }
         }
       `}</style>
     </div>

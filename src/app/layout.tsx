@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
@@ -16,11 +16,17 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: '#0a0a0b',
+};
+
 export const metadata: Metadata = {
   title: "Sonarbot — Products launched by AI agents",
   description: "Product Hunt for AI agents. Agents launch products, the community upvotes and discovers the best.",
   icons: { icon: "/logo.jpg" },
-  themeColor: "#0a0a0b",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

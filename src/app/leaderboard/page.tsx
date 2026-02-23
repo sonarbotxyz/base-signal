@@ -95,11 +95,11 @@ export default function LeaderboardPage() {
 
       <Header />
 
-      <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+      <main className="lb-main" style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
 
         {/* Title */}
         <div style={{ marginBottom: 32, animation: 'fadeInUp 350ms ease-out both' }}>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: '0 0 6px' }}>
+          <h1 className="lb-title" style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: '0 0 6px' }}>
             Weekly Rankings
           </h1>
           <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
@@ -156,14 +156,14 @@ export default function LeaderboardPage() {
           animation: 'fadeInUp 350ms ease-out 100ms both',
         }}>
           {/* Table header */}
-          <div style={{
+          <div className="lb-table-header" style={{
             display: 'flex', alignItems: 'center', padding: '10px 20px',
             borderBottom: `1px solid ${colors.border}`,
             fontSize: 12, fontWeight: 600, color: colors.textDim, textTransform: 'uppercase', letterSpacing: '0.05em',
           }}>
-            <span style={{ width: 48 }}>#</span>
+            <span className="lb-rank-col" style={{ width: 48 }}>#</span>
             <span style={{ flex: 1 }}>Product</span>
-            <span style={{ width: 80, textAlign: 'right' }}>Upvotes</span>
+            <span className="lb-upvotes-col" style={{ width: 80, textAlign: 'right' }}>Upvotes</span>
           </div>
 
           {loading ? (
@@ -192,7 +192,7 @@ export default function LeaderboardPage() {
                 const hue = hueFrom(p.name);
                 const rank = i + 1;
                 return (
-                  <div key={p.id} style={{
+                  <div key={p.id} className="lb-row" style={{
                     display: 'flex', alignItems: 'center', padding: '12px 20px',
                     borderBottom: `1px solid ${colors.border}`,
                     transition: 'background 150ms ease',
@@ -202,7 +202,7 @@ export default function LeaderboardPage() {
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                   >
                     {/* Rank */}
-                    <span style={{
+                    <span className="lb-rank-col" style={{
                       width: 48, fontSize: 14, fontWeight: 700, flexShrink: 0,
                       color: rank <= 3 ? '#0052FF' : colors.textDim,
                     }}>
@@ -213,9 +213,9 @@ export default function LeaderboardPage() {
                     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                       <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
                         {p.logo_url ? (
-                          <img src={p.logo_url} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
+                          <img src={p.logo_url} alt="" className="lb-logo" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
                         ) : (
-                          <div style={{
+                          <div className="lb-logo" style={{
                             width: 40, height: 40, borderRadius: 10,
                             background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`,
                             border: `1px solid ${colors.border}`,
@@ -226,13 +226,13 @@ export default function LeaderboardPage() {
                         )}
                       </Link>
                       <Link href={`/project/${p.id}`} style={{ textDecoration: 'none', minWidth: 0 }}>
-                        <h3 style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</h3>
-                        <p style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                        <h3 className="lb-name" style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</h3>
+                        <p className="lb-tagline" style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
                       </Link>
                     </div>
 
                     {/* Upvotes */}
-                    <span style={{
+                    <span className="lb-upvotes-col" style={{
                       width: 80, textAlign: 'right', fontSize: 15, fontWeight: 700, flexShrink: 0,
                       color: rank <= 3 ? '#0052FF' : colors.text,
                       display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4,
@@ -251,6 +251,40 @@ export default function LeaderboardPage() {
       </main>
 
       <Footer />
+
+      <style>{`
+        @media (max-width: 640px) {
+          .lb-main {
+            padding: 24px 16px 60px !important;
+          }
+          .lb-title {
+            font-size: 24px !important;
+          }
+          .lb-table-header {
+            padding: 10px 14px !important;
+          }
+          .lb-rank-col {
+            width: 32px !important;
+          }
+          .lb-upvotes-col {
+            width: 60px !important;
+          }
+          .lb-row {
+            padding: 10px 14px !important;
+            gap: 10px;
+          }
+          .lb-logo {
+            width: 34px !important;
+            height: 34px !important;
+          }
+          .lb-name {
+            font-size: 14px !important;
+          }
+          .lb-tagline {
+            font-size: 12px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

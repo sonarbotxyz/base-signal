@@ -268,18 +268,18 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
       <Header />
 
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '24px 20px 0' }}>
+      <main className="project-main" style={{ maxWidth: 1080, margin: '0 auto', padding: '24px 20px 0', boxSizing: 'border-box' }}>
         <div className="project-container">
 
           {/* Main Content */}
           <div style={{ flex: '1', minWidth: 0, animation: 'fadeInUp 350ms ease-out both' }}>
 
             {/* Project Header */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>
+            <div className="project-header" style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>
               {project.logo_url ? (
-                <img src={project.logo_url} alt="" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0, border: `1px solid ${colors.border}` }} />
+                <img src={project.logo_url} alt="" className="project-logo" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0, border: `1px solid ${colors.border}` }} />
               ) : (
-                <div style={{
+                <div className="project-logo" style={{
                   width: 64, height: 64, borderRadius: 14,
                   background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 50%, 14%), hsl(${hue}, 40%, 20%))` : `linear-gradient(135deg, hsl(${hue}, 60%, 92%), hsl(${hue}, 50%, 85%))`,
                   border: `1px solid ${colors.border}`,
@@ -288,8 +288,8 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   <span style={{ fontSize: 24, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 60%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{project.name[0]}</span>
                 </div>
               )}
-              <div style={{ flex: 1 }}>
-                <h1 style={{ fontSize: 24, fontWeight: 700, color: colors.text, margin: '0 0 4px', lineHeight: 1.2 }}>{project.name}</h1>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h1 className="project-title" style={{ fontSize: 24, fontWeight: 700, color: colors.text, margin: '0 0 4px', lineHeight: 1.2 }}>{project.name}</h1>
                 <p style={{ fontSize: 16, color: colors.textMuted, margin: '0 0 8px', lineHeight: 1.4 }}>{project.tagline}</p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <span style={{
@@ -340,20 +340,20 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             </div>
 
             {/* Stats row */}
-            <div style={{
+            <div className="project-stats" style={{
               display: 'flex', gap: 0,
               borderRadius: 10, background: colors.bgCard, border: `1px solid ${colors.border}`,
               marginBottom: 24, overflow: 'hidden',
             }}>
-              <div style={{ flex: 1, padding: '14px 20px', borderRight: `1px solid ${colors.border}` }}>
+              <div className="project-stat" style={{ flex: 1, padding: '14px 20px', borderRight: `1px solid ${colors.border}` }}>
                 <div style={{ fontSize: 12, color: colors.textDim, marginBottom: 4 }}>Upvotes</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#0052FF' }}>{project.upvotes}</div>
+                <div className="project-stat-val" style={{ fontSize: 22, fontWeight: 700, color: '#0052FF' }}>{project.upvotes}</div>
               </div>
-              <div style={{ flex: 1, padding: '14px 20px', borderRight: `1px solid ${colors.border}` }}>
+              <div className="project-stat" style={{ flex: 1, padding: '14px 20px', borderRight: `1px solid ${colors.border}` }}>
                 <div style={{ fontSize: 12, color: colors.textDim, marginBottom: 4 }}>Comments</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: colors.text }}>{comments.length}</div>
+                <div className="project-stat-val" style={{ fontSize: 22, fontWeight: 700, color: colors.text }}>{comments.length}</div>
               </div>
-              <div style={{ flex: 1, padding: '14px 20px' }}>
+              <div className="project-stat" style={{ flex: 1, padding: '14px 20px' }}>
                 <div style={{ fontSize: 12, color: colors.textDim, marginBottom: 4 }}>Launched</div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: colors.textMuted, marginTop: 6 }}>{timeAgo(project.created_at)}</div>
               </div>
@@ -630,9 +630,32 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             width: 100%;
           }
         }
-        @media (max-width: 400px) {
+        @media (max-width: 640px) {
+          .project-main {
+            padding: 16px 16px 0 !important;
+          }
+          .project-header {
+            gap: 12px !important;
+          }
+          .project-logo {
+            width: 48px !important;
+            height: 48px !important;
+            border-radius: 12px !important;
+          }
+          .project-title {
+            font-size: 20px !important;
+          }
+          .project-stat {
+            padding: 10px 12px !important;
+          }
+          .project-stat-val {
+            font-size: 18px !important;
+          }
           .action-buttons {
             flex-direction: column !important;
+          }
+          .action-buttons > * {
+            width: 100%;
           }
         }
       `}</style>

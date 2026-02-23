@@ -87,6 +87,13 @@ code {
   cursor: pointer;
 }
 
+@media (max-width: 640px) {
+  .product-row {
+    gap: 10px;
+    padding: 12px 14px;
+  }
+}
+
 .product-row:hover {
   background: var(--muted);
 }
@@ -102,6 +109,7 @@ code {
   align-items: center;
   justify-content: center;
   min-width: 52px;
+  min-height: 44px;
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -109,6 +117,13 @@ code {
   color: var(--foreground);
   cursor: pointer;
   transition: all 150ms ease-out;
+}
+
+@media (max-width: 640px) {
+  .upvote-btn {
+    min-width: 44px;
+    padding: 6px 8px;
+  }
 }
 
 .upvote-btn:hover {
@@ -179,4 +194,22 @@ code {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ── RESPONSIVE BASE ── */
+html {
+  overflow-x: hidden;
+}
+body {
+  overflow-x: hidden;
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 640px) {
+  .filter-btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+  }
 }
