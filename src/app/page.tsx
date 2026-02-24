@@ -219,7 +219,7 @@ export default function Home() {
                           )}
                         </Link>
 
-                        <div className="product-info" style={{ flex: 1, minWidth: 0 }}>
+                        <div className="product-info" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                           <Link href={`/project/${p.id}`} style={{ textDecoration: 'none', display: 'block' }}>
                             <h2 className="product-name" style={{ fontSize: 15, fontWeight: 600, margin: '0 0 2px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', color: colors.text }}>
                               {p.name}
@@ -471,18 +471,19 @@ export default function Home() {
             font-size: 14px !important;
           }
           .product-logo {
-            width: 40px !important;
-            height: 40px !important;
+            width: 36px !important;
+            height: 36px !important;
           }
           .product-rank {
-            font-size: 13px !important;
-            min-width: 20px !important;
+            font-size: 12px !important;
+            min-width: 18px !important;
           }
           .product-name {
             font-size: 14px !important;
           }
           .product-tagline {
-            font-size: 13px !important;
+            font-size: 12px !important;
+            max-width: 100% !important;
           }
           .product-category {
             display: none !important;
@@ -490,17 +491,37 @@ export default function Home() {
           .product-info {
             display: flex !important;
             flex-direction: column !important;
+            overflow: hidden !important;
+          }
+          .upvote-btn {
+            min-width: 36px !important;
+            min-height: 36px !important;
+            padding: 4px 6px !important;
+          }
+          .upvote-btn svg {
+            width: 10px !important;
+            height: 10px !important;
+          }
+          .upvote-btn span {
+            font-size: 11px !important;
           }
           .upcoming-scroll {
             -ms-overflow-style: none;
             scrollbar-width: none;
+            flex-direction: column !important;
+            padding-right: 0 !important;
           }
           .upcoming-scroll::-webkit-scrollbar {
             display: none;
           }
           .upcoming-card {
-            min-width: 180px !important;
+            min-width: 100% !important;
             padding: 12px 14px !important;
+            border-right: none !important;
+            border-bottom: 1px solid var(--border) !important;
+          }
+          .upcoming-card:last-child {
+            border-bottom: none !important;
           }
           .product-actions {
             gap: 4px !important;

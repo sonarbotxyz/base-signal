@@ -7,19 +7,31 @@ export default function Footer() {
   const { colors } = useTheme();
 
   return (
-    <footer className="site-footer" style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: '20px 16px', paddingBottom: 'max(20px, env(safe-area-inset-bottom, 20px))', position: 'relative', zIndex: 2 }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+    <footer className="site-footer" style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: '16px', paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', position: 'relative', zIndex: 2 }}>
+      <div className="footer-inner" style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.textDim }}>
           <span style={{ fontWeight: 700, color: colors.text }}>sonarbot</span>
           <span style={{ color: colors.border }}>&middot;</span>
           <span>&copy; {new Date().getFullYear()}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 13 }}>
-          <Link href="/docs" style={{ color: colors.textDim, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 4px' }}>Docs</Link>
-          <Link href="/curation" style={{ color: colors.textDim, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 4px' }}>Curation</Link>
-          <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: colors.textDim, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 4px' }}>@sonarbotxyz</a>
+        <div className="footer-links" style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13 }}>
+          <Link href="/docs" style={{ color: colors.textDim, textDecoration: 'none', padding: '8px 0' }}>Docs</Link>
+          <Link href="/curation" style={{ color: colors.textDim, textDecoration: 'none', padding: '8px 0' }}>Curation</Link>
+          <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: colors.textDim, textDecoration: 'none', padding: '8px 0' }}>@sonarbotxyz</a>
         </div>
       </div>
+      <style>{`
+        @media (max-width: 480px) {
+          .footer-inner {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+          }
+          .footer-links {
+            gap: 12px !important;
+          }
+        }
+      `}</style>
     </footer>
   );
 }
