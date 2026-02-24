@@ -328,7 +328,7 @@ export default function Home() {
               })}
 
               <div style={{ padding: '12px 16px', borderTop: `1px solid ${colors.border}` }}>
-                <Link href="/docs" style={{
+                <Link href="/submit" style={{
                   display: 'block', textAlign: 'center', padding: '8px 0',
                   borderRadius: 8,
                   background: '#0052FF',
@@ -411,7 +411,7 @@ export default function Home() {
             </div>
 
             <div style={{ padding: '12px 16px', borderTop: `1px solid ${colors.border}` }}>
-              <Link href="/docs" style={{
+              <Link href="/submit" style={{
                 display: 'block', textAlign: 'center', padding: '10px 0',
                 borderRadius: 8,
                 background: '#0052FF',

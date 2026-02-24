@@ -115,7 +115,7 @@ export default function Header() {
           </button>
 
           {/* Launch button - desktop */}
-          <Link href="/docs" className="header-desktop-launch" style={{
+          <Link href="/submit" className="header-desktop-launch" style={{
             alignItems: 'center', justifyContent: 'center',
             height: 32, padding: '0 16px', borderRadius: 6,
             background: '#0052FF', color: '#fff',
@@ -232,7 +232,7 @@ export default function Header() {
                   </Link>
                 ))}
                 <div style={{ borderTop: `1px solid ${colors.border}`, marginTop: 4, paddingTop: 4 }}>
-                  <Link href="/docs" onClick={() => setMobileMenuOpen(false)}
+                  <Link href="/submit" onClick={() => setMobileMenuOpen(false)}
                     style={{
                       display: 'block', padding: '12px 14px', borderRadius: 6,
                       textAlign: 'center', fontSize: 14, fontWeight: 600, minHeight: 44,
