@@ -138,7 +138,6 @@ export default function SubmitPage() {
         <Header />
         <main className="submit-main" style={{ flex: 1, maxWidth: 560, margin: '0 auto', padding: '60px 20px 80px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', animation: 'fadeInUp 350ms ease-out both' }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>🚀</div>
             <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: '0 0 8px' }}>
               Launch your product
             </h1>
@@ -357,9 +356,7 @@ export default function SubmitPage() {
                 Submitting...
               </>
             ) : (
-              <>
-                🚀 Launch product
-              </>
+              'Launch product'
             )}
           </button>
 
