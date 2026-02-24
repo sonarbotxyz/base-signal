@@ -204,10 +204,10 @@ export default function Home() {
 
                         <Link href={`/project/${p.id}`} className="product-logo-link" style={{ flexShrink: 0 }}>
                           {p.logo_url ? (
-                            <img src={p.logo_url} alt="" className="product-logo" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
+                            <img src={p.logo_url} alt="" className="product-logo" style={{ borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
                           ) : (
                             <div className="product-logo" style={{
-                              width: 48, height: 48, borderRadius: 10,
+                              borderRadius: 10,
                               border: `1px solid ${colors.border}`,
                               background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 60%, 92%), hsl(${hue}, 50%, 88%))`,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -234,7 +234,7 @@ export default function Home() {
                           <p className="product-tagline" style={{ fontSize: 14, color: colors.textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
                         </div>
 
-                        <div className="product-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                        <div className="product-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
                           <Link href={`/project/${p.id}`} className="product-comments-link" style={{ display: 'flex', alignItems: 'center', gap: 4, color: colors.textDim, textDecoration: 'none' }}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />

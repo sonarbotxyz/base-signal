@@ -85,6 +85,8 @@ code {
   border-bottom: 1px solid var(--border);
   transition: background 150ms ease-out;
   cursor: pointer;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 @media (min-width: 641px) {
@@ -100,6 +102,18 @@ code {
 
 .product-row:last-child {
   border-bottom: none;
+}
+
+.product-logo {
+  width: 40px;
+  height: 40px;
+}
+
+@media (min-width: 641px) {
+  .product-logo {
+    width: 48px;
+    height: 48px;
+  }
 }
 
 /* ── UPVOTE BUTTON ── */
