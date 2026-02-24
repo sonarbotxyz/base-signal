@@ -51,7 +51,6 @@ export default function Header() {
     { href: '/', label: 'Products' },
     { href: '/upcoming', label: 'Upcoming' },
     { href: '/leaderboard', label: 'Calendar' },
-    { href: '/docs', label: 'Docs' },
   ];
 
   return (
