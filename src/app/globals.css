@@ -87,6 +87,7 @@ code {
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 @media (min-width: 641px) {
@@ -104,9 +105,43 @@ code {
   border-bottom: none;
 }
 
+/* Product info - must shrink on mobile */
+.product-info {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.product-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-tagline {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Product actions - never shrink */
+.product-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .product-actions {
+    gap: 4px;
+  }
+}
+
 .product-logo {
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
 }
 
 @media (min-width: 641px) {
