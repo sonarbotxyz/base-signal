@@ -477,7 +477,6 @@ export default function Home() {
             padding: 10px 10px !important;
             width: 100% !important;
             box-sizing: border-box !important;
-            overflow: hidden !important;
           }
           .product-logo {
             width: 36px !important;
