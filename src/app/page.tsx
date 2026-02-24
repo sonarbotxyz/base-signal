@@ -104,19 +104,7 @@ export default function Home() {
             color: colors.text,
           }}>
             Find the{' '}
-            <span style={{ color: '#0052FF', position: 'relative' }}>
-              signal
-              <span className="hero-pulse" style={{
-                position: 'absolute',
-                top: '50%',
-                right: -20,
-                transform: 'translateY(-50%)',
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                background: '#0052FF',
-              }} />
-            </span>
+            <span style={{ color: '#0052FF' }}>signal</span>
             . Ignore the noise.
           </h1>
           <p className="home-hero-sub" style={{
@@ -444,14 +432,6 @@ export default function Home() {
       <SubscriptionModal isOpen={showSubModal} onClose={() => setShowSubModal(false)} limitMessage={rateLimitMsg} getAccessToken={getAccessToken} />
 
       <style>{`
-        @keyframes heroPulse {
-          0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
-          50% { opacity: 0.4; transform: translateY(-50%) scale(0.75); }
-        }
-        .hero-pulse {
-          animation: heroPulse 2.4s ease-in-out infinite;
-        }
-
         /* Desktop: sidebar visible, mobile upcoming hidden */
         .home-sidebar { display: none; }
         .home-upcoming-mobile { display: none; }
@@ -480,11 +460,6 @@ export default function Home() {
           }
           .home-hero-sub {
             font-size: 14px !important;
-          }
-          .hero-pulse {
-            width: 6px !important;
-            height: 6px !important;
-            right: -14px !important;
           }
           .product-card-header {
             padding: 12px 14px !important;

@@ -14,10 +14,10 @@ export default function Footer() {
           <span style={{ color: colors.border }}>&middot;</span>
           <span>&copy; {new Date().getFullYear()}</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 13 }}>
-          <Link href="/docs" style={{ color: colors.textDim, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>Docs</Link>
-          <Link href="/curation" style={{ color: colors.textDim, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>Curation</Link>
-          <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: colors.textDim, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center' }}>@sonarbotxyz</a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontSize: 13 }}>
+          <Link href="/docs" style={{ color: colors.textDim, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 4px' }}>Docs</Link>
+          <Link href="/curation" style={{ color: colors.textDim, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 4px' }}>Curation</Link>
+          <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: colors.textDim, textDecoration: 'none', minHeight: 44, display: 'inline-flex', alignItems: 'center', padding: '0 4px' }}>@sonarbotxyz</a>
         </div>
       </div>
     </footer>
