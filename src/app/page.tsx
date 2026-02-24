@@ -234,7 +234,7 @@ export default function Home() {
                           <p className="product-tagline" style={{ fontSize: 14, color: colors.textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
                         </div>
 
-                        <div className="product-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
+                        <div className="product-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 8 }}>
                           <Link href={`/project/${p.id}`} className="product-comments-link" style={{ display: 'flex', alignItems: 'center', gap: 4, color: colors.textDim, textDecoration: 'none' }}>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -242,7 +242,13 @@ export default function Home() {
                             <span style={{ fontSize: 13, fontWeight: 500 }}>{cc}</span>
                           </Link>
 
-                          <button onClick={(e) => { e.stopPropagation(); handleUpvote(p.id); }} className={`upvote-btn ${isUpvoted ? 'active' : ''}`}>
+                          <button onClick={(e) => { e.stopPropagation(); handleUpvote(p.id); }} className={`upvote-btn ${isUpvoted ? 'active' : ''}`} style={{
+                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                            minWidth: 44, minHeight: 48, padding: '4px 8px', borderRadius: 8,
+                            border: `1px solid ${isUpvoted ? '#0052FF' : colors.border}`,
+                            background: isUpvoted ? 'rgba(0, 82, 255, 0.08)' : 'transparent',
+                            color: isUpvoted ? '#0052FF' : colors.text, cursor: 'pointer',
+                          }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginBottom: 2 }}>
                               <polyline points="18 15 12 9 6 15" />
                             </svg>
@@ -512,7 +518,7 @@ export default function Home() {
             flex-shrink: 0 !important;
             display: flex !important;
             gap: 4px !important;
-            margin-left: auto !important;
+            margin-left: 8px !important;
           }
           .upvote-btn {
             min-width: 38px !important;
