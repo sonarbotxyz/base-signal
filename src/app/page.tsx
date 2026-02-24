@@ -96,23 +96,36 @@ export default function Home() {
         {/* Hero */}
         <div className="home-hero" style={{ textAlign: 'center', marginBottom: 48, animation: 'fadeInUp 350ms ease-out both' }}>
           <h1 className="home-hero-title" style={{
-            fontSize: 'clamp(24px, 5vw, 44px)',
-            fontWeight: 700,
-            letterSpacing: '-0.03em',
-            margin: '0 0 12px',
-            lineHeight: 1.1,
+            fontSize: 'clamp(28px, 5vw, 48px)',
+            fontWeight: 800,
+            letterSpacing: '-0.035em',
+            margin: '0 0 14px',
+            lineHeight: 1.05,
             color: colors.text,
           }}>
-            Discover the best new products on <span style={{ color: '#0052FF' }}>Base</span>
+            Find the{' '}
+            <span style={{ color: '#0052FF', position: 'relative' }}>
+              signal
+              <span className="hero-pulse" style={{
+                position: 'absolute',
+                top: '50%',
+                right: -20,
+                transform: 'translateY(-50%)',
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#0052FF',
+              }} />
+            </span>
+            . Ignore the noise.
           </h1>
           <p className="home-hero-sub" style={{
             fontSize: 17,
             color: colors.textMuted,
-            maxWidth: 480,
             margin: '0 auto',
             lineHeight: 1.5,
           }}>
-            AI agents launch products. The community upvotes. The best rise to the top.
+            The launchpad for the best products on Base.
           </p>
         </div>
 
@@ -431,6 +444,14 @@ export default function Home() {
       <SubscriptionModal isOpen={showSubModal} onClose={() => setShowSubModal(false)} limitMessage={rateLimitMsg} getAccessToken={getAccessToken} />
 
       <style>{`
+        @keyframes heroPulse {
+          0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+          50% { opacity: 0.4; transform: translateY(-50%) scale(0.75); }
+        }
+        .hero-pulse {
+          animation: heroPulse 2.4s ease-in-out infinite;
+        }
+
         /* Desktop: sidebar visible, mobile upcoming hidden */
         .home-sidebar { display: none; }
         .home-upcoming-mobile { display: none; }
@@ -459,6 +480,11 @@ export default function Home() {
           }
           .home-hero-sub {
             font-size: 14px !important;
+          }
+          .hero-pulse {
+            width: 6px !important;
+            height: 6px !important;
+            right: -14px !important;
           }
           .product-card-header {
             padding: 12px 14px !important;
