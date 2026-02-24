@@ -33,6 +33,9 @@ export default function SubmitPage() {
     website_url: '',
     description: '',
   });
+  const [launchTiming, setLaunchTiming] = useState<'now' | 'schedule'>('now');
+  const [scheduledDate, setScheduledDate] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('12:00');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -54,6 +57,15 @@ export default function SubmitPage() {
     if (!form.category) { setError('Select a category'); return; }
     if (!form.twitter_handle.trim()) { setError('Twitter handle is required'); return; }
     if (!form.description.trim()) { setError('Description is required'); return; }
+    if (launchTiming === 'schedule' && !scheduledDate) { setError('Select a launch date'); return; }
+
+    // Build scheduled_for timestamp if scheduling
+    let scheduled_for: string | undefined;
+    if (launchTiming === 'schedule' && scheduledDate) {
+      const dt = new Date(`${scheduledDate}T${scheduledTime}`);
+      if (dt <= new Date()) { setError('Launch date must be in the future'); return; }
+      scheduled_for = dt.toISOString();
+    }
 
     setSubmitting(true);
 
@@ -73,6 +85,7 @@ export default function SubmitPage() {
           twitter_handle: form.twitter_handle.trim().replace('@', ''),
           website_url: form.website_url.trim() || undefined,
           description: form.description.trim(),
+          scheduled_for,
         }),
       });
 
@@ -329,6 +342,85 @@ export default function SubmitPage() {
             <p style={hintStyle}>{form.description.length}/2000 characters • Tweet URLs will render as cards</p>
           </div>
 
+          {/* Launch Timing */}
+          <div style={{ marginBottom: 28 }}>
+            <label style={labelStyle}>Launch timing</label>
+            <div style={{ display: 'flex', gap: 12, marginBottom: launchTiming === 'schedule' ? 16 : 0 }}>
+              <button
+                type="button"
+                onClick={() => setLaunchTiming('now')}
+                style={{
+                  flex: 1,
+                  padding: '14px 16px',
+                  borderRadius: 10,
+                  border: launchTiming === 'now' ? '2px solid #0052FF' : `1px solid ${colors.border}`,
+                  background: launchTiming === 'now' ? 'rgba(0, 82, 255, 0.06)' : colors.bgCard,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 150ms',
+                }}
+              >
+                <p style={{ fontSize: 14, fontWeight: 600, color: launchTiming === 'now' ? '#0052FF' : colors.text, margin: '0 0 2px' }}>
+                  Launch now
+                </p>
+                <p style={{ fontSize: 12, color: colors.textDim, margin: 0 }}>
+                  Go live immediately
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setLaunchTiming('schedule')}
+                style={{
+                  flex: 1,
+                  padding: '14px 16px',
+                  borderRadius: 10,
+                  border: launchTiming === 'schedule' ? '2px solid #0052FF' : `1px solid ${colors.border}`,
+                  background: launchTiming === 'schedule' ? 'rgba(0, 82, 255, 0.06)' : colors.bgCard,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  transition: 'all 150ms',
+                }}
+              >
+                <p style={{ fontSize: 14, fontWeight: 600, color: launchTiming === 'schedule' ? '#0052FF' : colors.text, margin: '0 0 2px' }}>
+                  Schedule
+                </p>
+                <p style={{ fontSize: 12, color: colors.textDim, margin: 0 }}>
+                  Pick a launch date
+                </p>
+              </button>
+            </div>
+
+            {launchTiming === 'schedule' && (
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ flex: 1 }}>
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={e => setScheduledDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    style={inputStyle}
+                    onFocus={e => { e.currentTarget.style.borderColor = '#0052FF'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0, 82, 255, 0.1)'; }}
+                    onBlur={e => { e.currentTarget.style.borderColor = colors.border; e.currentTarget.style.boxShadow = 'none'; }}
+                  />
+                </div>
+                <div style={{ width: 120 }}>
+                  <select
+                    value={scheduledTime}
+                    onChange={e => setScheduledTime(e.target.value)}
+                    style={{ ...inputStyle, cursor: 'pointer' }}
+                  >
+                    {Array.from({ length: 24 }, (_, h) => {
+                      const hour = h.toString().padStart(2, '0');
+                      return (
+                        <option key={h} value={`${hour}:00`}>{hour}:00 UTC</option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Submit */}
           <button
             type="submit"
@@ -356,7 +448,7 @@ export default function SubmitPage() {
                 Submitting...
               </>
             ) : (
-              'Launch product'
+              launchTiming === 'schedule' ? 'Schedule launch' : 'Launch now'
             )}
           </button>
 
