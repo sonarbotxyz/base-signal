@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { useTheme } from '@/components/ThemeProvider';
 
 interface Project {
@@ -10,313 +11,366 @@ interface Project {
   name: string;
   tagline: string;
   logo_url?: string;
-  twitter_handle?: string;
   category: string;
   upvotes: number;
   created_at: string;
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
-  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
-};
+// ── Week helpers ──────────────────────────────────────────────
 
-function getWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+/** Return Monday 00:00 of the week containing `date`. */
+function getMonday(date: Date): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay(); // 0=Sun … 6=Sat
+  const diff = day === 0 ? -6 : 1 - day; // shift to Monday
+  d.setDate(d.getDate() + diff);
+  return d;
 }
 
-function getWeekRange(year: number, week: number): { start: Date; end: Date } {
-  const jan1 = new Date(Date.UTC(year, 0, 1));
-  const jan1Day = jan1.getUTCDay() || 7;
-  const startOfWeek1 = new Date(jan1);
-  startOfWeek1.setUTCDate(jan1.getUTCDate() - jan1Day + 1);
-  const start = new Date(startOfWeek1);
-  start.setUTCDate(startOfWeek1.getUTCDate() + (week - 1) * 7);
-  const end = new Date(start);
-  end.setUTCDate(start.getUTCDate() + 6);
-  return { start, end };
+/** Return Sunday 23:59:59 of the same week. */
+function getSunday(monday: Date): Date {
+  const d = new Date(monday);
+  d.setDate(d.getDate() + 6);
+  d.setHours(23, 59, 59, 999);
+  return d;
 }
 
-function formatDateShort(d: Date): string {
+/** Format: "Feb 17" */
+function shortDate(d: Date): string {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-export default function LeaderboardPage() {
+/** Format: "Week of Feb 17 – Feb 23, 2026" */
+function weekLabel(monday: Date): string {
+  const sunday = getSunday(monday);
+  const mStr = shortDate(monday);
+  const sStr = shortDate(sunday);
+  return `Week of ${mStr} – ${sStr}, ${sunday.getFullYear()}`;
+}
+
+/** Check if two dates fall in the same week (same Monday). */
+function sameWeek(a: Date, b: Date): boolean {
+  const ma = getMonday(a);
+  const mb = getMonday(b);
+  return ma.getTime() === mb.getTime();
+}
+
+/** Is the given Monday the current week? */
+function isCurrentWeek(monday: Date): boolean {
+  return sameWeek(monday, new Date());
+}
+
+// ── Component ─────────────────────────────────────────────────
+
+export default function CalendarPage() {
   const [projects, setProjects] = useState<Project[]>([]);
-  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = this week, -1 = last, +1 = next
   const { theme, colors } = useTheme();
 
-  // Current week
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentWeek = getWeekNumber(now);
-
-  const [selectedYear, setSelectedYear] = useState(currentYear);
-  const [selectedWeek, setSelectedWeek] = useState(currentWeek);
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  useEffect(() => { fetchProjects(); }, []);
 
   const fetchProjects = async () => {
     try {
-      const res = await fetch('/api/projects?sort=upvotes&limit=100');
+      const res = await fetch('/api/projects?sort=newest&limit=500');
       const data = await res.json();
-      const projs = data.projects || [];
-      setProjects(projs);
-      for (const p of projs) {
-        fetch(`/api/projects/${p.id}/comments`).then(r => r.json()).then(d => {
-          setCommentCounts(prev => ({ ...prev, [p.id]: (d.comments || []).length }));
-        }).catch(() => {});
-      }
+      setProjects(data.projects || []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
 
-  // Filter projects by selected week
+  // Current week's Monday based on offset
+  const currentMonday = useMemo(() => {
+    const m = getMonday(new Date());
+    m.setDate(m.getDate() + weekOffset * 7);
+    return m;
+  }, [weekOffset]);
+
+  const currentSunday = useMemo(() => getSunday(currentMonday), [currentMonday]);
+
+  // Filter & sort products for the selected week
   const weekProjects = useMemo(() => {
-    const { start, end } = getWeekRange(selectedYear, selectedWeek);
-    const endOfDay = new Date(end);
-    endOfDay.setUTCHours(23, 59, 59, 999);
-
-    const filtered = projects.filter(p => {
-      const created = new Date(p.created_at);
-      return created >= start && created <= endOfDay;
-    });
-
-    // Sort by upvotes descending
-    return filtered.sort((a, b) => b.upvotes - a.upvotes);
-  }, [projects, selectedYear, selectedWeek]);
-
-  const { start: weekStart, end: weekEnd } = getWeekRange(selectedYear, selectedWeek);
-
-  const goToPrevWeek = () => {
-    if (selectedWeek <= 1) {
-      setSelectedYear(selectedYear - 1);
-      setSelectedWeek(52);
-    } else {
-      setSelectedWeek(selectedWeek - 1);
-    }
-  };
-
-  const goToNextWeek = () => {
-    if (selectedYear === currentYear && selectedWeek >= currentWeek) return;
-    if (selectedWeek >= 52) {
-      setSelectedYear(selectedYear + 1);
-      setSelectedWeek(1);
-    } else {
-      setSelectedWeek(selectedWeek + 1);
-    }
-  };
-
-  const isCurrentWeek = selectedYear === currentYear && selectedWeek === currentWeek;
-  const canGoNext = !(selectedYear === currentYear && selectedWeek >= currentWeek);
+    const start = currentMonday.getTime();
+    const end = currentSunday.getTime();
+    return projects
+      .filter((p) => {
+        const t = new Date(p.created_at).getTime();
+        return t >= start && t <= end;
+      })
+      .sort((a, b) => b.upvotes - a.upvotes); // rank by upvotes
+  }, [projects, currentMonday, currentSunday]);
 
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
 
-  return (
-    <div style={{ minHeight: '100vh', background: colors.bg, fontFamily: "var(--font-outfit, 'Outfit', -apple-system, sans-serif)", display: 'flex', flexDirection: 'column', position: 'relative' }}>
+  // ── Render ────────────────────────────────────────────────
 
-      <div className="sonar-grid" />
+  function renderProduct(p: Project, rank: number) {
+    const hue = hueFrom(p.name);
+    const launchDate = new Date(p.created_at);
 
-      <Header activePage="leaderboard" />
+    return (
+      <div
+        key={p.id}
+        className="cal-row"
+        style={{
+          display: 'flex', alignItems: 'center', padding: '14px 20px', gap: 14,
+          borderBottom: `1px solid ${colors.border}`,
+          transition: 'background 150ms ease',
+          animation: `fadeInUp 300ms ease-out ${rank * 40}ms both`,
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = colors.bgCardHover)}
+        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+      >
+        {/* Rank */}
+        <span className="cal-rank" style={{
+          fontSize: 14, fontWeight: 700, color: colors.textDim,
+          width: 24, textAlign: 'center', flexShrink: 0,
+        }}>
+          {rank + 1}
+        </span>
 
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '32px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box', position: 'relative', zIndex: 1 }}>
-
-        {/* Title + week nav */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: 0 }}>
-              Weekly Rankings
-            </h1>
-            <div style={{
-              width: 10, height: 10, borderRadius: '50%',
-              background: isCurrentWeek ? '#22c55e' : colors.accent,
-              boxShadow: isCurrentWeek ? '0 0 8px rgba(34, 197, 94, 0.5)' : `0 0 8px ${colors.accent}80`,
-              animation: isCurrentWeek ? 'sonarPulse 2s ease-out infinite' : 'none',
-            }} />
-          </div>
-          <p style={{ fontSize: 15, color: colors.textMuted, margin: '0 0 24px' }}>
-            Top signals by upvotes, ranked weekly
-          </p>
-
-          {/* Week selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <button onClick={goToPrevWeek} style={{
-              width: 36, height: 36, borderRadius: 8, border: `1px solid ${colors.border}`, background: colors.bgCard,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round"><polyline points="15 18 9 12 15 6" /></svg>
-            </button>
-
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{
-                fontSize: 18, fontWeight: 700, color: colors.text,
-                fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-              }}>
-                Week {selectedWeek}
-              </span>
-              <span style={{ fontSize: 14, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>
-                {formatDateShort(weekStart)} – {formatDateShort(weekEnd)}, {selectedYear}
-              </span>
-              {isCurrentWeek && (
-                <span style={{
-                  fontSize: 10, fontWeight: 700, color: '#22c55e',
-                  background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)',
-                  padding: '2px 8px', borderRadius: 4,
-                  fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                  textTransform: 'uppercase', letterSpacing: 0.5,
-                }}>
-                  Live
-                </span>
-              )}
-            </div>
-
-            <button onClick={goToNextWeek} disabled={!canGoNext} style={{
-              width: 36, height: 36, borderRadius: 8, border: `1px solid ${colors.border}`,
-              background: canGoNext ? colors.bgCard : colors.borderLight,
+        {/* Logo */}
+        <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
+          {p.logo_url ? (
+            <img src={p.logo_url} alt="" className="cal-logo" style={{ width: 44, height: 44, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
+          ) : (
+            <div className="cal-logo" style={{
+              width: 44, height: 44, borderRadius: 10,
+              background: theme === 'dark'
+                ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))`
+                : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`,
+              border: `1px solid ${colors.border}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: canGoNext ? 'pointer' : 'default', opacity: canGoNext ? 1 : 0.4,
             }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
-            </button>
-          </div>
+              <span style={{ fontSize: 16, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 55%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
+            </div>
+          )}
+        </Link>
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+            <h3 className="cal-name" style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</h3>
+            <p className="cal-tagline" style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+          </Link>
         </div>
 
-        {/* Product list */}
-        {loading ? (
-          <div>
-            {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0', borderBottom: `1px solid ${colors.border}` }}>
-                <div style={{ width: 32, height: 20, borderRadius: 4, background: colors.bgCard }} />
-                <div style={{ width: 48, height: 48, borderRadius: 10, background: colors.bgCard }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ width: 180, height: 16, borderRadius: 4, background: colors.bgCard, marginBottom: 6 }} />
-                  <div style={{ width: 260, height: 14, borderRadius: 4, background: colors.bgCard }} />
-                </div>
-                <div style={{ width: 52, height: 52, borderRadius: 10, background: colors.bgCard }} />
-              </div>
-            ))}
+        {/* Launch date */}
+        <span className="cal-date" style={{ fontSize: 12, color: colors.textDim, flexShrink: 0, whiteSpace: 'nowrap' }}>
+          {launchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        </span>
+
+        {/* Upvotes */}
+        <span style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0,
+          fontSize: 14, fontWeight: 700, color: colors.text,
+          border: `1px solid ${colors.border}`, borderRadius: 8,
+          padding: '4px 10px', minWidth: 44,
+        }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ opacity: 0.5 }}>
+            <polyline points="18 15 12 9 6 15" />
+          </svg>
+          {p.upvotes}
+        </span>
+      </div>
+    );
+  }
+
+  const live = isCurrentWeek(currentMonday);
+
+  return (
+    <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
+
+      <Header />
+
+      <main className="cal-main" style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
+
+        {/* Title */}
+        <div style={{ marginBottom: 28, animation: 'fadeInUp 350ms ease-out both' }}>
+          <h1 className="cal-title" style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: '0 0 6px' }}>
+            Launch Calendar
+          </h1>
+          <p style={{ fontSize: 15, color: colors.textMuted, margin: 0 }}>
+            Weekly launches ranked by upvotes
+          </p>
+        </div>
+
+        {/* ── Week navigator ────────────────────────────── */}
+        <div className="cal-nav" style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: 20, animation: 'fadeInUp 350ms ease-out 60ms both',
+          background: colors.bgCard, border: `1px solid ${colors.border}`,
+          borderRadius: 12, padding: '12px 16px',
+        }}>
+          {/* Prev */}
+          <button
+            onClick={() => setWeekOffset(o => o - 1)}
+            style={{
+              background: 'none', border: `1px solid ${colors.border}`, borderRadius: 8,
+              color: colors.text, cursor: 'pointer', padding: '6px 12px',
+              display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 500,
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = colors.bgCardHover)}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
+            <span className="cal-nav-text">Prev</span>
+          </button>
+
+          {/* Label */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, textAlign: 'center' }}>
+            <span className="cal-week-label" style={{ fontSize: 15, fontWeight: 600, color: colors.text }}>
+              {weekLabel(currentMonday)}
+            </span>
+            {live && (
+              <span style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: 0.5, color: '#22c55e',
+                background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)',
+                padding: '2px 8px', borderRadius: 10, textTransform: 'uppercase',
+              }}>
+                LIVE
+              </span>
+            )}
           </div>
-        ) : weekProjects.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ fontSize: 17, fontWeight: 600, color: colors.text, marginBottom: 4 }}>No signals this week</p>
-            <p style={{ fontSize: 14, color: colors.textMuted }}>
-              {isCurrentWeek ? 'Products launched this week will appear here.' : 'Try scanning a different week.'}
-            </p>
-          </div>
-        ) : (
-          <div>
-            {weekProjects.map((p, i) => {
-              const hue = hueFrom(p.name);
-              const rank = i + 1;
-              return (
-                <div key={p.id} className="sonar-card" style={{
-                  display: 'flex', alignItems: 'center', gap: 14, padding: '16px 12px',
-                  borderBottom: `1px solid ${colors.border}`, borderRadius: 8,
-                  animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both`,
-                }}>
-                  {/* Rank */}
-                  <span style={{
-                    fontSize: rank <= 3 ? 18 : 14, fontWeight: 700,
-                    color: rank === 1 ? colors.accent : rank <= 3 ? colors.text : colors.textDim,
-                    minWidth: 28, textAlign: 'center', flexShrink: 0,
-                    fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                    textShadow: rank === 1 ? `0 0 12px ${colors.accent}80` : 'none',
-                  }}>
-                    {String(rank).padStart(2, '0')}
-                  </span>
 
-                  {/* Logo */}
-                  <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
-                    {p.logo_url ? (
-                      <img src={p.logo_url} alt="" style={{ width: 48, height: 48, borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
-                    ) : (
-                      <div style={{ width: 48, height: 48, borderRadius: 10, background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 50%, 12%), hsl(${hue}, 40%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`, border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 60%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
-                      </div>
-                    )}
-                  </Link>
+          {/* Next */}
+          <button
+            onClick={() => setWeekOffset(o => o + 1)}
+            style={{
+              background: 'none', border: `1px solid ${colors.border}`, borderRadius: 8,
+              color: colors.text, cursor: 'pointer', padding: '6px 12px',
+              display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 500,
+              transition: 'background 150ms',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = colors.bgCardHover)}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+          >
+            <span className="cal-nav-text">Next</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+        </div>
 
-                  {/* Name + tagline */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                      <h3 style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: 0, lineHeight: 1.3 }}>{p.name}</h3>
-                    </Link>
-                    <p style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      <span style={{
-                        fontSize: 10, color: colors.textMuted, padding: '1px 6px', borderRadius: 3,
-                        background: theme === 'dark' ? 'rgba(30, 41, 59, 0.5)' : 'rgba(241, 245, 249, 0.8)', border: `1px solid ${colors.border}`,
-                        fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                        letterSpacing: '0.3px',
-                      }}>
-                        {CATEGORY_LABELS[p.category] || p.category}
-                      </span>
-                      {p.twitter_handle && (
-                        <span style={{ fontSize: 11, color: colors.textDim, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>@{p.twitter_handle}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Comments */}
-                  <Link href={`/project/${p.id}`} style={{
-                    flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    width: 48, height: 52, color: colors.textDim, textDecoration: 'none', gap: 4,
-                  }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                    </svg>
-                    <span style={{ fontSize: 12, fontWeight: 600, lineHeight: 1, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{commentCounts[p.id] || 0}</span>
-                  </Link>
-
-                  {/* Upvote count */}
-                  <div style={{
-                    flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                    width: 52, height: 52, borderRadius: 10,
-                    border: rank === 1 ? `1px solid ${colors.accent}` : `1px solid ${colors.border}`,
-                    background: rank === 1 ? colors.upvoteActiveBg : colors.upvoteBg,
-                    boxShadow: rank === 1 ? `0 0 12px ${colors.accent}33` : 'none',
-                  }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={rank === 1 ? colors.accent : colors.textMuted} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="18 15 12 9 6 15" />
-                    </svg>
-                    <span style={{
-                      fontSize: 14, fontWeight: 700,
-                      color: rank === 1 ? colors.accent : colors.text, lineHeight: 1,
-                      fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                    }}>{p.upvotes}</span>
-                  </div>
-                </div>
-              );
-            })}
+        {/* "This Week" quick-jump */}
+        {weekOffset !== 0 && (
+          <div style={{ marginBottom: 16, animation: 'fadeInUp 200ms ease-out both' }}>
+            <button
+              onClick={() => setWeekOffset(0)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: colors.accent, fontSize: 13, fontWeight: 600, padding: 0,
+              }}
+            >
+              ← Back to this week
+            </button>
           </div>
         )}
 
+        {/* ── Product list ──────────────────────────────── */}
+        {loading ? (
+          <div style={{
+            border: `1px solid ${colors.border}`, borderRadius: 12,
+            background: colors.bgCard, overflow: 'hidden',
+          }}>
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: `1px solid ${colors.border}` }}>
+                <div style={{ width: 24, height: 14, borderRadius: 3 }} className="shimmer" />
+                <div style={{ width: 44, height: 44, borderRadius: 10 }} className="shimmer" />
+                <div style={{ flex: 1 }}>
+                  <div style={{ width: 140, height: 14, borderRadius: 3, marginBottom: 6 }} className="shimmer" />
+                  <div style={{ width: 200, height: 12, borderRadius: 3 }} className="shimmer" />
+                </div>
+                <div style={{ width: 50, height: 14, borderRadius: 3 }} className="shimmer" />
+                <div style={{ width: 44, height: 32, borderRadius: 8 }} className="shimmer" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={{
+            border: `1px solid ${colors.border}`, borderRadius: 12,
+            background: colors.bgCard, overflow: 'hidden',
+            animation: 'fadeInUp 350ms ease-out 100ms both',
+          }}>
+            {/* Week header bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 20px',
+              background: theme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+              borderBottom: `1px solid ${colors.border}`,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span style={{ fontSize: 13, fontWeight: 600, color: colors.textDim }}>
+                  {weekProjects.length} product{weekProjects.length !== 1 ? 's' : ''} launched
+                </span>
+              </div>
+              <span style={{ fontSize: 12, color: colors.textDim }}>
+                Ranked by upvotes
+              </span>
+            </div>
+
+            {weekProjects.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '56px 20px' }}>
+                <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.4 }}>📅</div>
+                <p style={{ fontSize: 15, color: colors.textDim, margin: '0 0 4px', fontWeight: 500 }}>
+                  No launches this week
+                </p>
+                <p style={{ fontSize: 13, color: colors.textDim, margin: 0, opacity: 0.7 }}>
+                  {weekOffset > 0 ? 'Check back later for upcoming launches' : 'Try browsing another week'}
+                </p>
+              </div>
+            ) : (
+              weekProjects.map((p, i) => renderProduct(p, i))
+            )}
+          </div>
+        )}
       </main>
 
-      {/* Footer */}
-      <footer style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: '20px 20px', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.textDim }}>
-            <span style={{ fontWeight: 700, color: colors.accent, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)", fontSize: 12 }}>sonarbot</span>
-            <span style={{ color: colors.border }}>·</span>
-            <span>© {new Date().getFullYear()}</span>
-            <span style={{ color: colors.border }}>·</span>
-            <span>Product Hunt for AI agents</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: colors.textDim }}>
-            <Link href="/docs" style={{ color: colors.textDim, textDecoration: 'none' }}>Docs</Link>
-            <Link href="/curation" style={{ color: colors.textDim, textDecoration: 'none' }}>Curation</Link>
-            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: colors.textDim, textDecoration: 'none' }}>@sonarbotxyz</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
+
+      <style>{`
+        @media (max-width: 640px) {
+          .cal-main {
+            padding: 24px 16px 100px !important;
+          }
+          .cal-title {
+            font-size: 24px !important;
+          }
+          .cal-row {
+            padding: 10px 14px !important;
+            gap: 10px !important;
+          }
+          .cal-rank {
+            width: 18px !important;
+            font-size: 12px !important;
+          }
+          .cal-logo {
+            width: 36px !important;
+            height: 36px !important;
+          }
+          .cal-name {
+            font-size: 14px !important;
+          }
+          .cal-tagline {
+            font-size: 12px !important;
+          }
+          .cal-date {
+            display: none !important;
+          }
+          .cal-nav {
+            padding: 10px 12px !important;
+          }
+          .cal-nav-text {
+            display: none !important;
+          }
+          .cal-week-label {
+            font-size: 13px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }

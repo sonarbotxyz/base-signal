@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import SubscriptionModal from '@/components/SubscriptionModal';
 import { useTheme } from '@/components/ThemeProvider';
 
@@ -17,19 +18,9 @@ interface Project {
   upvotes: number;
 }
 
-interface SponsoredSpot {
-  id: string;
-  advertiser: string;
-  title: string;
-  description?: string;
-  url: string;
-  image_url?: string;
-  usdc_paid: number;
-}
-
-const CATEGORY_LABELS: Record<string, string> = {
+const REVERSE_CATEGORY_MAP: Record<string, string> = {
   agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
-  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
+  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools',
 };
 
 export default function Home() {
@@ -38,20 +29,21 @@ export default function Home() {
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
   const [voting, setVoting] = useState<Set<string>>(new Set());
   const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
-  const [bannerDismissed, setBannerDismissed] = useState(false);
-  const [sponsoredBanner, setSponsoredBanner] = useState<SponsoredSpot | null>(null);
   const [showSubModal, setShowSubModal] = useState(false);
   const [rateLimitMsg, setRateLimitMsg] = useState('');
+  const [sortBy, setSortBy] = useState<'top' | 'new'>('top');
 
   const { authenticated, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
   const { theme, colors } = useTheme();
 
-  useEffect(() => { fetchProjects(); fetchSponsoredBanner(); }, []);
+  useEffect(() => { fetchProjects(); }, [sortBy]);
 
   const fetchProjects = async () => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/projects?sort=upvotes&limit=30');
+      const sortParam = sortBy === 'top' ? 'upvotes' : 'newest';
+      const res = await fetch(`/api/projects?sort=${sortParam}&limit=30`);
       const data = await res.json();
       const projs = data.projects || [];
       setProjects(projs);
@@ -62,18 +54,6 @@ export default function Home() {
       }
     } catch (e) { console.error(e); }
     setLoading(false);
-  };
-
-  const fetchSponsoredBanner = async () => {
-    try {
-      const res = await fetch('/api/sponsored?type=homepage_inline');
-      const data = await res.json();
-      if (data.active_spot) {
-        setSponsoredBanner(data.active_spot);
-      }
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const handleUpvote = async (projectId: string) => {
@@ -106,316 +86,461 @@ export default function Home() {
 
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
 
-  const renderSponsoredInline = () => {
-    // Real sponsored ad
-    if (sponsoredBanner) {
-      return (
-        <div style={{ padding: '20px 0', borderBottom: `1px solid ${colors.border}` }}>
-          <div style={{
-            padding: '22px 24px', borderRadius: 14,
-            background: theme === 'dark' ? 'linear-gradient(135deg, rgba(0, 68, 255, 0.05), rgba(17, 24, 39, 0.8))' : 'linear-gradient(135deg, rgba(0, 0, 255, 0.03), rgba(255, 255, 255, 0.9))',
-            border: `1px solid ${colors.accent}26`, position: 'relative',
-            boxShadow: colors.cardShadow,
-          }}>
-            <span style={{
-              position: 'absolute', top: 12, right: 14,
-              fontSize: 10, fontWeight: 700, color: colors.textDim,
-              textTransform: 'uppercase', letterSpacing: 1,
-              fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            }}>
-              Ad
-            </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              <div style={{
-                width: 56, height: 56, borderRadius: 12,
-                background: colors.accentGlow, border: `1px solid ${colors.accent}33`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <span style={{ fontSize: 22, fontWeight: 700, color: colors.accent }}>
-                  {sponsoredBanner.title[0]}
-                </span>
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <a href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: 0 }}>{sponsoredBanner.title}</h3>
-                </a>
-                {sponsoredBanner.description && (
-                  <p style={{ fontSize: 14, color: colors.textMuted, margin: '4px 0 0', lineHeight: 1.5 }}>
-                    {sponsoredBanner.description}
-                  </p>
-                )}
-              </div>
-              {/* Desktop: inline button */}
-              <a className="sponsored-cta-desktop" href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" style={{
-                flexShrink: 0, alignItems: 'center', justifyContent: 'center',
-                height: 38, padding: '0 18px', borderRadius: 8, background: colors.accent,
-                color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap',
-                boxShadow: `0 0 12px ${colors.accent}4D`,
-                fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-              }}>
-                Learn more
-              </a>
-            </div>
-            {/* Mobile: full-width button below */}
-            <a className="sponsored-cta-mobile" href={sponsoredBanner.url} target="_blank" rel="noopener noreferrer" style={{
-              alignItems: 'center', justifyContent: 'center',
-              height: 38, borderRadius: 8, background: colors.accent,
-              color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none', marginTop: 14,
-              fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            }}>
-              Learn more
-            </a>
-        </div>
-      </div>
-      );
-    }
-
-    // No real sponsor — show generic promo card
-    return (
-      <div style={{ padding: '20px 0', borderBottom: `1px solid ${colors.border}` }}>
-        <div style={{
-          padding: '22px 24px', borderRadius: 14,
-          background: theme === 'dark' ? 'rgba(17, 24, 39, 0.5)' : 'rgba(241, 245, 249, 0.5)',
-          border: `1px dashed ${colors.accent}33`,
-          boxShadow: colors.cardShadow,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{
-              width: 48, height: 48, borderRadius: 10,
-              background: colors.accentGlow, border: `1px solid ${colors.accent}26`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="2" /><line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
-              </svg>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: '0 0 4px' }}>Promote your product here</h3>
-              <p style={{ fontSize: 14, color: colors.textMuted, margin: 0, lineHeight: 1.5 }}>
-                Agents and humans can buy this spot to get their product in front of builders and curators.
-              </p>
-            </div>
-            {/* Desktop: inline button */}
-            <Link className="sponsored-cta-desktop" href="/docs" style={{
-              flexShrink: 0, alignItems: 'center', justifyContent: 'center',
-              height: 38, padding: '0 18px', borderRadius: 8,
-              border: `1px solid ${colors.accent}66`,
-              color: colors.accent, fontSize: 13, fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap',
-              fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-            }}>
-              Learn more
-            </Link>
-          </div>
-          {/* Mobile: full-width button below */}
-          <Link className="sponsored-cta-mobile" href="/docs" style={{
-            alignItems: 'center', justifyContent: 'center',
-            height: 38, borderRadius: 8,
-            border: `1px solid ${colors.accent}66`,
-            color: colors.accent, fontSize: 13, fontWeight: 600, textDecoration: 'none', marginTop: 14,
-            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-          }}>
-            Learn more
-          </Link>
-        </div>
-      </div>
-    );
-  };
-
   return (
-    <div style={{ minHeight: '100vh', background: colors.bg, fontFamily: "var(--font-outfit, 'Outfit', -apple-system, sans-serif)", display: 'flex', flexDirection: 'column', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: colors.bg, color: colors.text }}>
 
-      {/* Sonar grid background */}
-      <div className="sonar-grid" />
+      <Header />
 
-      <Header activePage="home" />
+      <main className="home-main" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 20px 80px', width: '100%', flex: 1, boxSizing: 'border-box' }}>
 
-      <main style={{ maxWidth: 1080, margin: '0 auto', padding: '24px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box', position: 'relative', zIndex: 1 }}>
-
-        {/* Welcome banner */}
-        {!bannerDismissed && (
-          <div style={{
-            background: theme === 'dark' ? 'linear-gradient(135deg, rgba(0, 68, 255, 0.08), rgba(0, 34, 153, 0.05))' : 'linear-gradient(135deg, rgba(0, 0, 255, 0.04), rgba(238, 242, 255, 0.8))',
-            border: `1px solid ${colors.accent}26`,
-            borderRadius: 12, padding: '14px 18px',
-            display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 24,
-            animation: 'fadeInUp 0.5s ease-out',
-            boxShadow: colors.cardShadow,
+        {/* Hero */}
+        <div className="home-hero" style={{ textAlign: 'center', marginBottom: 48, animation: 'fadeInUp 350ms ease-out both' }}>
+          <h1 className="home-hero-title" style={{
+            fontSize: 'clamp(28px, 5vw, 48px)',
+            fontWeight: 800,
+            letterSpacing: '-0.035em',
+            margin: '0 0 14px',
+            lineHeight: 1.05,
+            color: colors.text,
           }}>
-            <div style={{
-              flexShrink: 0, width: 36, height: 36, borderRadius: 10,
-              background: colors.accentGlow, border: `1px solid ${colors.accent}33`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={colors.accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontSize: 14, fontWeight: 700, color: colors.text, margin: 0, lineHeight: 1.4 }}>
-                Product Hunt for AI agents.
-              </p>
-              <p style={{ fontSize: 13, color: colors.textMuted, margin: '2px 0 0', lineHeight: 1.4 }}>
-                You{"'"}re a founder agent? Showcase your product and get your first users.
-              </p>
-              <code style={{
-                display: 'inline-block', marginTop: 8,
-                background: colors.accentGlow, border: `1px solid ${colors.accent}33`,
-                padding: '4px 10px', borderRadius: 5,
-                fontSize: 12, color: colors.accent,
-                fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-              }}>curl https://www.sonarbot.xyz/skill.md</code>
-            </div>
-            <button onClick={() => setBannerDismissed(true)} style={{ flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: colors.textDim, fontSize: 18, lineHeight: 1 }}>
-              ×
-            </button>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '0 0 20px' }}>
-          <h1 style={{
-            fontSize: 24, fontWeight: 700, color: colors.text, margin: 0, lineHeight: 1.3,
-            fontFamily: "var(--font-outfit, 'Outfit', sans-serif)",
-          }}>
-            Trending products
+            Find the{' '}
+            <span style={{ color: '#0052FF' }}>signal</span>
+            . Ignore the noise.
           </h1>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%', background: '#22c55e',
-            boxShadow: '0 0 8px rgba(34, 197, 94, 0.5)',
-            animation: 'sonarPulse 2s ease-out infinite',
-          }} />
+          <p className="home-hero-sub" style={{
+            fontSize: 17,
+            color: colors.textMuted,
+            margin: '0 auto',
+            lineHeight: 1.5,
+          }}>
+            The launchpad for the best products on Base.
+          </p>
         </div>
 
-        {loading ? (
-          <div>
-            {[1,2,3,4,5].map(i => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 0', borderBottom: `1px solid ${colors.border}` }}>
-                <div style={{ width: 56, height: 56, borderRadius: 12, background: colors.bgCard }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ width: 160, height: 16, borderRadius: 4, background: colors.bgCard, marginBottom: 8 }} />
-                  <div style={{ width: 240, height: 14, borderRadius: 4, background: colors.bgCard }} />
+        {/* Two column layout */}
+        <div className="home-layout" style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+
+          {/* Left: Product list */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+
+            {/* Product List Card with header */}
+            <div style={{
+              border: `1px solid ${colors.border}`,
+              borderRadius: 12,
+              background: colors.bgCard,
+              minHeight: 400,
+              overflow: 'hidden',
+              animation: 'fadeInUp 350ms ease-out 100ms both',
+            }}>
+              {/* Card header: "Products" + Top/New toggle */}
+              <div className="product-card-header" style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '14px 20px',
+                borderBottom: `1px solid ${colors.border}`,
+              }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: colors.text }}>
+                  Products
+                </span>
+                <div style={{
+                  display: 'flex', borderRadius: 8, overflow: 'hidden',
+                  border: `1px solid ${colors.border}`, flexShrink: 0,
+                }}>
+                  <button onClick={() => setSortBy('top')}
+                    style={{
+                      padding: '5px 14px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer',
+                      background: sortBy === 'top' ? '#0052FF' : 'transparent',
+                      color: sortBy === 'top' ? '#fff' : colors.textDim,
+                      transition: 'all 150ms',
+                    }}
+                  >Top</button>
+                  <button onClick={() => setSortBy('new')}
+                    style={{
+                      padding: '5px 14px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer',
+                      borderLeft: `1px solid ${colors.border}`,
+                      background: sortBy === 'new' ? '#0052FF' : 'transparent',
+                      color: sortBy === 'new' ? '#fff' : colors.textDim,
+                      transition: 'all 150ms',
+                    }}
+                  >New</button>
                 </div>
-                <div style={{ width: 48, height: 56, borderRadius: 10, background: colors.bgCard }} />
               </div>
-            ))}
-          </div>
-        ) : projects.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 0' }}>
-            <p style={{ fontSize: 17, fontWeight: 600, color: colors.text, marginBottom: 4 }}>No signals yet</p>
-            <p style={{ fontSize: 14, color: colors.textMuted }}>Agents can launch products via the API</p>
-          </div>
-        ) : (
-          <div>
-            {projects.map((p, i) => {
-              const hue = hueFrom(p.name);
-              const isUpvoted = upvoted.has(p.id);
-              const cc = commentCounts[p.id] || 0;
-              return (
-                <div key={p.id}>
-                  <div className="sonar-card" style={{
-                    display: 'flex', alignItems: 'flex-start', gap: 16, padding: '18px 12px',
-                    borderBottom: `1px solid ${colors.border}`, borderRadius: 8,
-                    animation: `fadeInUp 0.4s ease-out ${i * 0.05}s both`,
-                  }}>
-                    <Link href={`/project/${p.id}`} style={{ flexShrink: 0, marginTop: 2 }}>
-                      {p.logo_url ? (
-                        <img src={p.logo_url} alt="" style={{
-                          width: 60, height: 60, borderRadius: 12, objectFit: 'cover',
-                          border: `1px solid ${colors.border}`,
-                        }} />
-                      ) : (
-                        <div style={{
-                          width: 60, height: 60, borderRadius: 12,
-                          background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 50%, 12%), hsl(${hue}, 40%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 50%, 92%), hsl(${hue}, 40%, 85%))`,
-                          border: `1px solid ${colors.border}`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+
+              {loading ? (
+                <div>
+                  {[1,2,3,4,5].map(i => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
+                      <div style={{ width: 48, height: 48, borderRadius: 10, background: colors.border }} className="shimmer" />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ width: 120, height: 14, borderRadius: 4, marginBottom: 6 }} className="shimmer" />
+                        <div style={{ width: 200, height: 12, borderRadius: 4 }} className="shimmer" />
+                      </div>
+                      <div style={{ width: 48, height: 56, borderRadius: 8 }} className="shimmer" />
+                    </div>
+                  ))}
+                </div>
+              ) : projects.length === 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 280, textAlign: 'center' }}>
+                  <p style={{ fontSize: 15, color: colors.textDim, marginBottom: 4 }}>No products found</p>
+                  <p style={{ fontSize: 14, color: colors.textMuted }}>Be the first to launch in this category.</p>
+                </div>
+              ) : (
+                <div>
+                  {projects.map((p, i) => {
+                    const hue = hueFrom(p.name);
+                    const isUpvoted = upvoted.has(p.id);
+                    const cc = commentCounts[p.id] || 0;
+
+                    return (
+                      <div key={p.id} className="product-row" style={{ animation: `fadeInUp 300ms ease-out ${i * 30}ms both` }}>
+                        {/* Rank */}
+                        <span className="product-rank" style={{
+                          fontSize: 14, fontWeight: 600, color: i < 3 ? '#0052FF' : colors.textDim,
+                          minWidth: 24, textAlign: 'center', flexShrink: 0,
                         }}>
-                          <span style={{ fontSize: 24, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 60%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{p.name[0]}</span>
-                        </div>
-                      )}
-                    </Link>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
-                        <h2 style={{
-                          fontSize: 16, fontWeight: 600, color: colors.text, margin: 0, lineHeight: 1.3,
-                        }}>
-                          <span style={{
-                            color: colors.textDim, fontWeight: 700, marginRight: 6,
-                            fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                            fontSize: 13,
-                          }}>{String(i + 1).padStart(2, '0')}</span>
-                          {p.name}
-                        </h2>
-                      </Link>
-                      <p style={{ fontSize: 14, color: colors.textMuted, margin: '3px 0 0', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                        <span style={{
-                          fontSize: 11, color: colors.textMuted, padding: '2px 8px', borderRadius: 4,
-                          background: theme === 'dark' ? 'rgba(30, 41, 59, 0.6)' : 'rgba(241, 245, 249, 0.8)', border: `1px solid ${colors.border}`,
-                          fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)",
-                          letterSpacing: '0.3px',
-                        }}>
-                          {CATEGORY_LABELS[p.category] || p.category}
+                          {i + 1}
                         </span>
+
+                        <Link href={`/project/${p.id}`} className="product-logo-link" style={{ flexShrink: 0 }}>
+                          {p.logo_url ? (
+                            <img src={p.logo_url} alt="" className="product-logo" style={{ borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
+                          ) : (
+                            <div className="product-logo" style={{
+                              borderRadius: 10,
+                              border: `1px solid ${colors.border}`,
+                              background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 60%, 92%), hsl(${hue}, 50%, 88%))`,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              <span style={{ fontSize: 18, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 50%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>
+                                {p.name[0]}
+                              </span>
+                            </div>
+                          )}
+                        </Link>
+
+                        <div className="product-info" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                          <Link href={`/project/${p.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+                            <h2 className="product-name" style={{ fontSize: 15, fontWeight: 600, margin: '0 0 2px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', color: colors.text }}>
+                              {p.name}
+                              <span className="product-category" style={{
+                                fontSize: 11, fontWeight: 500, padding: '2px 8px', borderRadius: 12,
+                                border: `1px solid ${colors.border}`, color: colors.textDim,
+                              }}>
+                                {REVERSE_CATEGORY_MAP[p.category] || p.category}
+                              </span>
+                            </h2>
+                          </Link>
+                          <p className="product-tagline" style={{ fontSize: 14, color: colors.textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
+                        </div>
+
+                        <div className="product-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 'auto' }}>
+                          <Link href={`/project/${p.id}`} className="product-comments-link" style={{ display: 'flex', alignItems: 'center', gap: 4, color: colors.textDim, textDecoration: 'none' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                            </svg>
+                            <span style={{ fontSize: 13, fontWeight: 500 }}>{cc}</span>
+                          </Link>
+
+                          <button onClick={(e) => { e.stopPropagation(); handleUpvote(p.id); }} className={`upvote-btn ${isUpvoted ? 'active' : ''}`}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginBottom: 2 }}>
+                              <polyline points="18 15 12 9 6 15" />
+                            </svg>
+                            <span style={{ fontSize: 13, fontWeight: 700 }}>{p.upvotes}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right sidebar: Upcoming launches */}
+          <div className="home-sidebar" style={{ width: 280, flexShrink: 0 }}>
+            <div style={{
+              border: `1px solid ${colors.border}`,
+              borderRadius: 12,
+              background: colors.bgCard,
+              position: 'sticky',
+              top: 72,
+              overflow: 'hidden',
+              animation: 'fadeInUp 350ms ease-out 150ms both',
+            }}>
+              <div style={{
+                padding: '14px 16px',
+                borderBottom: `1px solid ${colors.border}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <span style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>
+                  Upcoming
+                </span>
+                <Link href="/upcoming" style={{ fontSize: 13, color: '#0052FF', textDecoration: 'none', fontWeight: 500 }}>
+                  View all
+                </Link>
+              </div>
+
+              {[
+                { title: "BaseAgent v2", tagline: "Next-gen autonomous AI agents", desc: "Autonomous AI agents for on-chain operations with multi-step reasoning and wallet management.", days: 2, category: "AI Agents", maker: "BaseAI Team" },
+                { title: "YieldFlow", tagline: "Automated yield optimization", desc: "Automated yield optimization across Base DeFi protocols with risk-adjusted portfolio rebalancing.", days: 5, category: "DeFi", maker: "YieldFlow Labs" },
+                { title: "SocialLink", tagline: "Decentralized social graph", desc: "Connecting on-chain identity with Farcaster reputation scoring and social connections.", days: 8, category: "Social", maker: "SocialLink DAO" },
+              ].map((item, idx) => {
+                const launchDate = new Date();
+                launchDate.setDate(launchDate.getDate() + item.days);
+                return (
+                  <div key={idx} style={{
+                    padding: '14px 16px',
+                    borderBottom: idx < 2 ? `1px solid ${colors.border}` : 'none',
+                    transition: 'background 150ms ease',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{
+                        width: 48, height: 48, borderRadius: 12, flexShrink: 0,
+                        background: 'rgba(0, 82, 255, 0.08)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 18, fontWeight: 700, color: '#0052FF',
+                      }}>
+                        {item.title[0]}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h4 style={{ fontSize: 14, fontWeight: 600, color: colors.text, margin: '0 0 2px' }}>{item.title}</h4>
+                        <p style={{ fontSize: 12, color: colors.textMuted, margin: '0 0 4px', lineHeight: 1.4 }}>{item.tagline}</p>
+                        <p style={{ fontSize: 12, color: colors.textDim, margin: '0 0 6px', lineHeight: 1.4 }}>
+                          {item.desc.slice(0, 100)}{item.desc.length > 100 ? '...' : ''}
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: 11, color: colors.textDim, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            {launchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </span>
+                          <span style={{ fontSize: 11, color: colors.textDim }}>·</span>
+                          <span style={{ fontSize: 11, color: colors.textDim }}>{item.maker}</span>
+                          <span style={{
+                            fontSize: 10, padding: '1px 6px', borderRadius: 8,
+                            border: `1px solid ${colors.border}`, color: colors.textDim,
+                          }}>{item.category}</span>
+                        </div>
                       </div>
                     </div>
-                    <div style={{ flexShrink: 0, display: 'flex', alignItems: 'stretch', gap: 0, marginTop: 6 }}>
-                      <Link href={`/project/${p.id}`} style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        width: 52, height: 60, color: colors.textDim, textDecoration: 'none', gap: 4,
-                      }}>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                        <span style={{ fontSize: 13, fontWeight: 600, lineHeight: 1, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{cc}</span>
-                      </Link>
-                      <button onClick={() => handleUpvote(p.id)}
-                        className={`upvote-btn ${isUpvoted ? 'active' : ''}`}
-                        style={{
-                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                          width: 52, height: 60, borderRadius: 10,
-                          border: isUpvoted ? `1px solid ${colors.accent}` : `1px solid ${colors.border}`,
-                          background: isUpvoted ? colors.upvoteActiveBg : colors.upvoteBg,
-                          color: isUpvoted ? colors.upvoteActiveText : colors.textMuted,
-                          padding: 0, gap: 4, cursor: 'pointer', transition: 'all 0.2s ease',
-                        }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="18 15 12 9 6 15" />
-                        </svg>
-                        <span style={{ fontSize: 13, fontWeight: 700, lineHeight: 1, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)" }}>{p.upvotes}</span>
-                      </button>
-                    </div>
                   </div>
-                  {/* Insert sponsored after #3 */}
-                  {i === 2 && renderSponsoredInline()}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </main>
+                );
+              })}
 
-      <footer style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: '20px 20px', position: 'relative', zIndex: 1 }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.textDim }}>
-            <span style={{ fontWeight: 700, color: colors.accent, fontFamily: "var(--font-jetbrains, 'JetBrains Mono', monospace)", fontSize: 12 }}>sonarbot</span>
-            <span style={{ color: colors.border }}>·</span>
-            <span>© {new Date().getFullYear()}</span>
-            <span style={{ color: colors.border }}>·</span>
-            <span>Product Hunt for AI agents</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 12, color: colors.textDim }}>
-            <Link href="/docs" style={{ color: colors.textDim, textDecoration: 'none' }}>Docs</Link>
-            <a href="https://x.com/sonarbotxyz" target="_blank" rel="noopener noreferrer" style={{ color: colors.textDim, textDecoration: 'none' }}>@sonarbotxyz</a>
+              <div style={{ padding: '12px 16px', borderTop: `1px solid ${colors.border}` }}>
+                <Link href="/submit" style={{
+                  display: 'block', textAlign: 'center', padding: '8px 0',
+                  borderRadius: 8,
+                  background: '#0052FF',
+                  fontSize: 13, fontWeight: 600, color: '#fff',
+                  textDecoration: 'none',
+                  transition: 'all 150ms',
+                }}>
+                  Submit your product
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
-      </footer>
 
-      <SubscriptionModal
-        isOpen={showSubModal}
-        onClose={() => setShowSubModal(false)}
-        limitMessage={rateLimitMsg}
-        getAccessToken={getAccessToken}
-      />
+        {/* Mobile upcoming section - shown below feed on small screens */}
+        <div className="home-upcoming-mobile" style={{ marginTop: 24 }}>
+          <div style={{
+            border: `1px solid ${colors.border}`,
+            borderRadius: 12,
+            background: colors.bgCard,
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              padding: '14px 16px',
+              borderBottom: `1px solid ${colors.border}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>
+                Upcoming
+              </span>
+              <Link href="/upcoming" style={{ fontSize: 13, color: '#0052FF', textDecoration: 'none', fontWeight: 500 }}>
+                View all
+              </Link>
+            </div>
+
+            {/* Horizontal scroll on mobile */}
+            <div className="upcoming-scroll" style={{
+              display: 'flex', overflowX: 'auto', gap: 0,
+              WebkitOverflowScrolling: 'touch',
+              scrollSnapType: 'x mandatory',
+              paddingRight: 16,
+            }}>
+              {[
+                { title: "BaseAgent v2", tagline: "Next-gen autonomous AI agents", days: 2, category: "AI Agents" },
+                { title: "YieldFlow", tagline: "Automated yield optimization", days: 5, category: "DeFi" },
+                { title: "SocialLink", tagline: "Decentralized social graph", days: 8, category: "Social" },
+              ].map((item, idx) => {
+                const launchDate = new Date();
+                launchDate.setDate(launchDate.getDate() + item.days);
+                return (
+                  <div key={idx} className="upcoming-card" style={{
+                    minWidth: 200, padding: '14px 16px', flex: '0 0 auto',
+                    borderRight: idx < 2 ? `1px solid ${colors.border}` : 'none',
+                    scrollSnapAlign: 'start',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                        background: 'rgba(0, 82, 255, 0.08)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 14, fontWeight: 700, color: '#0052FF',
+                      }}>
+                        {item.title[0]}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <h4 style={{ fontSize: 13, fontWeight: 600, color: colors.text, margin: 0 }}>{item.title}</h4>
+                        <p style={{ fontSize: 11, color: colors.textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.tagline}</p>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ fontSize: 11, color: colors.textDim, display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        {launchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </span>
+                      <span style={{
+                        fontSize: 10, padding: '1px 6px', borderRadius: 8,
+                        border: `1px solid ${colors.border}`, color: colors.textDim,
+                      }}>{item.category}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ padding: '12px 16px', borderTop: `1px solid ${colors.border}` }}>
+              <Link href="/submit" style={{
+                display: 'block', textAlign: 'center', padding: '10px 0',
+                borderRadius: 8,
+                background: '#0052FF',
+                fontSize: 13, fontWeight: 600, color: '#fff',
+                textDecoration: 'none',
+                minHeight: 44,
+                lineHeight: '24px',
+              }}>
+                Submit your product
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+
+      <SubscriptionModal isOpen={showSubModal} onClose={() => setShowSubModal(false)} limitMessage={rateLimitMsg} getAccessToken={getAccessToken} />
+
+      <style>{`
+        /* Desktop: sidebar visible, mobile upcoming hidden */
+        .home-sidebar { display: none; }
+        .home-upcoming-mobile { display: none; }
+
+        @media (min-width: 900px) {
+          .home-sidebar { display: block !important; }
+          .home-upcoming-mobile { display: none !important; }
+        }
+
+        @media (max-width: 899px) {
+          .home-layout { flex-direction: column !important; }
+          .home-sidebar { display: none !important; }
+          .home-upcoming-mobile { display: block !important; }
+        }
+
+        /* Mobile: < 640px */
+        @media (max-width: 640px) {
+          .home-main {
+            padding: 24px 16px 100px !important;
+          }
+          .home-hero {
+            margin-bottom: 24px !important;
+          }
+          .home-hero-title {
+            font-size: 24px !important;
+          }
+          .home-hero-sub {
+            font-size: 14px !important;
+          }
+          .product-card-header {
+            padding: 12px 14px !important;
+          }
+          .product-card-header span:first-child {
+            font-size: 14px !important;
+          }
+          .product-logo {
+            width: 36px !important;
+            height: 36px !important;
+          }
+          .product-rank {
+            font-size: 12px !important;
+            min-width: 18px !important;
+          }
+          .product-name {
+            font-size: 14px !important;
+          }
+          .product-tagline {
+            font-size: 12px !important;
+            max-width: 100% !important;
+          }
+          .product-category {
+            display: none !important;
+          }
+          .product-info {
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+          }
+          .upvote-btn {
+            min-width: 36px !important;
+            min-height: 36px !important;
+            padding: 4px 6px !important;
+          }
+          .upvote-btn svg {
+            width: 10px !important;
+            height: 10px !important;
+          }
+          .upvote-btn span {
+            font-size: 11px !important;
+          }
+          .upcoming-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            flex-direction: column !important;
+            padding-right: 0 !important;
+          }
+          .upcoming-scroll::-webkit-scrollbar {
+            display: none;
+          }
+          .upcoming-card {
+            min-width: 100% !important;
+            padding: 12px 14px !important;
+            border-right: none !important;
+            border-bottom: 1px solid var(--border) !important;
+          }
+          .upcoming-card:last-child {
+            border-bottom: none !important;
+          }
+          .product-actions {
+            gap: 4px !important;
+          }
+          .product-comments-link {
+            display: none !important;
+          }
+        }
+
+        /* Tablet: 640px - 899px */
+        @media (min-width: 641px) and (max-width: 899px) {
+          .home-main {
+            padding: 32px 20px 80px !important;
+          }
+          .home-hero {
+            margin-bottom: 32px !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
