@@ -174,6 +174,9 @@ a { color: inherit; }
 .sonar-card {
   transition: all 0.25s ease;
   position: relative;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 .sonar-card:hover {
   background: var(--bg-card-hover) !important;
@@ -194,6 +197,31 @@ a { color: inherit; }
 }
 .sonar-card:hover::after {
   opacity: 1;
+}
+
+/* ── Mobile product cards fix ── */
+@media (max-width: 480px) {
+  .sonar-card {
+    gap: 10px !important;
+    padding: 14px 10px !important;
+  }
+  .sonar-card > a:first-child img,
+  .sonar-card > a:first-child > div {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .sonar-card > a:first-child > div span {
+    font-size: 18px !important;
+  }
+  /* Force upvote/comment buttons smaller */
+  .sonar-card .upvote-btn,
+  .sonar-card > div:last-child > a {
+    width: 42px !important;
+    height: 50px !important;
+  }
+  .sonar-card > div:last-child {
+    gap: 0 !important;
+  }
 }
 
 /* ── Theme Toggle Button ── */
