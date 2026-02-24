@@ -193,7 +193,7 @@ export default function Home() {
                     const cc = commentCounts[p.id] || 0;
 
                     return (
-                      <div key={p.id} className="product-row" style={{ animation: `fadeInUp 300ms ease-out ${i * 30}ms both` }}>
+                      <div key={p.id} className="product-row" style={{ animation: `fadeInUp 300ms ease-out ${i * 30}ms both`, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
                         {/* Rank */}
                         <span className="product-rank" style={{
                           fontSize: 14, fontWeight: 600, color: i < 3 ? '#0052FF' : colors.textDim,
@@ -219,7 +219,7 @@ export default function Home() {
                           )}
                         </Link>
 
-                        <div className="product-info" style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                        <div className="product-info" style={{ flex: '1 1 0', minWidth: 0, overflow: 'hidden', maxWidth: 'calc(100% - 120px)' }}>
                           <Link href={`/project/${p.id}`} style={{ textDecoration: 'none', display: 'block' }}>
                             <h2 className="product-name" style={{ fontSize: 15, fontWeight: 600, margin: '0 0 2px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', color: colors.text }}>
                               {p.name}
