@@ -7,7 +7,7 @@ export default function Footer() {
   const { colors } = useTheme();
 
   return (
-    <footer className="site-footer" style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: '20px 16px', position: 'relative', zIndex: 2 }}>
+    <footer className="site-footer" style={{ borderTop: `1px solid ${colors.border}`, background: colors.bg, padding: '20px 16px', paddingBottom: 'max(20px, env(safe-area-inset-bottom, 20px))', position: 'relative', zIndex: 2 }}>
       <div style={{ maxWidth: 1080, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: colors.textDim }}>
           <span style={{ fontWeight: 700, color: colors.text }}>sonarbot</span>

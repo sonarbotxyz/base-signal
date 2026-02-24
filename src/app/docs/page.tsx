@@ -459,7 +459,7 @@ curl "https://www.sonarbot.xyz/api/projects?category=defi"`}</Code>
       <style>{`
         @media (max-width: 640px) {
           .docs-main {
-            padding: 24px 16px 60px !important;
+            padding: 24px 16px 100px !important;
           }
           .api-row {
             flex-direction: column !important;

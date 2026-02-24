@@ -368,6 +368,8 @@ export default function Home() {
             <div className="upcoming-scroll" style={{
               display: 'flex', overflowX: 'auto', gap: 0,
               WebkitOverflowScrolling: 'touch',
+              scrollSnapType: 'x mandatory',
+              paddingRight: 16,
             }}>
               {[
                 { title: "BaseAgent v2", tagline: "Next-gen autonomous AI agents", days: 2, category: "AI Agents" },
@@ -377,9 +379,10 @@ export default function Home() {
                 const launchDate = new Date();
                 launchDate.setDate(launchDate.getDate() + item.days);
                 return (
-                  <div key={idx} style={{
-                    minWidth: 220, padding: '14px 16px', flex: '0 0 auto',
+                  <div key={idx} className="upcoming-card" style={{
+                    minWidth: 200, padding: '14px 16px', flex: '0 0 auto',
                     borderRight: idx < 2 ? `1px solid ${colors.border}` : 'none',
+                    scrollSnapAlign: 'start',
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                       <div style={{
@@ -450,7 +453,7 @@ export default function Home() {
         /* Mobile: < 640px */
         @media (max-width: 640px) {
           .home-main {
-            padding: 24px 16px 60px !important;
+            padding: 24px 16px 100px !important;
           }
           .home-hero {
             margin-bottom: 24px !important;
@@ -494,6 +497,16 @@ export default function Home() {
           }
           .upcoming-scroll::-webkit-scrollbar {
             display: none;
+          }
+          .upcoming-card {
+            min-width: 180px !important;
+            padding: 12px 14px !important;
+          }
+          .product-actions {
+            gap: 4px !important;
+          }
+          .product-comments-link {
+            display: none !important;
           }
         }
 

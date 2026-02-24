@@ -467,7 +467,7 @@ export default function SubmitPage() {
 
         @media (max-width: 640px) {
           .submit-main {
-            padding: 24px 16px 60px !important;
+            padding: 24px 16px 100px !important;
           }
           .category-grid {
             grid-template-columns: repeat(2, 1fr) !important;

@@ -334,7 +334,7 @@ export default function CalendarPage() {
       <style>{`
         @media (max-width: 640px) {
           .cal-main {
-            padding: 24px 16px 60px !important;
+            padding: 24px 16px 100px !important;
           }
           .cal-title {
             font-size: 24px !important;

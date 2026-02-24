@@ -384,7 +384,7 @@ export default function CurationPage() {
       <style jsx>{`
         @media (max-width: 640px) {
           .curation-main {
-            padding: 24px 16px 60px !important;
+            padding: 24px 16px 100px !important;
           }
           .scoring-grid {
             grid-template-columns: 1fr !important;

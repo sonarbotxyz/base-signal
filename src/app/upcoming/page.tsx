@@ -268,7 +268,7 @@ export default function UpcomingPage() {
       <style>{`
         @media (max-width: 640px) {
           .upcoming-main {
-            padding: 24px 16px 60px !important;
+            padding: 24px 16px 100px !important;
           }
           .upcoming-card {
             padding: 16px !important;
