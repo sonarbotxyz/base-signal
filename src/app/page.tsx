@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
 import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import SubscriptionModal from '@/components/SubscriptionModal';
 import { useTheme } from '@/components/ThemeProvider';
 
@@ -13,45 +12,30 @@ interface Project {
   name: string;
   tagline: string;
   logo_url?: string;
-  twitter_handle?: string;
   category: string;
   upvotes: number;
 }
-
-const REVERSE_CATEGORY_MAP: Record<string, string> = {
-  agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
-  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools',
-};
 
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
   const [voting, setVoting] = useState<Set<string>>(new Set());
-  const [commentCounts, setCommentCounts] = useState<Record<string, number>>({});
   const [showSubModal, setShowSubModal] = useState(false);
   const [rateLimitMsg, setRateLimitMsg] = useState('');
-  const [sortBy, setSortBy] = useState<'top' | 'new'>('top');
 
   const { authenticated, getAccessToken } = usePrivy();
   const { initOAuth } = useLoginWithOAuth();
   const { theme, colors } = useTheme();
 
-  useEffect(() => { fetchProjects(); }, [sortBy]);
+  useEffect(() => { fetchProjects(); }, []);
 
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const sortParam = sortBy === 'top' ? 'upvotes' : 'newest';
-      const res = await fetch(`/api/projects?sort=${sortParam}&limit=30`);
+      const res = await fetch('/api/projects?sort=upvotes&limit=30');
       const data = await res.json();
-      const projs = data.projects || [];
-      setProjects(projs);
-      for (const p of projs) {
-        fetch(`/api/projects/${p.id}/comments`).then(r => r.json()).then(d => {
-          setCommentCounts(prev => ({ ...prev, [p.id]: (d.comments || []).length }));
-        }).catch(() => {});
-      }
+      setProjects(data.projects || []);
     } catch (e) { console.error(e); }
     setLoading(false);
   };
@@ -74,11 +58,9 @@ export default function Home() {
           return next;
         });
       } else if (res.status === 429) {
-        try {
-          const data = await res.json();
-          setRateLimitMsg(data.limit || 'Rate limit exceeded');
-          setShowSubModal(true);
-        } catch { setRateLimitMsg('Rate limit exceeded'); setShowSubModal(true); }
+        const data = await res.json().catch(() => ({}));
+        setRateLimitMsg(data.limit || 'Rate limit exceeded');
+        setShowSubModal(true);
       }
     } catch (e) { console.error(e); }
     setVoting(prev => { const n = new Set(prev); n.delete(projectId); return n; });
@@ -87,480 +69,175 @@ export default function Home() {
   const hueFrom = (s: string) => s.charCodeAt(0) * 7 % 360;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: colors.bg, color: colors.text }}>
-
+    <div style={{ minHeight: '100vh', background: '#080810', color: '#e4e4e7', fontFamily: "'Inter', -apple-system, sans-serif" }}>
       <Header />
 
-      <main className="home-main" style={{ maxWidth: 1080, margin: '0 auto', padding: '48px 20px 80px', width: '100%', flex: 1, boxSizing: 'border-box' }}>
-
-        {/* Hero */}
-        <div className="home-hero" style={{ textAlign: 'center', marginBottom: 48, animation: 'fadeInUp 350ms ease-out both' }}>
-          <h1 className="home-hero-title" style={{
-            fontSize: 'clamp(28px, 5vw, 48px)',
-            fontWeight: 800,
-            letterSpacing: '-0.035em',
-            margin: '0 0 14px',
-            lineHeight: 1.05,
-            color: colors.text,
-          }}>
-            Find the{' '}
-            <span style={{ color: '#0052FF' }}>signal</span>
-            . Ignore the noise.
+      <main style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px' }}>
+        {/* Hero - minimal */}
+        <div style={{ marginBottom: 48 }}>
+          <h1 style={{ fontSize: 'clamp(32px, 6vw, 56px)', fontWeight: 700, margin: 0, letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+            Find the <span style={{ color: '#0052FF' }}>signal</span>.
           </h1>
-          <p className="home-hero-sub" style={{
-            fontSize: 17,
-            color: colors.textMuted,
-            margin: '0 auto',
-            lineHeight: 1.5,
-          }}>
-            The launchpad for the best products on Base.
+          <p style={{ fontSize: 18, color: '#71717a', marginTop: 12 }}>
+            The best products on Base, ranked by the community.
           </p>
         </div>
 
-        {/* Two column layout */}
-        <div className="home-layout" style={{ display: 'flex', gap: 32, alignItems: 'flex-start' }}>
+        {/* Product List - flat, no cards */}
+        <div>
+          {loading ? (
+            <div style={{ padding: '40px 0', textAlign: 'center', color: '#71717a' }}>Loading...</div>
+          ) : projects.length === 0 ? (
+            <div style={{ padding: '40px 0', textAlign: 'center', color: '#71717a' }}>No products yet</div>
+          ) : (
+            projects.map((p, i) => {
+              const hue = hueFrom(p.name);
+              const isUpvoted = upvoted.has(p.id);
 
-          {/* Left: Product list */}
-          <div style={{ flex: 1, minWidth: 0, width: '100%', maxWidth: '100%' }}>
-
-            {/* Product List Card with header */}
-            <div style={{
-              border: `1px solid ${colors.border}`,
-              borderRadius: 12,
-              background: colors.bgCard,
-              minHeight: 400,
-              overflow: 'hidden',
-              animation: 'fadeInUp 350ms ease-out 100ms both',
-            }}>
-              {/* Card header: "Products" + Top/New toggle */}
-              <div className="product-card-header" style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '14px 20px',
-                borderBottom: `1px solid ${colors.border}`,
-              }}>
-                <span style={{ fontSize: 15, fontWeight: 600, color: colors.text }}>
-                  Products
-                </span>
-                <div style={{
-                  display: 'flex', borderRadius: 8, overflow: 'hidden',
-                  border: `1px solid ${colors.border}`, flexShrink: 0,
-                }}>
-                  <button onClick={() => setSortBy('top')}
-                    style={{
-                      padding: '5px 14px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer',
-                      background: sortBy === 'top' ? '#0052FF' : 'transparent',
-                      color: sortBy === 'top' ? '#fff' : colors.textDim,
-                      transition: 'all 150ms',
-                    }}
-                  >Top</button>
-                  <button onClick={() => setSortBy('new')}
-                    style={{
-                      padding: '5px 14px', fontSize: 13, fontWeight: 500, border: 'none', cursor: 'pointer',
-                      borderLeft: `1px solid ${colors.border}`,
-                      background: sortBy === 'new' ? '#0052FF' : 'transparent',
-                      color: sortBy === 'new' ? '#fff' : colors.textDim,
-                      transition: 'all 150ms',
-                    }}
-                  >New</button>
-                </div>
-              </div>
-
-              {loading ? (
-                <div>
-                  {[1,2,3,4,5].map(i => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', borderBottom: `1px solid ${colors.border}` }}>
-                      <div style={{ width: 48, height: 48, borderRadius: 10, background: colors.border }} className="shimmer" />
-                      <div style={{ flex: 1 }}>
-                        <div style={{ width: 120, height: 14, borderRadius: 4, marginBottom: 6 }} className="shimmer" />
-                        <div style={{ width: 200, height: 12, borderRadius: 4 }} className="shimmer" />
-                      </div>
-                      <div style={{ width: 48, height: 56, borderRadius: 8 }} className="shimmer" />
-                    </div>
-                  ))}
-                </div>
-              ) : projects.length === 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 280, textAlign: 'center' }}>
-                  <p style={{ fontSize: 15, color: colors.textDim, marginBottom: 4 }}>No products found</p>
-                  <p style={{ fontSize: 14, color: colors.textMuted }}>Be the first to launch in this category.</p>
-                </div>
-              ) : (
-                <div>
-                  {projects.map((p, i) => {
-                    const hue = hueFrom(p.name);
-                    const isUpvoted = upvoted.has(p.id);
-                    const cc = commentCounts[p.id] || 0;
-
-                    return (
-                      <div key={p.id} className="product-row" style={{ animation: `fadeInUp 300ms ease-out ${i * 30}ms both`, display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', width: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
-                        {/* Rank */}
-                        <span className="product-rank" style={{
-                          fontSize: 14, fontWeight: 600, color: i < 3 ? '#0052FF' : colors.textDim,
-                          minWidth: 24, textAlign: 'center', flexShrink: 0,
-                        }}>
-                          {i + 1}
-                        </span>
-
-                        <Link href={`/project/${p.id}`} className="product-logo-link" style={{ flexShrink: 0 }}>
-                          {p.logo_url ? (
-                            <img src={p.logo_url} alt="" className="product-logo" style={{ borderRadius: 10, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
-                          ) : (
-                            <div className="product-logo" style={{
-                              borderRadius: 10,
-                              border: `1px solid ${colors.border}`,
-                              background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 40%, 14%), hsl(${hue}, 30%, 18%))` : `linear-gradient(135deg, hsl(${hue}, 60%, 92%), hsl(${hue}, 50%, 88%))`,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              <span style={{ fontSize: 18, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 50%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>
-                                {p.name[0]}
-                              </span>
-                            </div>
-                          )}
-                        </Link>
-
-                        <div className="product-info" style={{ flex: '1 1 0%', minWidth: 0, overflow: 'hidden' }}>
-                          <Link href={`/project/${p.id}`} style={{ textDecoration: 'none', display: 'block' }}>
-                            <h2 className="product-name" style={{ fontSize: 15, fontWeight: 600, margin: '0 0 2px', color: colors.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {p.name}
-                            </h2>
-                          </Link>
-                          <p className="product-tagline" style={{ fontSize: 14, color: colors.textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.tagline}</p>
-                        </div>
-
-                        <div className="product-actions" style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, marginLeft: 8 }}>
-                          <Link href={`/project/${p.id}`} className="product-comments-link" style={{ display: 'flex', alignItems: 'center', gap: 4, color: colors.textDim, textDecoration: 'none' }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                            </svg>
-                            <span style={{ fontSize: 13, fontWeight: 500 }}>{cc}</span>
-                          </Link>
-
-                          <button onClick={(e) => { e.stopPropagation(); handleUpvote(p.id); }} className={`upvote-btn ${isUpvoted ? 'active' : ''}`} style={{
-                            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                            minWidth: 44, minHeight: 48, padding: '4px 8px', borderRadius: 8,
-                            border: `1px solid ${isUpvoted ? '#0052FF' : colors.border}`,
-                            background: isUpvoted ? 'rgba(0, 82, 255, 0.08)' : 'transparent',
-                            color: isUpvoted ? '#0052FF' : colors.text, cursor: 'pointer',
-                          }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" style={{ marginBottom: 2 }}>
-                              <polyline points="18 15 12 9 6 15" />
-                            </svg>
-                            <span style={{ fontSize: 13, fontWeight: 700 }}>{p.upvotes}</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right sidebar: Upcoming launches */}
-          <div className="home-sidebar" style={{ width: 280, flexShrink: 0 }}>
-            <div style={{
-              border: `1px solid ${colors.border}`,
-              borderRadius: 12,
-              background: colors.bgCard,
-              position: 'sticky',
-              top: 72,
-              overflow: 'hidden',
-              animation: 'fadeInUp 350ms ease-out 150ms both',
-            }}>
-              <div style={{
-                padding: '14px 16px',
-                borderBottom: `1px solid ${colors.border}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>
-                  Upcoming
-                </span>
-                <Link href="/upcoming" style={{ fontSize: 13, color: '#0052FF', textDecoration: 'none', fontWeight: 500 }}>
-                  View all
-                </Link>
-              </div>
-
-              {[
-                { title: "BaseAgent v2", tagline: "Next-gen autonomous AI agents", desc: "Autonomous AI agents for on-chain operations with multi-step reasoning and wallet management.", days: 2, category: "AI Agents", maker: "BaseAI Team" },
-                { title: "YieldFlow", tagline: "Automated yield optimization", desc: "Automated yield optimization across Base DeFi protocols with risk-adjusted portfolio rebalancing.", days: 5, category: "DeFi", maker: "YieldFlow Labs" },
-                { title: "SocialLink", tagline: "Decentralized social graph", desc: "Connecting on-chain identity with Farcaster reputation scoring and social connections.", days: 8, category: "Social", maker: "SocialLink DAO" },
-              ].map((item, idx) => {
-                const launchDate = new Date();
-                launchDate.setDate(launchDate.getDate() + item.days);
-                return (
-                  <div key={idx} style={{
-                    padding: '14px 16px',
-                    borderBottom: idx < 2 ? `1px solid ${colors.border}` : 'none',
-                    transition: 'background 150ms ease',
+              return (
+                <div
+                  key={p.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '16px 0',
+                    borderBottom: '1px solid #1e1e24',
+                    gap: 16,
+                  }}
+                >
+                  {/* Rank */}
+                  <span style={{
+                    fontSize: 16,
+                    fontWeight: 600,
+                    color: i < 3 ? '#0052FF' : '#52525b',
+                    width: 28,
+                    textAlign: 'center',
+                    flexShrink: 0,
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <div style={{
-                        width: 48, height: 48, borderRadius: 12, flexShrink: 0,
-                        background: 'rgba(0, 82, 255, 0.08)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 18, fontWeight: 700, color: '#0052FF',
-                      }}>
-                        {item.title[0]}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <h4 style={{ fontSize: 14, fontWeight: 600, color: colors.text, margin: '0 0 2px' }}>{item.title}</h4>
-                        <p style={{ fontSize: 12, color: colors.textMuted, margin: '0 0 4px', lineHeight: 1.4 }}>{item.tagline}</p>
-                        <p style={{ fontSize: 12, color: colors.textDim, margin: '0 0 6px', lineHeight: 1.4 }}>
-                          {item.desc.slice(0, 100)}{item.desc.length > 100 ? '...' : ''}
-                        </p>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: 11, color: colors.textDim, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            {launchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                          </span>
-                          <span style={{ fontSize: 11, color: colors.textDim }}>·</span>
-                          <span style={{ fontSize: 11, color: colors.textDim }}>{item.maker}</span>
-                          <span style={{
-                            fontSize: 10, padding: '1px 6px', borderRadius: 8,
-                            border: `1px solid ${colors.border}`, color: colors.textDim,
-                          }}>{item.category}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    {i + 1}
+                  </span>
 
-              <div style={{ padding: '12px 16px', borderTop: `1px solid ${colors.border}` }}>
-                <Link href="/submit" style={{
-                  display: 'block', textAlign: 'center', padding: '8px 0',
-                  borderRadius: 8,
-                  background: '#0052FF',
-                  fontSize: 13, fontWeight: 600, color: '#fff',
-                  textDecoration: 'none',
-                  transition: 'all 150ms',
-                }}>
-                  Submit your product
-                </Link>
-              </div>
-            </div>
-          </div>
+                  {/* Logo */}
+                  <Link href={`/project/${p.id}`} style={{ flexShrink: 0 }}>
+                    {p.logo_url ? (
+                      <img
+                        src={p.logo_url}
+                        alt=""
+                        style={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: 10,
+                          objectFit: 'cover',
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 10,
+                        background: `linear-gradient(135deg, hsl(${hue}, 40%, 15%), hsl(${hue}, 30%, 20%))`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                        <span style={{ fontSize: 20, fontWeight: 700, color: `hsl(${hue}, 50%, 55%)` }}>
+                          {p.name[0]}
+                        </span>
+                      </div>
+                    )}
+                  </Link>
+
+                  {/* Name & Tagline */}
+                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                    <Link href={`/project/${p.id}`} style={{ textDecoration: 'none' }}>
+                      <h2 style={{
+                        fontSize: 16,
+                        fontWeight: 600,
+                        color: '#e4e4e7',
+                        margin: 0,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {p.name}
+                      </h2>
+                    </Link>
+                    <p style={{
+                      fontSize: 14,
+                      color: '#71717a',
+                      margin: '4px 0 0',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {p.tagline}
+                    </p>
+                  </div>
+
+                  {/* Upvote Button */}
+                  <button
+                    onClick={() => handleUpvote(p.id)}
+                    disabled={voting.has(p.id)}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 52,
+                      height: 60,
+                      border: `1.5px solid ${isUpvoted ? '#0052FF' : '#27272a'}`,
+                      borderRadius: 8,
+                      background: isUpvoted ? 'rgba(0, 82, 255, 0.1)' : 'transparent',
+                      color: isUpvoted ? '#0052FF' : '#a1a1aa',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none" style={{ marginBottom: 4 }}>
+                      <path d="M6 0L0 6h12L6 0z" fill="currentColor" />
+                    </svg>
+                    <span style={{ fontSize: 14, fontWeight: 700 }}>{p.upvotes}</span>
+                  </button>
+                </div>
+              );
+            })
+          )}
         </div>
 
-        {/* Mobile upcoming section - shown below feed on small screens */}
-        <div className="home-upcoming-mobile" style={{ marginTop: 24 }}>
-          <div style={{
-            border: `1px solid ${colors.border}`,
-            borderRadius: 12,
-            background: colors.bgCard,
-            overflow: 'hidden',
-          }}>
-            <div style={{
-              padding: '14px 16px',
-              borderBottom: `1px solid ${colors.border}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>
-                Upcoming
-              </span>
-              <Link href="/upcoming" style={{ fontSize: 13, color: '#0052FF', textDecoration: 'none', fontWeight: 500 }}>
-                View all
-              </Link>
-            </div>
-
-            {/* Horizontal scroll on mobile */}
-            <div className="upcoming-scroll" style={{
-              display: 'flex', overflowX: 'auto', gap: 0,
-              WebkitOverflowScrolling: 'touch',
-              scrollSnapType: 'x mandatory',
-              paddingRight: 16,
-            }}>
-              {[
-                { title: "BaseAgent v2", tagline: "Next-gen autonomous AI agents", days: 2, category: "AI Agents" },
-                { title: "YieldFlow", tagline: "Automated yield optimization", days: 5, category: "DeFi" },
-                { title: "SocialLink", tagline: "Decentralized social graph", days: 8, category: "Social" },
-              ].map((item, idx) => {
-                const launchDate = new Date();
-                launchDate.setDate(launchDate.getDate() + item.days);
-                return (
-                  <div key={idx} className="upcoming-card" style={{
-                    minWidth: 200, padding: '14px 16px', flex: '0 0 auto',
-                    borderRight: idx < 2 ? `1px solid ${colors.border}` : 'none',
-                    scrollSnapAlign: 'start',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-                      <div style={{
-                        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                        background: 'rgba(0, 82, 255, 0.08)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 14, fontWeight: 700, color: '#0052FF',
-                      }}>
-                        {item.title[0]}
-                      </div>
-                      <div style={{ minWidth: 0 }}>
-                        <h4 style={{ fontSize: 13, fontWeight: 600, color: colors.text, margin: 0 }}>{item.title}</h4>
-                        <p style={{ fontSize: 11, color: colors.textMuted, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.tagline}</p>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 11, color: colors.textDim, display: 'flex', alignItems: 'center', gap: 3 }}>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        {launchDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </span>
-                      <span style={{
-                        fontSize: 10, padding: '1px 6px', borderRadius: 8,
-                        border: `1px solid ${colors.border}`, color: colors.textDim,
-                      }}>{item.category}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div style={{ padding: '12px 16px', borderTop: `1px solid ${colors.border}` }}>
-              <Link href="/submit" style={{
-                display: 'block', textAlign: 'center', padding: '10px 0',
-                borderRadius: 8,
-                background: '#0052FF',
-                fontSize: 13, fontWeight: 600, color: '#fff',
-                textDecoration: 'none',
-                minHeight: 44,
-                lineHeight: '24px',
-              }}>
-                Submit your product
-              </Link>
-            </div>
-          </div>
+        {/* Submit CTA */}
+        <div style={{ marginTop: 48, textAlign: 'center' }}>
+          <Link
+            href="/submit"
+            style={{
+              display: 'inline-block',
+              padding: '12px 24px',
+              background: '#0052FF',
+              color: '#fff',
+              borderRadius: 8,
+              fontSize: 14,
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            Submit your product
+          </Link>
         </div>
       </main>
-
-      <Footer />
 
       <SubscriptionModal isOpen={showSubModal} onClose={() => setShowSubModal(false)} limitMessage={rateLimitMsg} getAccessToken={getAccessToken} />
 
       <style>{`
-        /* Desktop: sidebar visible, mobile upcoming hidden */
-        .home-sidebar { display: none; }
-        .home-upcoming-mobile { display: none; }
-
-        @media (min-width: 900px) {
-          .home-sidebar { display: block !important; }
-          .home-upcoming-mobile { display: none !important; }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
-
-        @media (max-width: 899px) {
-          .home-layout { flex-direction: column !important; }
-          .home-sidebar { display: none !important; }
-          .home-upcoming-mobile { display: block !important; }
+        button:hover:not(:disabled) {
+          border-color: #0052FF !important;
+          color: #0052FF !important;
         }
-
-        /* Mobile: < 640px */
-        @media (max-width: 640px) {
-          .home-main {
-            padding: 24px 12px 100px !important;
-          }
-          .home-hero {
-            margin-bottom: 24px !important;
-          }
-          .home-hero-title {
-            font-size: 24px !important;
-          }
-          .home-hero-sub {
-            font-size: 14px !important;
-          }
-          .product-card-header {
-            padding: 10px 12px !important;
-          }
-          .product-card-header span:first-child {
-            font-size: 14px !important;
-          }
-          .product-row {
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-            padding: 10px 10px !important;
-            width: 100% !important;
-            box-sizing: border-box !important;
-          }
-          .product-logo {
-            width: 36px !important;
-            height: 36px !important;
-            flex-shrink: 0 !important;
-          }
-          .product-rank {
-            font-size: 12px !important;
-            min-width: 16px !important;
-            flex-shrink: 0 !important;
-          }
-          .product-name {
-            font-size: 13px !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-          }
-          .product-tagline {
-            font-size: 11px !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-          }
-          .product-category {
-            display: none !important;
-          }
-          .product-info {
-            flex: 1 !important;
-            min-width: 0 !important;
-            overflow: hidden !important;
-          }
-          .product-actions {
-            flex-shrink: 0 !important;
-            display: flex !important;
-            gap: 4px !important;
-            margin-left: 8px !important;
-          }
-          .upvote-btn {
-            min-width: 38px !important;
-            min-height: 42px !important;
-            padding: 4px 6px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-          }
-          .upvote-btn svg {
-            width: 10px !important;
-            height: 10px !important;
-          }
-          .upvote-btn span {
-            font-size: 11px !important;
-          }
-          .product-comments-link {
-            display: none !important;
-          }
-          .upcoming-scroll {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-            flex-direction: column !important;
-            padding-right: 0 !important;
-          }
-          .upcoming-scroll::-webkit-scrollbar {
-            display: none;
-          }
-          .upcoming-card {
-            min-width: 100% !important;
-            padding: 12px 14px !important;
-            border-right: none !important;
-            border-bottom: 1px solid var(--border) !important;
-          }
-          .upcoming-card:last-child {
-            border-bottom: none !important;
-          }
-        }
-
-        /* Tablet: 640px - 899px */
-        @media (min-width: 641px) and (max-width: 899px) {
-          .home-main {
-            padding: 32px 20px 80px !important;
-          }
-          .home-hero {
-            margin-bottom: 32px !important;
-          }
+        a:hover h2 {
+          color: #fff !important;
         }
       `}</style>
     </div>
