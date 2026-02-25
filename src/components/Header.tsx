@@ -3,272 +3,228 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
-import { useTheme } from './ThemeProvider';
+import { Search, Menu, X, Radio, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-interface UserInfo {
-  twitter_handle: string;
-  name: string;
-  avatar: string | null;
-}
+const NAV_LINKS = [
+  { href: '/', label: 'Trending' },
+  { href: '/upcoming', label: 'Upcoming' },
+  { href: '/submit', label: 'Submit' },
+] as const;
 
-export default function Header() {
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const mobileMenuRef = useRef<HTMLDivElement>(null);
+export function Header() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
-  const { ready, authenticated, logout, getAccessToken } = usePrivy();
-  const { initOAuth } = useLoginWithOAuth();
-  const { theme, toggleTheme, colors } = useTheme();
-
+  // Close mobile menu on route change
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(e.target as Node)) setMobileMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+    setMobileOpen(false);
+    setSearchOpen(false);
+  }, [pathname]);
 
-  const fetchUserInfo = async () => {
-    if (!authenticated) { setUserInfo(null); return; }
-    try {
-      const token = await getAccessToken();
-      if (!token) return;
-      const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) setUserInfo(await res.json());
-    } catch (e) { console.error(e); }
+  // Lock body scroll when mobile menu open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
+
+  // Focus search input when opened
+  useEffect(() => {
+    if (searchOpen && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [searchOpen]);
+
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    return pathname?.startsWith(href) ?? false;
   };
 
-  useEffect(() => {
-    if (ready && authenticated) fetchUserInfo();
-  }, [ready, authenticated]);
-
-  const navLinks = [
-    { href: '/', label: 'Products' },
-    { href: '/upcoming', label: 'Upcoming' },
-    { href: '/leaderboard', label: 'Calendar' },
-  ];
-
   return (
-    <header className="glass-header">
-      <div className="header-inner" style={{ maxWidth: 1080, margin: '0 auto', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', gap: 16 }}>
+    <>
+      <header className="glass-header">
+        <div className="mx-auto max-w-[1280px] h-[56px] sm:h-[60px] px-4 sm:px-6 flex items-center gap-3">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0 no-underline">
+            <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(0,82,255,0.5)]" />
+            <span className="font-brand text-[17px] font-bold text-text tracking-[-0.02em]">
+              Base Signal
+            </span>
+          </Link>
 
-        {/* Logo */}
-        <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <div style={{
-            width: 8, height: 8, borderRadius: '50%',
-            background: '#0052FF',
-          }} />
-          <span style={{
-            fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em',
-            color: colors.text,
-          }}>
-            sonarbot
-          </span>
-        </Link>
+          {/* Desktop Search */}
+          <div className="hidden md:block flex-1 max-w-[320px] ml-4 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-tertiary pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Search projects..."
+              className="w-full h-9 pl-9 pr-4 rounded-lg bg-surface border border-border text-sm text-text placeholder:text-text-tertiary focus:outline-none focus:border-primary/50 transition-colors"
+            />
+          </div>
 
-        <div style={{ flex: 1 }} />
-
-        {/* Desktop nav */}
-        <nav style={{ alignItems: 'center', gap: 4 }} className="header-desktop-nav">
-          {navLinks.map(link => {
-            const isActive = pathname === link.href || (pathname !== '/' && link.href !== '/' && pathname?.startsWith(link.href));
-            return (
-              <Link key={link.label} href={link.href}
-                style={{
-                  display: 'flex', alignItems: 'center',
-                  height: 32, padding: '0 12px',
-                  borderRadius: 6,
-                  fontSize: 14, fontWeight: 500,
-                  textDecoration: 'none',
-                  transition: 'all 150ms ease-out',
-                  background: isActive ? colors.accentGlow : 'transparent',
-                  color: isActive ? '#0052FF' : colors.textMuted,
-                }}
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-1 ml-auto">
+            {NAV_LINKS.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors no-underline ${
+                  isActive(link.href)
+                    ? 'text-text bg-surface-hover'
+                    : 'text-text-secondary hover:text-text'
+                }`}
               >
                 {link.label}
               </Link>
-            );
-          })}
-        </nav>
+            ))}
+          </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Theme toggle */}
-          <button onClick={toggleTheme}
-            style={{
-              width: 32, height: 32, borderRadius: 6,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: `1px solid ${colors.border}`, background: 'transparent',
-              color: colors.textDim, cursor: 'pointer',
-              transition: 'all 150ms ease-out',
-            }}
+          {/* My Signal - Desktop */}
+          <Link
+            href="/my-signal"
+            className={`hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors no-underline ${
+              isActive('/my-signal')
+                ? 'text-primary bg-primary/10'
+                : 'text-text-secondary hover:text-text'
+            }`}
           >
-            {theme === 'dark' ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            )}
-          </button>
-
-          {/* Launch button - desktop */}
-          <Link href="/submit" className="header-desktop-launch" style={{
-            alignItems: 'center', justifyContent: 'center',
-            height: 32, padding: '0 16px', borderRadius: 6,
-            background: '#0052FF', color: '#fff',
-            fontSize: 13, fontWeight: 600,
-            textDecoration: 'none',
-            transition: 'all 150ms ease-out',
-          }}>
-            Launch
+            <Radio className="w-3.5 h-3.5" />
+            <span>My Signal</span>
           </Link>
 
-          {/* Auth */}
-          {ready && (
-            authenticated && userInfo ? (
-              <div ref={menuRef} style={{ position: 'relative' }}>
-                <button onClick={() => setMenuOpen(!menuOpen)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    height: 32, padding: '0 10px', borderRadius: 6,
-                    border: `1px solid ${colors.border}`, background: 'transparent',
-                    cursor: 'pointer', fontSize: 13, fontWeight: 500,
-                    color: colors.textMuted,
-                  }}
-                >
-                  {userInfo.avatar ? (
-                    <img src={userInfo.avatar} alt="" style={{ width: 20, height: 20, borderRadius: '50%' }} />
-                  ) : (
-                    <div style={{
-                      width: 20, height: 20, borderRadius: '50%',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, fontWeight: 700, background: colors.border, color: colors.text,
-                    }}>
-                      {userInfo.twitter_handle[0]?.toUpperCase()}
-                    </div>
-                  )}
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
-                </button>
-                {menuOpen && (
-                  <div style={{
-                    position: 'absolute', right: 0, top: 40,
-                    borderRadius: 8, padding: 4, minWidth: 160,
-                    background: colors.bgCard, border: `1px solid ${colors.border}`,
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                    zIndex: 50,
-                  }}>
-                    <div style={{
-                      padding: '8px 12px', fontSize: 13, fontWeight: 600,
-                      borderBottom: `1px solid ${colors.border}`,
-                      color: colors.text,
-                    }}>
-                      @{userInfo.twitter_handle}
-                    </div>
-                    <button onClick={() => { logout(); setMenuOpen(false); }}
-                      style={{
-                        width: '100%', marginTop: 4, padding: '8px 12px',
-                        fontSize: 13, fontWeight: 500, borderRadius: 6,
-                        border: 'none', background: 'transparent',
-                        textAlign: 'left', cursor: 'pointer',
-                        color: '#ef4444',
-                      }}
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button onClick={() => initOAuth({ provider: 'twitter' })}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  height: 32, padding: '0 14px', borderRadius: 6,
-                  fontSize: 13, fontWeight: 600,
-                  background: colors.text, color: colors.bg,
-                  border: 'none', cursor: 'pointer',
-                  transition: 'all 150ms ease-out',
-                }}
-              >
-                Sign in
-              </button>
-            )
-          )}
+          {/* Connect Button - Desktop */}
+          <button className="hidden sm:flex shrink-0 items-center gap-1.5 px-4 h-9 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors cursor-pointer">
+            <Zap className="w-3.5 h-3.5" />
+            Connect
+          </button>
 
-          {/* Mobile menu */}
-          <div ref={mobileMenuRef} className="header-mobile-menu" style={{ position: 'relative', marginLeft: 4 }}>
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{
-                width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                borderRadius: 6, border: `1px solid ${colors.border}`,
-                background: 'transparent', color: colors.textMuted, cursor: 'pointer',
-              }}
+          {/* Mobile: Search toggle */}
+          <button
+            onClick={() => setSearchOpen(!searchOpen)}
+            className="md:hidden ml-auto w-10 h-10 flex items-center justify-center rounded-lg text-text-secondary hover:text-text hover:bg-surface-hover transition-colors cursor-pointer"
+            aria-label="Search"
+          >
+            <Search className="w-[18px] h-[18px]" />
+          </button>
+
+          {/* Mobile: Hamburger */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg text-text-secondary hover:text-text hover:bg-surface-hover transition-colors cursor-pointer"
+            aria-label="Menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+
+        {/* Mobile Search Bar (slides down) */}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden overflow-hidden border-t border-border"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-              </svg>
-            </button>
-            {mobileMenuOpen && (
-              <div style={{
-                position: 'absolute', right: 0, top: 40,
-                borderRadius: 8, padding: 4, minWidth: 180,
-                background: colors.bgCard, border: `1px solid ${colors.border}`,
-                boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
-                zIndex: 50,
-                display: 'flex', flexDirection: 'column', gap: 2,
-              }}>
-                {navLinks.map(link => (
-                  <Link key={link.label} href={link.href} onClick={() => setMobileMenuOpen(false)}
-                    style={{
-                      display: 'block', padding: '12px 14px', borderRadius: 6,
-                      fontSize: 15, fontWeight: 500, minHeight: 44,
-                      textDecoration: 'none', color: colors.text,
-                      lineHeight: '20px',
-                    }}
+              <div className="px-4 py-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none" />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    placeholder="Search projects..."
+                    className="w-full h-11 pl-10 pr-4 rounded-lg bg-surface border border-border text-base text-text placeholder:text-text-tertiary focus:outline-none focus:border-primary/50 transition-colors"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
+
+      {/* Mobile Slide-Out Menu */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+              onClick={() => setMobileOpen(false)}
+            />
+
+            {/* Panel */}
+            <motion.div
+              ref={menuRef}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+              className="fixed top-0 right-0 bottom-0 z-50 w-[280px] bg-bg border-l border-border flex flex-col md:hidden"
+            >
+              {/* Panel Header */}
+              <div className="flex items-center justify-between px-5 h-[56px] border-b border-border">
+                <span className="font-brand text-[15px] font-bold text-text">Menu</span>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="w-10 h-10 flex items-center justify-center rounded-lg text-text-secondary hover:text-text hover:bg-surface-hover transition-colors cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Nav Links */}
+              <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+                {NAV_LINKS.map(link => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center h-12 px-4 rounded-lg text-[15px] font-medium transition-colors no-underline ${
+                      isActive(link.href)
+                        ? 'text-text bg-surface-hover'
+                        : 'text-text-secondary hover:text-text hover:bg-surface'
+                    }`}
                   >
                     {link.label}
                   </Link>
                 ))}
-                <div style={{ borderTop: `1px solid ${colors.border}`, marginTop: 4, paddingTop: 4 }}>
-                  <Link href="/submit" onClick={() => setMobileMenuOpen(false)}
-                    style={{
-                      display: 'block', padding: '12px 14px', borderRadius: 6,
-                      textAlign: 'center', fontSize: 14, fontWeight: 600, minHeight: 44,
-                      background: '#0052FF', color: '#fff', textDecoration: 'none',
-                      lineHeight: '20px',
-                    }}
-                  >
-                    Launch
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
 
-          <style>{`
-            .header-inner {
-              padding: 0 16px;
-              gap: 10px;
-            }
-            .header-desktop-nav { display: none; }
-            .header-desktop-launch { display: none; }
-            .header-mobile-menu { display: block; }
-            @media (min-width: 640px) {
-              .header-inner {
-                padding: 0 20px;
-                gap: 16px;
-              }
-            }
-            @media (min-width: 768px) {
-              .header-desktop-nav { display: flex !important; }
-              .header-desktop-launch { display: flex !important; }
-              .header-mobile-menu { display: none !important; }
-            }
-          `}</style>
-        </div>
-      </div>
-    </header>
+                <div className="h-px bg-border my-2" />
+
+                <Link
+                  href="/my-signal"
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-2 h-12 px-4 rounded-lg text-[15px] font-medium transition-colors no-underline ${
+                    isActive('/my-signal')
+                      ? 'text-primary bg-primary/10'
+                      : 'text-text-secondary hover:text-text hover:bg-surface'
+                  }`}
+                >
+                  <Radio className="w-4 h-4" />
+                  My Signal
+                </Link>
+              </nav>
+
+              {/* Connect Button */}
+              <div className="px-4 pb-6 pt-2">
+                <button className="w-full h-12 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors cursor-pointer flex items-center justify-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  Connect
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

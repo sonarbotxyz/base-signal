@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 
 export interface ThemeColors {
   bg: string;
@@ -25,53 +25,29 @@ export interface ThemeColors {
 }
 
 const darkColors: ThemeColors = {
-  bg: '#0a0a0b',
-  bgCard: '#111113',
-  bgCardHover: '#18181b',
-  text: '#e4e4e7',
-  textMuted: '#a1a1aa',
-  textDim: '#71717a',
+  bg: '#0C0C0E',
+  bgCard: '#16161A',
+  bgCardHover: '#1E1E24',
+  text: '#F5F5F5',
+  textMuted: '#8B8B9A',
+  textDim: '#56566B',
   accent: '#0052FF',
   accentGlow: 'rgba(0, 82, 255, 0.10)',
-  border: '#222225',
-  borderLight: '#1a1a1d',
+  border: '#2A2A32',
+  borderLight: '#222228',
   codeBg: '#0f0f11',
   bannerBg: 'linear-gradient(135deg, #0a0e1a, #0d1428)',
-  upvoteBg: '#111113',
+  upvoteBg: '#16161A',
   upvoteActiveBg: 'rgba(0, 82, 255, 0.12)',
   upvoteActiveText: '#0052FF',
-  headerBg: 'rgba(10, 10, 11, 0.85)',
-  footerBg: '#0a0a0b',
-  separator: '#222225',
+  headerBg: 'rgba(12, 12, 14, 0.85)',
+  footerBg: '#0C0C0E',
+  separator: '#2A2A32',
   cardShadow: 'none',
 };
 
-const lightColors: ThemeColors = {
-  bg: '#fafafa',
-  bgCard: '#ffffff',
-  bgCardHover: '#f4f4f5',
-  text: '#09090b',
-  textMuted: '#71717a',
-  textDim: '#a1a1aa',
-  accent: '#0052FF',
-  accentGlow: 'rgba(0, 82, 255, 0.06)',
-  border: '#e4e4e7',
-  borderLight: '#f4f4f5',
-  codeBg: '#f4f4f5',
-  bannerBg: 'linear-gradient(135deg, #eef2ff, #e8ecff)',
-  upvoteBg: '#f4f4f5',
-  upvoteActiveBg: 'rgba(0, 82, 255, 0.08)',
-  upvoteActiveText: '#0052FF',
-  headerBg: 'rgba(250, 250, 250, 0.85)',
-  footerBg: '#fafafa',
-  separator: '#e4e4e7',
-  cardShadow: '0 1px 3px rgba(0,0,0,0.04)',
-};
-
-type Theme = 'dark' | 'light';
-
 interface ThemeContextValue {
-  theme: Theme;
+  theme: 'dark';
   colors: ThemeColors;
   toggleTheme: () => void;
 }
@@ -87,35 +63,8 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('dark');
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem('sonarbot-theme') as Theme | null;
-    if (stored === 'light' || stored === 'dark') {
-      setTheme(stored);
-      document.documentElement.setAttribute('data-theme', stored);
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (mounted) {
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('sonarbot-theme', theme);
-    }
-  }, [theme, mounted]);
-
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
-  const colors = theme === 'dark' ? darkColors : lightColors;
-
   return (
-    <ThemeContext.Provider value={{ theme, colors, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: 'dark', colors: darkColors, toggleTheme: () => {} }}>
       {children}
     </ThemeContext.Provider>
   );

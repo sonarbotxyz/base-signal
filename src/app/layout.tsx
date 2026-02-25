@@ -3,7 +3,8 @@ import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { Header } from "@/components/ui/Header";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -43,11 +44,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
     >
-      <body>
+      <body className="flex flex-col min-h-dvh">
         <Providers>
           <ThemeProvider>
             <Header />
-            {children}
+            <div className="flex-1">
+              {children}
+            </div>
+            <Footer />
           </ThemeProvider>
         </Providers>
       </body>
