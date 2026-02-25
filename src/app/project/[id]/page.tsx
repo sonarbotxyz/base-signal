@@ -3,7 +3,10 @@
 import { useState, use } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ExternalLink, Globe, ChevronUp, Eye, Calendar, Tag, MessageSquare, X, Bell, Check } from 'lucide-react';
+import {
+  ArrowLeft, ExternalLink, Globe, ChevronUp, Eye, MessageSquare,
+  X, Check, Flame, BarChart3, Zap, Handshake, Gem, Bell,
+} from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -40,13 +43,13 @@ interface ProjectData {
   comments: Comment[];
 }
 
-// ─── Alert categories for subscription modal ────────────────────────────────
+// ─── Alert categories for subscription modal (Lucide icons, no emoji) ──────
 
 const ALERT_TYPES = [
-  { id: 'metrics', label: 'Metrics milestones', desc: 'Users, TVL, volume crossing key thresholds', icon: '📊' },
-  { id: 'features', label: 'New features & launches', desc: 'Product updates, new versions, feature drops', icon: '🚀' },
-  { id: 'partnerships', label: 'Partnerships & integrations', desc: 'New partners, chain expansions, protocol integrations', icon: '🤝' },
-  { id: 'token', label: 'Token events', desc: 'Listings, liquidity events, tokenomics changes', icon: '💰' },
+  { id: 'metrics', label: 'Metrics milestones', desc: 'Users, TVL, volume crossing key thresholds', Icon: BarChart3 },
+  { id: 'features', label: 'New features & launches', desc: 'Product updates, new versions, feature drops', Icon: Zap },
+  { id: 'partnerships', label: 'Partnerships & integrations', desc: 'New partners, chain expansions, protocol integrations', Icon: Handshake },
+  { id: 'token', label: 'Token events', desc: 'Listings, liquidity events, tokenomics changes', Icon: Gem },
 ] as const;
 
 // ─── Mock data ──────────────────────────────────────────────────────────────
@@ -121,16 +124,16 @@ function AlertModal({ projectName, onClose }: { projectName: string; onClose: ()
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
       style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
         transition={{ duration: 0.2 }}
-        className="w-full max-w-[480px] rounded-xl bg-surface border border-border p-6"
+        className="w-full sm:max-w-[480px] rounded-t-2xl sm:rounded-xl bg-surface border border-border p-5 sm:p-6 max-h-[90dvh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         {saved ? (
@@ -152,7 +155,7 @@ function AlertModal({ projectName, onClose }: { projectName: string; onClose: ()
                 <h3 className="text-lg font-bold text-text">Choose your signals</h3>
                 <p className="text-sm text-text-secondary mt-0.5">{projectName}</p>
               </div>
-              <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-surface-hover flex items-center justify-center transition-colors cursor-pointer">
+              <button onClick={onClose} className="w-10 h-10 rounded-lg hover:bg-surface-hover flex items-center justify-center transition-colors cursor-pointer">
                 <X className="w-4 h-4 text-text-tertiary" />
               </button>
             </div>
@@ -162,6 +165,7 @@ function AlertModal({ projectName, onClose }: { projectName: string; onClose: ()
             <div className="flex flex-col gap-2 mb-6">
               {ALERT_TYPES.map(type => {
                 const isSelected = selected.has(type.id);
+                const TypeIcon = type.Icon;
                 return (
                   <button
                     key={type.id}
@@ -177,8 +181,11 @@ function AlertModal({ projectName, onClose }: { projectName: string; onClose: ()
                     }`}>
                       {isSelected && <Check className="w-3 h-3 text-white" />}
                     </div>
-                    <div>
-                      <span className="text-sm font-semibold text-text">{type.icon} {type.label}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <TypeIcon className="w-4 h-4 text-text-secondary" />
+                        <span className="text-sm font-semibold text-text">{type.label}</span>
+                      </div>
                       <p className="text-xs text-text-tertiary mt-0.5">{type.desc}</p>
                     </div>
                   </button>
@@ -188,7 +195,7 @@ function AlertModal({ projectName, onClose }: { projectName: string; onClose: ()
 
             <div className="border-t border-border pt-4 mb-5">
               <p className="text-sm text-text-secondary mb-3">Notify me via:</p>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {[
                   { id: 'telegram', label: 'Telegram' },
                   { id: 'email', label: 'Email' },
@@ -197,7 +204,7 @@ function AlertModal({ projectName, onClose }: { projectName: string; onClose: ()
                   <button
                     key={ch.id}
                     onClick={() => toggle(ch.id, channels, setChannels)}
-                    className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
+                    className={`px-4 py-2.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
                       channels.has(ch.id)
                         ? 'border-primary/30 bg-primary/10 text-primary'
                         : 'border-border text-text-secondary hover:text-text'
@@ -211,7 +218,7 @@ function AlertModal({ projectName, onClose }: { projectName: string; onClose: ()
 
             <button
               onClick={handleSave}
-              className="w-full py-3 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-primary-hover transition-colors cursor-pointer"
+              className="w-full py-3.5 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-primary-hover transition-colors cursor-pointer"
             >
               Save Preferences
             </button>
@@ -237,9 +244,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   if (!project) {
     return (
-      <main className="mx-auto max-w-[900px] px-5 pt-16 pb-16 text-center">
+      <main className="mx-auto max-w-[900px] px-4 sm:px-6 pt-16 pb-16 text-center">
         <p className="text-text-secondary text-lg mb-4">Project not found</p>
-        <Link href="/" className="text-primary font-semibold text-sm hover:underline">
+        <Link href="/" className="text-primary font-semibold text-sm hover:underline no-underline">
           Back to feed
         </Link>
       </main>
@@ -263,14 +270,14 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   return (
     <>
-      <main className="mx-auto max-w-[900px] px-5 pt-6 pb-20">
+      <main className="mx-auto max-w-[900px] px-4 sm:px-6 pt-4 sm:pt-6 pb-20">
         {/* Back link */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
         >
-          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text transition-colors mb-6 no-underline">
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text transition-colors mb-6 no-underline py-2">
             <ArrowLeft className="w-4 h-4" />
             Back to feed
           </Link>
@@ -281,11 +288,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease: 'easeOut' }}
-          className="mb-8"
+          className="mb-6 sm:mb-8"
         >
           {/* Banner gradient */}
           <div
-            className="w-full h-32 sm:h-40 rounded-xl mb-[-32px] relative overflow-hidden"
+            className="w-full h-28 sm:h-40 rounded-xl mb-[-28px] sm:mb-[-32px] relative overflow-hidden"
             style={{
               background: `linear-gradient(135deg, hsl(${hue}, 30%, 12%) 0%, hsl(${hue}, 25%, 8%) 100%)`,
             }}
@@ -296,15 +303,15 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           </div>
 
           {/* Logo + Name */}
-          <div className="flex items-end gap-4 px-2 relative z-10">
+          <div className="flex items-end gap-3 sm:gap-4 px-2 relative z-10">
             <div
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl shrink-0 flex items-center justify-center border-4 border-bg"
+              className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl shrink-0 flex items-center justify-center border-4 border-bg"
               style={{
                 background: `linear-gradient(135deg, hsl(${hue}, 35%, 20%), hsl(${hue}, 30%, 28%))`,
               }}
             >
               <span
-                className="font-brand text-2xl sm:text-3xl font-bold"
+                className="font-brand text-xl sm:text-3xl font-bold"
                 style={{ color: `hsl(${hue}, 45%, 60%)` }}
               >
                 {project.name[0]}
@@ -312,9 +319,12 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             </div>
             <div className="flex-1 min-w-0 pb-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-text truncate">{project.name}</h1>
+                <h1 className="text-lg sm:text-2xl font-bold text-text truncate">{project.name}</h1>
                 {project.isHot && (
-                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-danger">HOT</span>
+                  <span className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-danger">
+                    <Flame className="w-3 h-3" />
+                    HOT
+                  </span>
                 )}
               </div>
               <p className="text-sm text-text-secondary mt-0.5 truncate">{project.tagline}</p>
@@ -327,21 +337,19 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.3 }}
-          className="flex items-center gap-3 mb-8 flex-wrap"
+          className="flex items-center gap-2 sm:gap-3 mb-6 sm:mb-8 flex-wrap"
         >
           {/* Watch */}
           <button
             onClick={handleWatch}
-            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-5 sm:px-6 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
               watching
                 ? 'bg-primary text-white shadow-[0_0_16px_rgba(0,82,255,0.3)]'
                 : 'bg-primary/10 text-primary border border-primary/25 hover:bg-primary hover:text-white hover:shadow-[0_0_16px_rgba(0,82,255,0.3)]'
             }`}
           >
-            <span className="flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              {watching ? 'Watching' : 'Watch'}
-            </span>
+            <Eye className="w-4 h-4" />
+            {watching ? 'Watching' : 'Watch'}
           </button>
 
           {/* Upvote */}
@@ -363,16 +371,16 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             <span className="font-mono">{upvoteCount}</span>
           </motion.button>
 
-          {/* Links */}
+          {/* External Links */}
           <a href={project.website} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-text-secondary hover:text-text hover:border-border-light transition-colors no-underline">
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-text-secondary hover:text-text hover:border-border-light transition-colors no-underline">
             <Globe className="w-4 h-4" />
-            Website
+            <span className="hidden sm:inline">Website</span>
           </a>
           <a href={`https://x.com/${project.twitter}`} target="_blank" rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-text-secondary hover:text-text hover:border-border-light transition-colors no-underline">
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-text-secondary hover:text-text hover:border-border-light transition-colors no-underline">
             <ExternalLink className="w-4 h-4" />
-            @{project.twitter}
+            <span className="hidden sm:inline">@{project.twitter}</span>
           </a>
         </motion.div>
 
@@ -381,7 +389,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.3 }}
-          className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-xl bg-border overflow-hidden mb-8"
+          className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-xl bg-border overflow-hidden mb-6 sm:mb-8"
         >
           {[
             { label: 'Upvotes', value: upvoteCount.toLocaleString(), color: 'text-primary' },
@@ -389,9 +397,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
             { label: 'Category', value: `${project.category} · ${project.subcategory}`, color: 'text-text' },
             { label: 'Launched', value: project.launchDate, color: 'text-text' },
           ].map(stat => (
-            <div key={stat.label} className="bg-surface p-4">
+            <div key={stat.label} className="bg-surface p-3 sm:p-4">
               <p className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider mb-1">{stat.label}</p>
-              <p className={`font-mono text-lg font-bold ${stat.color}`}>{stat.value}</p>
+              <p className={`font-mono text-base sm:text-lg font-bold ${stat.color}`}>{stat.value}</p>
             </div>
           ))}
         </motion.div>
@@ -401,7 +409,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.3 }}
-          className="mb-10"
+          className="mb-8 sm:mb-10"
         >
           <h2 className="text-base font-semibold text-text mb-3">About</h2>
           <div className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
@@ -414,13 +422,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.3 }}
-          className="mb-10"
+          className="mb-8 sm:mb-10"
         >
           <h2 className="text-base font-semibold text-text mb-4">Milestones</h2>
           <div className="relative pl-6">
-            {/* Vertical line */}
             <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
-
             <div className="flex flex-col gap-4">
               {project.milestones.map((ms, i) => (
                 <motion.div
@@ -430,13 +436,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   transition={{ delay: 0.3 + i * 0.06, duration: 0.25 }}
                   className="relative flex items-start gap-3"
                 >
-                  {/* Dot */}
                   <div className={`absolute left-[-20px] top-1.5 w-3.5 h-3.5 rounded-full border-2 ${
                     ms.achieved
                       ? 'bg-success border-success/30'
                       : 'bg-surface border-text-tertiary'
                   }`} />
-
                   <div className="flex-1">
                     <p className={`text-sm font-medium ${ms.achieved ? 'text-text' : 'text-text-tertiary'}`}>
                       {ms.label}
@@ -445,13 +449,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                       {ms.date}
                     </p>
                   </div>
-
-                  {ms.achieved && (
+                  {ms.achieved ? (
                     <span className="text-[10px] font-semibold text-success bg-success/10 px-2 py-0.5 rounded-full shrink-0">
                       Done
                     </span>
-                  )}
-                  {!ms.achieved && (
+                  ) : (
                     <span className="text-[10px] font-semibold text-text-tertiary bg-surface px-2 py-0.5 rounded-full border border-border shrink-0">
                       Upcoming
                     </span>
@@ -474,7 +476,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
           </div>
 
           {/* Comment input */}
-          <div className="flex gap-3 mb-6 p-4 rounded-xl bg-surface border border-border">
+          <div className="flex gap-3 mb-6 p-3 sm:p-4 rounded-xl bg-surface border border-border">
             <div className="w-8 h-8 rounded-full bg-surface-hover border border-border flex items-center justify-center shrink-0">
               <span className="text-xs font-bold text-text-tertiary">U</span>
             </div>
@@ -489,7 +491,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                 <motion.button
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="mt-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold cursor-pointer hover:bg-primary-hover transition-colors"
+                  className="mt-2 px-4 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold cursor-pointer hover:bg-primary-hover transition-colors"
                 >
                   Comment
                 </motion.button>
@@ -505,7 +507,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.35 + i * 0.05, duration: 0.25 }}
-                className="flex gap-3 p-4 rounded-xl bg-surface border border-border"
+                className="flex gap-3 p-3 sm:p-4 rounded-xl bg-surface border border-border"
               >
                 <div className="w-8 h-8 rounded-full bg-surface-hover border border-border flex items-center justify-center shrink-0">
                   <span className="text-xs font-bold text-text-tertiary">

@@ -3,7 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Radio, Bell, Eye, Settings, ChevronRight, Zap, TrendingUp, Users, Gem, Handshake } from 'lucide-react';
+import {
+  Radio, Bell, Eye, Settings, ChevronRight, Zap,
+  TrendingUp, Handshake, Gem, Flame,
+} from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -65,7 +68,7 @@ function generateHue(name: string): number {
 
 function LoginCTA() {
   return (
-    <main className="mx-auto max-w-[600px] px-5 pt-20 pb-16 text-center">
+    <main className="mx-auto max-w-[600px] px-4 sm:px-6 pt-16 sm:pt-20 pb-16 text-center">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -76,8 +79,8 @@ function LoginCTA() {
           <Radio className="w-8 h-8 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-text mb-2">Your personal signal feed</h1>
-          <p className="text-text-secondary text-sm leading-relaxed max-w-[400px]">
+          <h1 className="text-xl sm:text-2xl font-bold text-text mb-2">Your personal signal feed</h1>
+          <p className="text-text-secondary text-sm leading-relaxed max-w-[400px] mx-auto">
             Watch projects, choose your milestones, and get notified when things happen. Your Base radar, personalized.
           </p>
         </div>
@@ -95,7 +98,7 @@ function LoginCTA() {
 // ─── Main Dashboard ─────────────────────────────────────────────────────────
 
 export default function MySignalPage() {
-  const [isLoggedIn] = useState(true); // Toggle to test login CTA
+  const [isLoggedIn] = useState(true);
   const [notifSettings, setNotifSettings] = useState({
     telegram: true,
     email: false,
@@ -106,17 +109,17 @@ export default function MySignalPage() {
   if (!isLoggedIn) return <LoginCTA />;
 
   return (
-    <main className="mx-auto max-w-[1000px] px-5 pt-8 pb-16">
+    <main className="mx-auto max-w-[1000px] px-4 sm:px-6 pt-6 sm:pt-8 pb-16">
       {/* Page header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex items-center justify-between mb-8"
+        className="flex items-center justify-between mb-6 sm:mb-8"
       >
         <div className="flex items-center gap-3">
           <Radio className="w-5 h-5 text-primary" />
-          <h1 className="text-xl font-bold text-text">My Signal</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-text">My Signal</h1>
         </div>
         <span className="text-xs text-text-tertiary font-mono">Updated 2m ago</span>
       </motion.div>
@@ -126,7 +129,7 @@ export default function MySignalPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05, duration: 0.3 }}
-        className="mb-10"
+        className="mb-8 sm:mb-10"
       >
         <div className="flex items-center gap-2 mb-4">
           <Bell className="w-4 h-4 text-text-tertiary" />
@@ -146,23 +149,18 @@ export default function MySignalPage() {
               >
                 <Link
                   href={`/project/${alert.projectId}`}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-surface border border-border hover:border-border-light transition-all group no-underline"
+                  className="flex items-start gap-3 p-3 sm:p-4 rounded-xl bg-surface border border-border hover:border-border-light transition-all group no-underline"
                 >
-                  {/* Icon */}
                   <div className={`w-8 h-8 rounded-lg ${config.bg} flex items-center justify-center shrink-0`}>
                     <Icon className={`w-4 h-4 ${config.color}`} />
                   </div>
-
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-0.5">
+                    <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
                       <span className="text-sm font-semibold text-text">{alert.projectName}</span>
                       <span className="text-xs text-text-tertiary">{alert.timeAgo}</span>
                     </div>
                     <p className="text-sm text-text-secondary leading-relaxed">{alert.message}</p>
                   </div>
-
-                  {/* Arrow */}
                   <ChevronRight className="w-4 h-4 text-text-tertiary shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </motion.div>
@@ -176,7 +174,7 @@ export default function MySignalPage() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15, duration: 0.3 }}
-        className="mb-10"
+        className="mb-8 sm:mb-10"
       >
         <div className="flex items-center gap-2 mb-4">
           <Eye className="w-4 h-4 text-text-tertiary" />
@@ -194,38 +192,38 @@ export default function MySignalPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 + i * 0.04, duration: 0.25 }}
-                whileHover={{ y: -2, transition: { duration: 0.15 } }}
+                className="group"
               >
                 <Link
                   href={`/project/${project.id}`}
-                  className="block p-4 rounded-xl bg-surface border border-border hover:border-border-light transition-all no-underline"
+                  className="block p-3 sm:p-4 rounded-xl bg-surface border border-border hover:border-border-light hover:-translate-y-0.5 transition-all no-underline"
                 >
                   {/* Mini banner */}
                   <div
-                    className="w-full h-12 rounded-lg mb-3"
+                    className="w-full h-10 sm:h-12 rounded-lg mb-3"
                     style={{
                       background: `linear-gradient(135deg, hsl(${hue}, 30%, 14%), hsl(${hue}, 25%, 10%))`,
                     }}
                   />
 
                   {/* Logo + Name */}
-                  <div className="flex items-center gap-2.5 mb-2">
+                  <div className="flex items-center gap-2 sm:gap-2.5 mb-2">
                     <div
-                      className="w-8 h-8 rounded-lg shrink-0 flex items-center justify-center"
+                      className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg shrink-0 flex items-center justify-center"
                       style={{
                         background: `linear-gradient(135deg, hsl(${hue}, 35%, 20%), hsl(${hue}, 30%, 28%))`,
                       }}
                     >
                       <span
-                        className="font-brand text-sm font-bold"
+                        className="font-brand text-xs sm:text-sm font-bold"
                         style={{ color: `hsl(${hue}, 45%, 60%)` }}
                       >
                         {project.name[0]}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-text truncate">{project.name}</p>
-                      <p className="text-[11px] text-text-tertiary uppercase tracking-wider">{project.category}</p>
+                      <p className="text-xs sm:text-sm font-semibold text-text truncate">{project.name}</p>
+                      <p className="text-[10px] sm:text-[11px] text-text-tertiary uppercase tracking-wider">{project.category}</p>
                     </div>
                   </div>
 
@@ -240,7 +238,7 @@ export default function MySignalPage() {
                       </>
                     ) : project.status === 'hot' ? (
                       <>
-                        <span className="w-2 h-2 rounded-full bg-danger" />
+                        <Flame className="w-3 h-3 text-danger" />
                         <span className="text-xs font-medium text-danger">hot</span>
                       </>
                     ) : (
@@ -275,14 +273,14 @@ export default function MySignalPage() {
             { key: 'inApp' as const, label: 'In-app notifications', desc: 'See alerts in your dashboard feed' },
             { key: 'weeklyDigest' as const, label: 'Weekly digest', desc: 'Summary of all watched project activity' },
           ].map(pref => (
-            <div key={pref.key} className="flex items-center justify-between p-4">
-              <div>
+            <div key={pref.key} className="flex items-center justify-between p-3 sm:p-4">
+              <div className="mr-4">
                 <p className="text-sm font-medium text-text">{pref.label}</p>
                 <p className="text-xs text-text-tertiary mt-0.5">{pref.desc}</p>
               </div>
               <button
                 onClick={() => setNotifSettings(prev => ({ ...prev, [pref.key]: !prev[pref.key] }))}
-                className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${
+                className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer shrink-0 ${
                   notifSettings[pref.key] ? 'bg-primary' : 'bg-border'
                 }`}
               >

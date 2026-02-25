@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Rocket } from 'lucide-react';
+import { Rocket, Eye, Bell, Check, Clock } from 'lucide-react';
+import { getCategoryColors } from '@/components/ProjectCard';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -58,21 +60,9 @@ const MOCK_UPCOMING: UpcomingProject[] = [
   },
 ];
 
-// ─── Category Colors ─────────────────────────────────────────────────────────
+// ─── Noise texture SVG ──────────────────────────────────────────────────────
 
-const CATEGORY_GRADIENTS: Record<string, { from: string; via: string; to: string; accent: string }> = {
-  DeFi:       { from: '#0033CC', via: '#0052FF', to: '#1A3A8A', accent: '#0052FF' },
-  Social:     { from: '#6B21A8', via: '#9333EA', to: '#4C1D95', accent: '#A855F7' },
-  NFT:        { from: '#BE185D', via: '#EC4899', to: '#831843', accent: '#F472B6' },
-  Infra:      { from: '#065F46', via: '#10B981', to: '#064E3B', accent: '#34D399' },
-  Gaming:     { from: '#C2410C', via: '#F97316', to: '#7C2D12', accent: '#FB923C' },
-  Tools:      { from: '#374151', via: '#6B7280', to: '#1F2937', accent: '#9CA3AF' },
-  'AI Agents': { from: '#6D28D9', via: '#8B5CF6', to: '#4C1D95', accent: '#A78BFA' },
-};
-
-function getCategoryColors(category: string) {
-  return CATEGORY_GRADIENTS[category] ?? CATEGORY_GRADIENTS.Tools;
-}
+const NOISE_SVG = `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`;
 
 // ─── Countdown Hook ──────────────────────────────────────────────────────────
 
@@ -106,7 +96,8 @@ function CountdownDisplay({ targetDate }: { targetDate: Date }) {
   ];
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
+      <Clock className="w-3 h-3 text-text-tertiary" />
       {segments.map((seg, i) => (
         <div key={seg.label} className="flex items-baseline gap-0.5">
           <span className="font-mono text-sm font-bold text-text tabular-nums">
@@ -124,12 +115,14 @@ function CountdownDisplay({ targetDate }: { targetDate: Date }) {
 
 // ─── Project Card ────────────────────────────────────────────────────────────
 
-function ProjectCard({ project, index }: { project: UpcomingProject; index: number }) {
+function UpcomingCard({ project, index }: { project: UpcomingProject; index: number }) {
   const [notified, setNotified] = useState(false);
   const [watcherCount, setWatcherCount] = useState(project.watchers);
   const colors = getCategoryColors(project.category);
 
-  const handleNotify = () => {
+  const handleNotify = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setNotified(prev => !prev);
     setWatcherCount(prev => prev + (notified ? -1 : 1));
   };
@@ -139,95 +132,110 @@ function ProjectCard({ project, index }: { project: UpcomingProject; index: numb
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08 + index * 0.06, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className="group relative rounded-2xl overflow-hidden flex flex-col transition-shadow duration-300"
-      style={{ background: '#1A1A2E' }}
+      className="group relative"
     >
-      {/* ── Banner (65%) ── */}
-      <div
-        className="relative w-full overflow-hidden"
-        style={{
-          paddingBottom: '55%',
-          background: `linear-gradient(145deg, ${colors.from} 0%, ${colors.via}22 40%, ${colors.to} 100%)`,
-        }}
+      <Link
+        href={`/project/${project.id}`}
+        className="block rounded-2xl overflow-hidden no-underline transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02]"
+        style={{ background: '#16161A' }}
       >
+        {/* ── Banner ── */}
         <div
-          className="absolute inset-0"
+          className="relative w-full overflow-hidden"
           style={{
-            background: `radial-gradient(ellipse at 30% 50%, ${colors.via}30 0%, transparent 65%)`,
+            paddingBottom: '55%',
+            background: `linear-gradient(145deg, ${colors.from} 0%, ${colors.via}22 40%, ${colors.to} 100%)`,
           }}
-        />
+        >
+          <div
+            className="absolute inset-0"
+            style={{ background: `radial-gradient(ellipse at 30% 50%, ${colors.via}30 0%, transparent 65%)` }}
+          />
 
-        {/* Grid pattern */}
-        <div
-          className="absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '24px 24px',
-          }}
-        />
+          {/* Noise texture */}
+          <div
+            className="absolute inset-0 opacity-60 mix-blend-overlay"
+            style={{ backgroundImage: NOISE_SVG, backgroundSize: '128px 128px' }}
+          />
 
-        {/* Large initial */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span
-            className="font-brand font-bold select-none"
-            style={{ fontSize: '4.5rem', lineHeight: 1, color: `${colors.via}25` }}
-          >
-            {project.name[0]}
-          </span>
-        </div>
+          {/* Grid pattern */}
+          <div
+            className="absolute inset-0 opacity-[0.03]"
+            style={{
+              backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+              backgroundSize: '20px 20px',
+            }}
+          />
 
-        {/* Category badge */}
-        <div className="absolute top-3 left-3">
-          <span
-            className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider"
-            style={{ background: `${colors.accent}20`, color: colors.accent }}
-          >
-            {project.category}
-          </span>
-        </div>
-
-        {/* Countdown overlay */}
-        <div className="absolute bottom-3 left-3 px-2.5 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm">
-          <CountdownDisplay targetDate={project.launchDate} />
-        </div>
-      </div>
-
-      {/* ── Content ── */}
-      <div className="p-4 pb-3.5 flex-1 flex flex-col">
-        <h3 className="text-[15px] font-bold text-text truncate mb-1">{project.name}</h3>
-        <p className="text-[13px] text-text-secondary leading-snug mb-1">{project.tagline}</p>
-        <p className="text-xs text-text-tertiary leading-relaxed mb-4 flex-1 line-clamp-2">
-          {project.description}
-        </p>
-
-        {/* Bottom row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-text-tertiary">
-            <span className="text-xs">&#x1F440;</span>
-            <span className="font-mono text-xs">{watcherCount.toLocaleString()}</span>
+          {/* Large initial */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span
+              className="font-brand font-bold select-none"
+              style={{ fontSize: 'clamp(3rem, 7vw, 4.5rem)', lineHeight: 1, color: `${colors.via}20` }}
+            >
+              {project.name[0]}
+            </span>
           </div>
 
-          <motion.button
-            onClick={handleNotify}
-            whileTap={{ scale: 0.93 }}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-              notified
-                ? 'bg-primary text-white shadow-[0_0_14px_rgba(0,82,255,0.3)]'
-                : 'bg-[#252540] text-text-secondary hover:bg-primary hover:text-white hover:shadow-[0_0_14px_rgba(0,82,255,0.3)]'
-            }`}
-          >
-            {notified ? '✓ Notified' : '🔔 Notify Me'}
-          </motion.button>
+          {/* Category badge */}
+          <div className="absolute top-2.5 left-2.5">
+            <span
+              className="px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm"
+              style={{ background: `${colors.accent}25`, color: colors.accent }}
+            >
+              {project.category}
+            </span>
+          </div>
+
+          {/* Countdown overlay */}
+          <div className="absolute bottom-2.5 left-2.5 px-2.5 py-1.5 rounded-lg bg-black/50 backdrop-blur-sm">
+            <CountdownDisplay targetDate={project.launchDate} />
+          </div>
         </div>
-      </div>
+
+        {/* ── Content ── */}
+        <div className="p-4 pb-3.5 flex flex-col">
+          <h3 className="text-[15px] font-bold text-text truncate mb-1">{project.name}</h3>
+          <p className="text-[13px] text-text-secondary leading-snug mb-1">{project.tagline}</p>
+          <p className="text-xs text-text-tertiary leading-relaxed mb-4 line-clamp-2">
+            {project.description}
+          </p>
+
+          {/* Bottom row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-text-tertiary">
+              <Eye className="w-3.5 h-3.5" />
+              <span className="font-mono text-xs">{watcherCount.toLocaleString()}</span>
+            </div>
+
+            <button
+              onClick={handleNotify}
+              className={`flex items-center gap-1.5 px-3.5 py-2 sm:px-3 sm:py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                notified
+                  ? 'bg-primary text-white shadow-[0_0_14px_rgba(0,82,255,0.3)]'
+                  : 'bg-surface-hover text-text-secondary hover:bg-primary hover:text-white hover:shadow-[0_0_14px_rgba(0,82,255,0.3)]'
+              }`}
+            >
+              {notified ? (
+                <>
+                  <Check className="w-3 h-3" />
+                  Notified
+                </>
+              ) : (
+                <>
+                  <Bell className="w-3 h-3" />
+                  Notify Me
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Link>
 
       {/* Hover glow */}
       <div
         className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{
-          boxShadow: `0 8px 40px ${colors.accent}12, 0 0 0 1px ${colors.accent}15`,
-        }}
+        style={{ boxShadow: `0 8px 40px ${colors.accent}10, 0 0 0 1px ${colors.accent}12` }}
       />
     </motion.div>
   );
@@ -237,27 +245,27 @@ function ProjectCard({ project, index }: { project: UpcomingProject; index: numb
 
 export default function UpcomingPage() {
   return (
-    <main className="mx-auto max-w-[1280px] px-5 pt-8 pb-16">
+    <main className="mx-auto max-w-[1280px] px-4 sm:px-6 pt-6 sm:pt-8 pb-16">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="mb-8"
+        className="mb-6 sm:mb-8"
       >
         <div className="flex items-center gap-2.5 mb-2">
           <Rocket className="w-5 h-5 text-primary" />
-          <h1 className="text-xl font-bold text-text">Upcoming Launches</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-text">Upcoming Launches</h1>
         </div>
-        <p className="text-sm text-text-secondary">
+        <p className="text-sm text-text-secondary max-w-[500px]">
           Projects preparing to launch on Base. Get notified when they go live.
         </p>
       </motion.div>
 
       {/* Card Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {MOCK_UPCOMING.map((project, i) => (
-          <ProjectCard key={project.id} project={project} index={i} />
+          <UpcomingCard key={project.id} project={project} index={i} />
         ))}
       </div>
     </main>
