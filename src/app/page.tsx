@@ -1,372 +1,299 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
-import Header from '@/components/Header';
-import SubscriptionModal from '@/components/SubscriptionModal';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
 
 interface Project {
   id: string;
   name: string;
-  tagline: string;
-  logo_url?: string;
-  twitter_handle?: string;
+  description: string;
   category: string;
+  subcategory: string;
   upvotes: number;
+  watchers: number;
+  isHot: boolean;
 }
 
-interface SponsoredSpot {
-  id: string;
-  title: string;
-  description?: string;
-  url: string;
-  image_url?: string;
-}
+const MOCK_PROJECTS: Project[] = [
+  {
+    id: '1',
+    name: 'Aerodrome Finance',
+    description: 'The central trading and liquidity marketplace on Base',
+    category: 'DeFi',
+    subcategory: 'DEX',
+    upvotes: 847,
+    watchers: 2341,
+    isHot: true,
+  },
+  {
+    id: '2',
+    name: 'Morpho',
+    description: 'Permissionless lending protocol optimizing interest rates across DeFi',
+    category: 'DeFi',
+    subcategory: 'Lending',
+    upvotes: 623,
+    watchers: 1856,
+    isHot: true,
+  },
+  {
+    id: '3',
+    name: 'Farcaster',
+    description: 'Sufficiently decentralized social network protocol on Base',
+    category: 'Social',
+    subcategory: 'Protocol',
+    upvotes: 512,
+    watchers: 3102,
+    isHot: false,
+  },
+  {
+    id: '4',
+    name: 'Seamless Protocol',
+    description: 'Native lending and borrowing on Base with integrated leverage',
+    category: 'DeFi',
+    subcategory: 'Lending',
+    upvotes: 389,
+    watchers: 1204,
+    isHot: false,
+  },
+  {
+    id: '5',
+    name: 'BaseSwap',
+    description: 'Community-driven DEX with yield farming and NFT marketplace',
+    category: 'DeFi',
+    subcategory: 'DEX',
+    upvotes: 298,
+    watchers: 967,
+    isHot: false,
+  },
+  {
+    id: '6',
+    name: 'Degen Chain',
+    description: 'High-performance L3 built on Base for the Degen community',
+    category: 'Infra',
+    subcategory: 'L3',
+    upvotes: 276,
+    watchers: 1543,
+    isHot: true,
+  },
+  {
+    id: '7',
+    name: 'Moonwell',
+    description: 'Open lending and borrowing DeFi protocol with transparent governance',
+    category: 'DeFi',
+    subcategory: 'Lending',
+    upvotes: 234,
+    watchers: 812,
+    isHot: false,
+  },
+  {
+    id: '8',
+    name: 'Brett',
+    description: "Base's blue mascot memecoin powering the ecosystem community",
+    category: 'Social',
+    subcategory: 'Meme',
+    upvotes: 198,
+    watchers: 2876,
+    isHot: false,
+  },
+  {
+    id: '9',
+    name: 'Zora',
+    description: 'Create, collect, and earn on the open internet',
+    category: 'NFT',
+    subcategory: 'Marketplace',
+    upvotes: 167,
+    watchers: 1089,
+    isHot: false,
+  },
+  {
+    id: '10',
+    name: 'BasePaint',
+    description: 'Collaborative pixel art canvas minted daily as NFTs on Base',
+    category: 'NFT',
+    subcategory: 'Art',
+    upvotes: 143,
+    watchers: 654,
+    isHot: false,
+  },
+];
 
-const FILTERS = ['All', 'Agents', 'DeFi', 'Infra', 'Social', 'Gaming', 'Tools'];
+const CATEGORIES = ['All', 'DeFi', 'Social', 'NFT', 'Infra', 'Gaming', 'Tools'];
+
+function generateHue(name: string): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) * 47 + ((hash << 5) - hash);
+  }
+  return Math.abs(hash) % 360;
+}
 
 export default function Home() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [category, setCategory] = useState('All');
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
-  const [voting, setVoting] = useState<Set<string>>(new Set());
-  const [showSubModal, setShowSubModal] = useState(false);
-  const [rateLimitMsg, setRateLimitMsg] = useState('');
-  const [filter, setFilter] = useState('All');
-  const [sponsored, setSponsored] = useState<SponsoredSpot | null>(null);
+  const [watched, setWatched] = useState<Set<string>>(new Set());
+  const [projects, setProjects] = useState<Project[]>(MOCK_PROJECTS);
 
-  const { authenticated, getAccessToken } = usePrivy();
-  const { initOAuth } = useLoginWithOAuth();
+  const filtered = category === 'All'
+    ? projects
+    : projects.filter(p => p.category === category);
 
-  useEffect(() => {
-    fetchProjects();
-    fetchSponsored();
-  }, []);
+  const sorted = [...filtered].sort((a, b) => b.upvotes - a.upvotes);
 
-  const fetchProjects = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/projects?sort=upvotes&limit=24');
-      const data = await res.json();
-      setProjects(data.projects || []);
-    } catch (e) { console.error(e); }
-    setLoading(false);
+  const handleUpvote = (id: string) => {
+    const wasUpvoted = upvoted.has(id);
+    setUpvoted(prev => {
+      const next = new Set(prev);
+      wasUpvoted ? next.delete(id) : next.add(id);
+      return next;
+    });
+    setProjects(prev =>
+      prev.map(p =>
+        p.id === id
+          ? { ...p, upvotes: p.upvotes + (wasUpvoted ? -1 : 1) }
+          : p
+      )
+    );
   };
 
-  const fetchSponsored = async () => {
-    try {
-      const res = await fetch('/api/sponsored?type=homepage_card');
-      const data = await res.json();
-      if (data.active_spot) setSponsored(data.active_spot);
-    } catch (e) {}
+  const handleWatch = (id: string) => {
+    const wasWatching = watched.has(id);
+    setWatched(prev => {
+      const next = new Set(prev);
+      wasWatching ? next.delete(id) : next.add(id);
+      return next;
+    });
+    setProjects(prev =>
+      prev.map(p =>
+        p.id === id
+          ? { ...p, watchers: p.watchers + (wasWatching ? -1 : 1) }
+          : p
+      )
+    );
   };
-
-  const handleUpvote = async (projectId: string) => {
-    if (!authenticated) { initOAuth({ provider: 'twitter' }); return; }
-    if (voting.has(projectId)) return;
-    setVoting(prev => new Set(prev).add(projectId));
-    try {
-      const token = await getAccessToken();
-      const res = await fetch(`/api/projects/${projectId}/upvote`, {
-        method: 'POST', headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setProjects(prev => prev.map(p => p.id === projectId ? { ...p, upvotes: data.upvotes } : p));
-        setUpvoted(prev => {
-          const next = new Set(prev);
-          data.action === 'added' ? next.add(projectId) : next.delete(projectId);
-          return next;
-        });
-      } else if (res.status === 429) {
-        setRateLimitMsg('Rate limit reached');
-        setShowSubModal(true);
-      }
-    } catch (e) {}
-    setVoting(prev => { const n = new Set(prev); n.delete(projectId); return n; });
-  };
-
-  const hue = (s: string) => (s.charCodeAt(0) * 47) % 360;
-
-  const filtered = filter === 'All' ? projects : projects.filter(p => {
-    const map: Record<string, string> = { Agents: 'agents', DeFi: 'defi', Infra: 'infrastructure', Social: 'social', Gaming: 'gaming', Tools: 'tools' };
-    return p.category === map[filter];
-  });
 
   return (
-    <div className="page">
-      <Header />
-      
-      <main className="main">
-        <div className="top-bar">
-          <h1>Explore</h1>
-          <div className="filters">
-            {FILTERS.map(f => (
-              <button key={f} className={`filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
+    <main className="mx-auto max-w-[900px] px-5 pt-8 pb-16">
+      {/* Category filters */}
+      <div className="flex items-center gap-2 mb-8 overflow-x-auto scrollbar-hide pb-1">
+        {CATEGORIES.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setCategory(cat)}
+            className={`px-3.5 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              category === cat
+                ? 'bg-primary text-white'
+                : 'bg-surface border border-border text-text-secondary hover:text-text hover:border-border-light'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
 
-        <div className="grid">
-          {/* Sponsored Card */}
-          <a href={sponsored?.url || '/submit'} target={sponsored ? '_blank' : '_self'} rel="noopener" className="card featured">
-            <div className="card-visual featured-visual">
-              {sponsored ? (
-                <span className="featured-badge">AD</span>
-              ) : (
-                <span className="featured-badge">PROMO</span>
-              )}
-            </div>
-            <div className="card-info">
-              <h3>{sponsored?.title || 'Get Featured'}</h3>
-              <p>{sponsored?.description || 'Promote your product to the Base community'}</p>
-            </div>
-            <div className="card-footer">
-              <span className="cta-btn">{sponsored ? 'View' : 'Book Spot'}</span>
-            </div>
-          </a>
+      {/* Feed list */}
+      <div className="flex flex-col gap-1">
+        {sorted.map((project, i) => {
+          const hue = generateHue(project.name);
+          const isUpvoted = upvoted.has(project.id);
+          const isWatching = watched.has(project.id);
 
-          {loading ? (
-            Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="card skeleton" />
-            ))
-          ) : (
-            filtered.map((p) => {
-              const isUpvoted = upvoted.has(p.id);
-              const h = hue(p.name);
-              
-              return (
-                <div key={p.id} className="card">
-                  <Link href={`/project/${p.id}`} className="card-visual">
-                    {p.logo_url ? (
-                      <img src={p.logo_url} alt="" />
-                    ) : (
-                      <div className="placeholder" style={{ background: `linear-gradient(135deg, hsl(${h},40%,25%), hsl(${h},35%,35%))` }}>
-                        <span style={{ color: `hsl(${h},50%,65%)` }}>{p.name[0]}</span>
-                      </div>
-                    )}
-                  </Link>
-                  <div className="card-info">
-                    <Link href={`/project/${p.id}`}>
-                      <h3>{p.name}</h3>
-                    </Link>
-                    <p>{p.tagline.length > 50 ? p.tagline.slice(0, 50) + '...' : p.tagline}</p>
-                  </div>
-                  <div className="card-footer">
-                    {p.twitter_handle && (
-                      <a href={`https://x.com/${p.twitter_handle}`} target="_blank" rel="noopener" className="handle">
-                        @{p.twitter_handle}
-                      </a>
-                    )}
-                    <button className={`vote-btn ${isUpvoted ? 'voted' : ''}`} onClick={() => handleUpvote(p.id)} disabled={voting.has(p.id)}>
-                      <svg viewBox="0 0 12 8" fill="currentColor"><path d="M6 0L0 8h12L6 0z"/></svg>
-                      {p.upvotes}
-                    </button>
-                  </div>
+          return (
+            <motion.div
+              key={project.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04, duration: 0.3, ease: 'easeOut' }}
+              className="flex items-center gap-4 px-4 py-4 rounded-xl border border-transparent hover:border-border hover:bg-surface/40 transition-all group"
+            >
+              {/* Rank */}
+              <span className="w-6 text-center font-mono text-sm text-text-tertiary shrink-0">
+                {i + 1}
+              </span>
+
+              {/* Logo placeholder */}
+              <div
+                className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center"
+                style={{
+                  background: `linear-gradient(135deg, hsl(${hue}, 35%, 20%), hsl(${hue}, 30%, 28%))`,
+                }}
+              >
+                <span
+                  className="font-brand text-lg font-bold"
+                  style={{ color: `hsl(${hue}, 45%, 60%)` }}
+                >
+                  {project.name[0]}
+                </span>
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-[15px] font-semibold text-text truncate">
+                    {project.name}
+                  </h3>
+                  {project.isHot && (
+                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-danger leading-none">
+                      HOT
+                    </span>
+                  )}
                 </div>
-              );
-            })
-          )}
+                <p className="text-sm text-text-secondary mt-0.5 truncate">
+                  {project.description}
+                </p>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-surface text-text-tertiary uppercase tracking-wider">
+                    {project.category}
+                  </span>
+                  <span className="text-text-tertiary text-[10px]">&middot;</span>
+                  <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-surface text-text-tertiary uppercase tracking-wider">
+                    {project.subcategory}
+                  </span>
+                </div>
+              </div>
+
+              {/* Watchers */}
+              <div className="hidden sm:flex items-center gap-1.5 text-text-secondary shrink-0">
+                <span className="text-sm leading-none">&#x1F440;</span>
+                <span className="font-mono text-sm">{project.watchers.toLocaleString()}</span>
+              </div>
+
+              {/* Upvote */}
+              <button
+                onClick={() => handleUpvote(project.id)}
+                className={`flex flex-col items-center gap-0.5 w-14 py-2 rounded-lg border text-center transition-all cursor-pointer shrink-0 ${
+                  isUpvoted
+                    ? 'bg-primary/10 border-primary/30 text-primary'
+                    : 'bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-primary'
+                }`}
+              >
+                <svg viewBox="0 0 12 8" fill="currentColor" className="w-3 h-2">
+                  <path d="M6 0L0 8h12L6 0z" />
+                </svg>
+                <span className="font-mono text-[13px] font-medium leading-none">{project.upvotes}</span>
+              </button>
+
+              {/* Watch */}
+              <button
+                onClick={() => handleWatch(project.id)}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer shrink-0 ${
+                  isWatching
+                    ? 'bg-primary text-white shadow-[0_0_12px_rgba(0,82,255,0.25)]'
+                    : 'bg-transparent text-primary border border-primary/25 hover:bg-primary hover:text-white hover:shadow-[0_0_12px_rgba(0,82,255,0.25)]'
+                }`}
+              >
+                {isWatching ? 'Watching' : 'Watch'}
+              </button>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Empty state for filtered categories with no results */}
+      {sorted.length === 0 && (
+        <div className="text-center py-16">
+          <p className="text-text-secondary text-sm">No projects in this category yet.</p>
         </div>
-      </main>
-
-      <SubscriptionModal isOpen={showSubModal} onClose={() => setShowSubModal(false)} limitMessage={rateLimitMsg} getAccessToken={getAccessToken} />
-
-      <style jsx>{`
-        .page {
-          min-height: 100vh;
-          background: #0c0c10;
-          color: #eee;
-        }
-        .main {
-          max-width: 1320px;
-          margin: 0 auto;
-          padding: 24px 20px 60px;
-        }
-        .top-bar {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 28px;
-          flex-wrap: wrap;
-          gap: 16px;
-        }
-        .top-bar h1 {
-          font-size: 26px;
-          font-weight: 700;
-          margin: 0;
-        }
-        .filters {
-          display: flex;
-          gap: 6px;
-          flex-wrap: wrap;
-        }
-        .filter-btn {
-          padding: 7px 14px;
-          border-radius: 6px;
-          border: 1px solid #222;
-          background: transparent;
-          color: #777;
-          font-size: 13px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-        .filter-btn:hover {
-          border-color: #444;
-          color: #aaa;
-        }
-        .filter-btn.active {
-          background: #0052FF;
-          border-color: #0052FF;
-          color: #fff;
-        }
-        .grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
-        }
-        @media (max-width: 1100px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 800px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 500px) { .grid { grid-template-columns: 1fr; } }
-        
-        .card {
-          background: #131318;
-          border: 1px solid #1e1e24;
-          border-radius: 14px;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          transition: transform 0.2s, border-color 0.2s;
-        }
-        .card:hover {
-          transform: translateY(-4px);
-          border-color: #2a2a35;
-        }
-        .card.skeleton {
-          min-height: 280px;
-          background: linear-gradient(90deg, #131318 25%, #1a1a22 50%, #131318 75%);
-          background-size: 200% 100%;
-          animation: shimmer 1.5s infinite;
-        }
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-        .card.featured {
-          background: linear-gradient(145deg, #1a1000, #2a1800);
-          border-color: #3d2800;
-        }
-        .card.featured:hover {
-          border-color: #5a4000;
-        }
-        .card-visual {
-          height: 160px;
-          background: #1a1a22;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          position: relative;
-        }
-        .card-visual img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-        .card-visual .placeholder {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        .card-visual .placeholder span {
-          font-size: 42px;
-          font-weight: 700;
-        }
-        .featured-visual {
-          background: linear-gradient(145deg, #FF8C00, #FF6B00);
-        }
-        .featured-badge {
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.5px;
-          color: #000;
-          background: rgba(0,0,0,0.2);
-          padding: 4px 10px;
-          border-radius: 4px;
-        }
-        .card-info {
-          padding: 14px 16px 10px;
-          flex: 1;
-        }
-        .card-info h3 {
-          font-size: 15px;
-          font-weight: 600;
-          margin: 0 0 6px;
-          color: #f0f0f0;
-        }
-        .card-info p {
-          font-size: 13px;
-          color: #666;
-          margin: 0;
-          line-height: 1.4;
-        }
-        .card-footer {
-          padding: 10px 16px 14px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 10px;
-        }
-        .handle {
-          font-size: 12px;
-          color: #555;
-          text-decoration: none;
-        }
-        .handle:hover {
-          color: #888;
-        }
-        .vote-btn {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          padding: 6px 12px;
-          border-radius: 6px;
-          border: 1px solid #2a2a35;
-          background: #1a1a22;
-          color: #888;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.15s;
-        }
-        .vote-btn svg {
-          width: 10px;
-          height: 8px;
-        }
-        .vote-btn:hover {
-          border-color: #0052FF;
-          color: #0052FF;
-        }
-        .vote-btn.voted {
-          background: #0052FF;
-          border-color: #0052FF;
-          color: #fff;
-        }
-        .cta-btn {
-          display: inline-block;
-          padding: 8px 16px;
-          background: rgba(0,0,0,0.25);
-          border-radius: 6px;
-          color: #000;
-          font-size: 13px;
-          font-weight: 600;
-        }
-      `}</style>
-    </div>
+      )}
+    </main>
   );
 }

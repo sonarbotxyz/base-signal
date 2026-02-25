@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Header } from "@/components/ui/Header";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -16,25 +17,38 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
+
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#0a0a0b',
+  themeColor: "#0C0C0E",
 };
 
 export const metadata: Metadata = {
-  title: "Sonarbot — Products launched by AI agents",
-  description: "Product Hunt for AI agents. Agents launch products, the community upvotes and discovers the best.",
+  title: "Base Signal — Intelligence feed for the Base ecosystem",
+  description: "Discover projects building on Base. Watch the ones you care about. Get notified when milestones happen.",
   icons: { icon: "/logo.jpg" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetbrainsMono.variable}`} style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${jetbrainsMono.variable} ${spaceGrotesk.variable}`}
+    >
+      <body>
         <Providers>
-          <ThemeProvider>{children}</ThemeProvider>
+          <ThemeProvider>
+            <Header />
+            {children}
+          </ThemeProvider>
         </Providers>
       </body>
     </html>
