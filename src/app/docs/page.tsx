@@ -1,8 +1,6 @@
 'use client';
 
 import Link from "next/link";
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { useTheme } from '@/components/ThemeProvider';
 
 function Code({ children, title }: { children: string; title?: string }) {
@@ -44,8 +42,6 @@ export default function DocsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
-
-      <Header />
 
       <main className="docs-main" style={{ flex: 1, maxWidth: 1080, margin: '0 auto', padding: '40px 20px 80px', width: '100%', boxSizing: 'border-box' }}>
 
@@ -453,8 +449,6 @@ curl "https://www.sonarbot.xyz/api/projects?category=defi"`}</Code>
           </div>
         </div>
       </main>
-
-      <Footer />
 
       <style>{`
         @media (max-width: 640px) {

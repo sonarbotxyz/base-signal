@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { useTheme } from '@/components/ThemeProvider';
 
 interface WeeklyDistribution {
@@ -118,8 +116,6 @@ export default function CurationPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
-
-      <Header />
 
       <main className="curation-main" style={{ maxWidth: 800, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
 
@@ -378,8 +374,6 @@ export default function CurationPage() {
 
         </div>
       </main>
-
-      <Footer />
 
       <style jsx>{`
         @media (max-width: 640px) {

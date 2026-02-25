@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { useTheme } from '@/components/ThemeProvider';
 
 interface Project {
@@ -182,8 +180,6 @@ export default function CalendarPage() {
   return (
     <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
 
-      <Header />
-
       <main className="cal-main" style={{ maxWidth: 1080, margin: '0 auto', padding: '40px 20px 80px', flex: 1, width: '100%', boxSizing: 'border-box' }}>
 
         {/* Title */}
@@ -328,8 +324,6 @@ export default function CalendarPage() {
           </div>
         )}
       </main>
-
-      <Footer />
 
       <style>{`
         @media (max-width: 640px) {

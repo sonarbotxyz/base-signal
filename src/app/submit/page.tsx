@@ -4,8 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { useTheme } from '@/components/ThemeProvider';
 
 const CATEGORIES = [
@@ -134,11 +132,9 @@ export default function SubmitPage() {
   if (!ready) {
     return (
       <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
-        <Header />
         <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ width: 24, height: 24, border: `2px solid ${colors.border}`, borderTopColor: '#0052FF', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
         </main>
-        <Footer />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -148,7 +144,6 @@ export default function SubmitPage() {
   if (!authenticated) {
     return (
       <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
-        <Header />
         <main className="submit-main" style={{ flex: 1, maxWidth: 560, margin: '0 auto', padding: '60px 20px 80px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ textAlign: 'center', animation: 'fadeInUp 350ms ease-out both' }}>
             <h1 style={{ fontSize: 28, fontWeight: 700, color: colors.text, margin: '0 0 8px' }}>
@@ -183,7 +178,6 @@ export default function SubmitPage() {
             </button>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
@@ -191,7 +185,6 @@ export default function SubmitPage() {
   // Authenticated - show form
   return (
     <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: 'column' }}>
-      <Header />
 
       <main className="submit-main" style={{ flex: 1, maxWidth: 640, margin: '0 auto', padding: '40px 20px 80px', width: '100%', boxSizing: 'border-box' }}>
 
@@ -459,8 +452,6 @@ export default function SubmitPage() {
           </p>
         </form>
       </main>
-
-      <Footer />
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
