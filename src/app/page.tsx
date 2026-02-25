@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Project {
   id: string;
@@ -13,6 +15,8 @@ interface Project {
   watchers: number;
   isHot: boolean;
 }
+
+// ─── Mock Data ───────────────────────────────────────────────────────────────
 
 const MOCK_PROJECTS: Project[] = [
   {
@@ -119,13 +123,172 @@ const MOCK_PROJECTS: Project[] = [
 
 const CATEGORIES = ['All', 'DeFi', 'Social', 'NFT', 'Infra', 'Gaming', 'Tools'];
 
-function generateHue(name: string): number {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) * 47 + ((hash << 5) - hash);
-  }
-  return Math.abs(hash) % 360;
+// ─── Category Colors ─────────────────────────────────────────────────────────
+
+const CATEGORY_GRADIENTS: Record<string, { from: string; via: string; to: string; accent: string }> = {
+  DeFi:    { from: '#0033CC', via: '#0052FF', to: '#1A3A8A', accent: '#0052FF' },
+  Social:  { from: '#6B21A8', via: '#9333EA', to: '#4C1D95', accent: '#A855F7' },
+  NFT:     { from: '#BE185D', via: '#EC4899', to: '#831843', accent: '#F472B6' },
+  Infra:   { from: '#065F46', via: '#10B981', to: '#064E3B', accent: '#34D399' },
+  Gaming:  { from: '#C2410C', via: '#F97316', to: '#7C2D12', accent: '#FB923C' },
+  Tools:   { from: '#374151', via: '#6B7280', to: '#1F2937', accent: '#9CA3AF' },
+};
+
+function getCategoryColors(category: string) {
+  return CATEGORY_GRADIENTS[category] ?? CATEGORY_GRADIENTS.Tools;
 }
+
+// ─── Project Card ────────────────────────────────────────────────────────────
+
+function ProjectCard({
+  project,
+  index,
+  isUpvoted,
+  isWatching,
+  onUpvote,
+  onWatch,
+}: {
+  project: Project;
+  index: number;
+  isUpvoted: boolean;
+  isWatching: boolean;
+  onUpvote: () => void;
+  onWatch: () => void;
+}) {
+  const colors = getCategoryColors(project.category);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className={`group relative rounded-2xl overflow-hidden cursor-pointer transition-shadow duration-300 ${
+        project.isHot
+          ? 'shadow-[0_0_0_1px_rgba(255,68,102,0.3),0_0_20px_rgba(255,68,102,0.08)]'
+          : ''
+      }`}
+      style={{ background: '#1A1A2E' }}
+    >
+      {/* ── Banner (65% of card) ── */}
+      <div
+        className="relative w-full overflow-hidden"
+        style={{
+          paddingBottom: '65%',
+          background: `linear-gradient(145deg, ${colors.from} 0%, ${colors.via}22 40%, ${colors.to} 100%)`,
+        }}
+      >
+        {/* Radial highlight */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `radial-gradient(ellipse at 30% 50%, ${colors.via}30 0%, transparent 65%)`,
+          }}
+        />
+
+        {/* Subtle grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+            backgroundSize: '24px 24px',
+          }}
+        />
+
+        {/* Large initial letter */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span
+            className="font-brand font-bold select-none"
+            style={{
+              fontSize: '5rem',
+              lineHeight: 1,
+              color: `${colors.via}25`,
+            }}
+          >
+            {project.name[0]}
+          </span>
+        </div>
+
+        {/* HOT badge */}
+        {project.isHot && (
+          <div className="absolute top-3 right-3 px-2 py-1 rounded-lg text-[11px] font-bold bg-danger/90 text-white tracking-wide flex items-center gap-1">
+            <span>&#x1F525;</span> HOT
+          </div>
+        )}
+
+        {/* Watch button — appears on hover */}
+        <motion.button
+          onClick={(e) => { e.stopPropagation(); onWatch(); }}
+          initial={false}
+          className={`absolute top-3 left-3 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer opacity-0 group-hover:opacity-100 ${
+            isWatching
+              ? 'bg-primary text-white shadow-[0_0_14px_rgba(0,82,255,0.35)]'
+              : 'bg-black/60 backdrop-blur-sm text-white/90 hover:bg-primary hover:text-white'
+          }`}
+        >
+          {isWatching ? '✓ Watching' : '+ Watch'}
+        </motion.button>
+      </div>
+
+      {/* ── Content (35% of card) ── */}
+      <div className="p-4 pb-3.5">
+        <h3 className="text-[15px] font-bold text-text truncate mb-1">{project.name}</h3>
+        <p className="text-[13px] text-text-secondary leading-snug truncate mb-3">
+          {project.description}
+        </p>
+
+        {/* Bottom row: category + metrics + upvote */}
+        <div className="flex items-center gap-2">
+          <span
+            className="px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider shrink-0"
+            style={{
+              background: `${colors.accent}15`,
+              color: colors.accent,
+            }}
+          >
+            {project.category}
+          </span>
+
+          <div className="flex items-center gap-1 text-text-tertiary ml-auto shrink-0">
+            <span className="text-xs">&#x1F440;</span>
+            <span className="font-mono text-xs">{project.watchers.toLocaleString()}</span>
+          </div>
+
+          <motion.button
+            onClick={(e) => { e.stopPropagation(); onUpvote(); }}
+            whileTap={{ scale: 0.88 }}
+            className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+              isUpvoted
+                ? 'bg-primary/15 text-primary'
+                : 'text-text-tertiary hover:text-primary hover:bg-primary/10'
+            }`}
+          >
+            <motion.svg
+              viewBox="0 0 12 8"
+              fill="currentColor"
+              className="w-2.5 h-2"
+              animate={isUpvoted ? { y: [0, -2, 0] } : {}}
+              transition={{ duration: 0.25 }}
+            >
+              <path d="M6 0L0 8h12L6 0z" />
+            </motion.svg>
+            <span className="font-mono">{project.upvotes}</span>
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Hover glow */}
+      <div
+        className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{
+          boxShadow: `0 8px 40px ${colors.accent}12, 0 0 0 1px ${colors.accent}15`,
+        }}
+      />
+    </motion.div>
+  );
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const [category, setCategory] = useState('All');
@@ -172,134 +335,59 @@ export default function Home() {
   };
 
   return (
-    <main className="mx-auto max-w-[900px] px-5 pt-8 pb-16">
+    <main className="mx-auto max-w-[1280px] px-5 pt-8 pb-16">
       {/* Category filters */}
       <div className="flex items-center gap-2 mb-8 overflow-x-auto scrollbar-hide pb-1">
-        {CATEGORIES.map(cat => (
-          <button
-            key={cat}
-            onClick={() => setCategory(cat)}
-            className={`px-3.5 py-1.5 rounded-md text-sm font-medium whitespace-nowrap transition-colors cursor-pointer ${
-              category === cat
-                ? 'bg-primary text-white'
-                : 'bg-surface border border-border text-text-secondary hover:text-text hover:border-border-light'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Feed list */}
-      <div className="flex flex-col gap-1">
-        {sorted.map((project, i) => {
-          const hue = generateHue(project.name);
-          const isUpvoted = upvoted.has(project.id);
-          const isWatching = watched.has(project.id);
-
+        {CATEGORIES.map(cat => {
+          const active = category === cat;
+          const catColors = getCategoryColors(cat);
           return (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04, duration: 0.3, ease: 'easeOut' }}
-              whileHover={{ y: -2, transition: { duration: 0.15 } }}
-              className="flex items-center gap-4 px-4 py-4 rounded-xl border border-transparent hover:border-border hover:bg-surface/40 transition-all group hover:shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
+            <button
+              key={cat}
+              onClick={() => setCategory(cat)}
+              className={`px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
+                active
+                  ? 'text-white shadow-lg'
+                  : 'bg-[#1A1A2E] text-text-secondary hover:text-text hover:bg-[#222236]'
+              }`}
+              style={active ? {
+                background: `linear-gradient(135deg, ${catColors.from}, ${catColors.to})`,
+                boxShadow: `0 4px 16px ${catColors.accent}30`,
+              } : undefined}
             >
-              {/* Rank */}
-              <span className="w-6 text-center font-mono text-sm text-text-tertiary shrink-0">
-                {i + 1}
-              </span>
-
-              {/* Logo placeholder */}
-              <div
-                className="w-11 h-11 rounded-xl shrink-0 flex items-center justify-center"
-                style={{
-                  background: `linear-gradient(135deg, hsl(${hue}, 35%, 20%), hsl(${hue}, 30%, 28%))`,
-                }}
-              >
-                <span
-                  className="font-brand text-lg font-bold"
-                  style={{ color: `hsl(${hue}, 45%, 60%)` }}
-                >
-                  {project.name[0]}
-                </span>
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-[15px] font-semibold text-text truncate">
-                    {project.name}
-                  </h3>
-                  {project.isHot && (
-                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-danger leading-none">
-                      HOT
-                    </span>
-                  )}
-                </div>
-                <p className="text-sm text-text-secondary mt-0.5 truncate">
-                  {project.description}
-                </p>
-                <div className="flex items-center gap-1.5 mt-1.5">
-                  <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-surface text-text-tertiary uppercase tracking-wider">
-                    {project.category}
-                  </span>
-                  <span className="text-text-tertiary text-[10px]">&middot;</span>
-                  <span className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-surface text-text-tertiary uppercase tracking-wider">
-                    {project.subcategory}
-                  </span>
-                </div>
-              </div>
-
-              {/* Watchers */}
-              <div className="hidden sm:flex items-center gap-1.5 text-text-secondary shrink-0">
-                <span className="text-sm leading-none">&#x1F440;</span>
-                <span className="font-mono text-sm">{project.watchers.toLocaleString()}</span>
-              </div>
-
-              {/* Upvote */}
-              <motion.button
-                onClick={() => handleUpvote(project.id)}
-                whileTap={{ scale: 0.9 }}
-                className={`flex flex-col items-center gap-0.5 w-14 py-2 rounded-lg border text-center transition-all cursor-pointer shrink-0 ${
-                  isUpvoted
-                    ? 'bg-primary/10 border-primary/30 text-primary'
-                    : 'bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-primary'
-                }`}
-              >
-                <motion.svg
-                  viewBox="0 0 12 8"
-                  fill="currentColor"
-                  className="w-3 h-2"
-                  animate={isUpvoted ? { y: [0, -3, 0] } : {}}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                >
-                  <path d="M6 0L0 8h12L6 0z" />
-                </motion.svg>
-                <span className="font-mono text-[13px] font-medium leading-none">{project.upvotes}</span>
-              </motion.button>
-
-              {/* Watch */}
-              <motion.button
-                onClick={() => handleWatch(project.id)}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer shrink-0 ${
-                  isWatching
-                    ? 'bg-primary text-white shadow-[0_0_12px_rgba(0,82,255,0.25)]'
-                    : 'bg-transparent text-primary border border-primary/25 hover:bg-primary hover:text-white hover:shadow-[0_0_12px_rgba(0,82,255,0.25)]'
-                }`}
-              >
-                {isWatching ? 'Watching' : 'Watch'}
-              </motion.button>
-            </motion.div>
+              {cat}
+            </button>
           );
         })}
       </div>
 
-      {/* Empty state for filtered categories with no results */}
+      {/* Card grid */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={category}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+        >
+          {sorted.map((project, i) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              index={i}
+              isUpvoted={upvoted.has(project.id)}
+              isWatching={watched.has(project.id)}
+              onUpvote={() => handleUpvote(project.id)}
+              onWatch={() => handleWatch(project.id)}
+            />
+          ))}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Empty state */}
       {sorted.length === 0 && (
-        <div className="text-center py-16">
+        <div className="text-center py-20">
           <p className="text-text-secondary text-sm">No projects in this category yet.</p>
         </div>
       )}
