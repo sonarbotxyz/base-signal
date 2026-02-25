@@ -122,9 +122,18 @@ code, .font-mono {
   background-size: 600px 100%;
 }
 
-/* Touch-friendly */
+/* Touch-friendly: buttons and nav links get 44px minimum tap target on mobile */
 @media (max-width: 640px) {
-  button, a {
+  button:not(.inline-btn),
+  nav a,
+  [role="button"] {
     min-height: 44px;
+  }
+}
+
+/* Safe area padding for notch devices */
+@supports(padding: max(0px)) {
+  .safe-bottom {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
 }

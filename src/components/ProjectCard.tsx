@@ -149,7 +149,7 @@ export function ProjectCard({
           {/* Watch button - visible on hover (desktop) or always (mobile) */}
           <button
             onClick={onWatch}
-            className={`absolute bottom-2.5 right-2.5 flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
+            className={`absolute bottom-2.5 right-2.5 flex items-center gap-1.5 px-3.5 py-2 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer opacity-100 md:opacity-0 md:group-hover:opacity-100 ${
               isWatching
                 ? 'bg-primary text-white shadow-[0_0_14px_rgba(0,82,255,0.35)]'
                 : 'bg-black/60 backdrop-blur-sm text-white/90 hover:bg-primary hover:text-white'
@@ -182,7 +182,7 @@ export function ProjectCard({
 
             <button
               onClick={onUpvote}
-              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+              className={`inline-btn flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ${
                 isUpvoted
                   ? 'bg-primary/15 text-primary'
                   : 'text-text-tertiary hover:text-primary hover:bg-primary/10'
