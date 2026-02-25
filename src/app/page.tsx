@@ -203,7 +203,8 @@ export default function Home() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.04, duration: 0.3, ease: 'easeOut' }}
-              className="flex items-center gap-4 px-4 py-4 rounded-xl border border-transparent hover:border-border hover:bg-surface/40 transition-all group"
+              whileHover={{ y: -2, transition: { duration: 0.15 } }}
+              className="flex items-center gap-4 px-4 py-4 rounded-xl border border-transparent hover:border-border hover:bg-surface/40 transition-all group hover:shadow-[0_4px_20px_rgba(0,0,0,0.2)]"
             >
               {/* Rank */}
               <span className="w-6 text-center font-mono text-sm text-text-tertiary shrink-0">
@@ -258,23 +259,31 @@ export default function Home() {
               </div>
 
               {/* Upvote */}
-              <button
+              <motion.button
                 onClick={() => handleUpvote(project.id)}
+                whileTap={{ scale: 0.9 }}
                 className={`flex flex-col items-center gap-0.5 w-14 py-2 rounded-lg border text-center transition-all cursor-pointer shrink-0 ${
                   isUpvoted
                     ? 'bg-primary/10 border-primary/30 text-primary'
                     : 'bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-primary'
                 }`}
               >
-                <svg viewBox="0 0 12 8" fill="currentColor" className="w-3 h-2">
+                <motion.svg
+                  viewBox="0 0 12 8"
+                  fill="currentColor"
+                  className="w-3 h-2"
+                  animate={isUpvoted ? { y: [0, -3, 0] } : {}}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                >
                   <path d="M6 0L0 8h12L6 0z" />
-                </svg>
+                </motion.svg>
                 <span className="font-mono text-[13px] font-medium leading-none">{project.upvotes}</span>
-              </button>
+              </motion.button>
 
               {/* Watch */}
-              <button
+              <motion.button
                 onClick={() => handleWatch(project.id)}
+                whileTap={{ scale: 0.95 }}
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all cursor-pointer shrink-0 ${
                   isWatching
                     ? 'bg-primary text-white shadow-[0_0_12px_rgba(0,82,255,0.25)]'
@@ -282,7 +291,7 @@ export default function Home() {
                 }`}
               >
                 {isWatching ? 'Watching' : 'Watch'}
-              </button>
+              </motion.button>
             </motion.div>
           );
         })}
