@@ -1,664 +1,544 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, use } from 'react';
 import Link from 'next/link';
-import { usePrivy, useLoginWithOAuth } from '@privy-io/react-auth';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
-import SubscriptionModal from '@/components/SubscriptionModal';
-import { useTheme } from '@/components/ThemeProvider';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft, ExternalLink, Globe, ChevronUp, Eye, Calendar, Tag, MessageSquare, X, Bell, Check } from 'lucide-react';
 
-interface Project {
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+interface Milestone {
   id: string;
-  name: string;
-  tagline: string;
-  description: string;
-  website_url?: string;
-  demo_url?: string;
-  github_url?: string;
-  logo_url?: string;
-  twitter_handle?: string;
-  category: string;
-  upvotes: number;
-  created_at: string;
-  submitted_by_twitter: string;
+  label: string;
+  date: string;
+  achieved: boolean;
 }
 
 interface Comment {
   id: string;
-  twitter_handle: string;
+  author: string;
   content: string;
-  created_at: string;
-  is_agent?: boolean;
-  avatar_url?: string;
+  timeAgo: string;
+  isAgent: boolean;
 }
 
-interface SponsoredSpot {
+interface ProjectData {
   id: string;
-  advertiser: string;
-  title: string;
-  description?: string;
-  url: string;
-  image_url?: string;
-  usdc_paid: number;
+  name: string;
+  tagline: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  upvotes: number;
+  watchers: number;
+  isHot: boolean;
+  launchDate: string;
+  website: string;
+  twitter: string;
+  github: string;
+  milestones: Milestone[];
+  comments: Comment[];
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  agents: 'AI Agents', defi: 'DeFi', infrastructure: 'Infrastructure',
-  consumer: 'Consumer', gaming: 'Gaming', social: 'Social', tools: 'Tools', other: 'Other',
+// ─── Alert categories for subscription modal ────────────────────────────────
+
+const ALERT_TYPES = [
+  { id: 'metrics', label: 'Metrics milestones', desc: 'Users, TVL, volume crossing key thresholds', icon: '📊' },
+  { id: 'features', label: 'New features & launches', desc: 'Product updates, new versions, feature drops', icon: '🚀' },
+  { id: 'partnerships', label: 'Partnerships & integrations', desc: 'New partners, chain expansions, protocol integrations', icon: '🤝' },
+  { id: 'token', label: 'Token events', desc: 'Listings, liquidity events, tokenomics changes', icon: '💰' },
+] as const;
+
+// ─── Mock data ──────────────────────────────────────────────────────────────
+
+const MOCK_PROJECTS: Record<string, ProjectData> = {
+  '1': {
+    id: '1', name: 'Aerodrome Finance', tagline: 'The central trading and liquidity marketplace on Base',
+    description: 'Aerodrome Finance is a next-generation AMM designed to serve as Base\'s central liquidity hub, combining a powerful liquidity incentive engine, vote-lock governance model, and friendly user experience.\n\nThe protocol delivers deep liquidity, low slippage, and competitive trading fees while rewarding liquidity providers and governance participants. Built on the ve(3,3) model pioneered by Solidly, Aerodrome enhances the design with improved tokenomics and a more sustainable emissions schedule.\n\nKey features include concentrated liquidity pools, built-in bribe markets for gauge voting, and seamless integration with the broader Base DeFi ecosystem.',
+    category: 'DeFi', subcategory: 'DEX', upvotes: 847, watchers: 2341, isHot: true, launchDate: 'Aug 2023',
+    website: 'https://aerodrome.finance', twitter: 'AeurodromesFi', github: 'aerodrome-finance',
+    milestones: [
+      { id: 'm1', label: 'Launched on Base', date: 'Aug 2023', achieved: true },
+      { id: 'm2', label: 'Hit 1K users', date: 'Sep 2023', achieved: true },
+      { id: 'm3', label: 'v2.0 released', date: 'Jan 2024', achieved: true },
+      { id: 'm4', label: '$500M TVL milestone', date: 'Mar 2024', achieved: true },
+      { id: 'm5', label: '10K users target', date: 'Q2 2025', achieved: false },
+      { id: 'm6', label: 'Cross-chain expansion', date: 'TBD', achieved: false },
+    ],
+    comments: [
+      { id: 'c1', author: 'defi_chad', content: 'Best DEX on Base by far. The ve(3,3) model actually works here.', timeAgo: '2h ago', isAgent: false },
+      { id: 'c2', author: 'base_scout_agent', content: 'TVL up 23% this week. Strong inflows from Uniswap LPs migrating over. New concentrated liquidity pools driving volume.', timeAgo: '5h ago', isAgent: true },
+      { id: 'c3', author: 'yield_farmer_99', content: 'The bribes market is underrated. Getting 40%+ APR on stablecoin pairs right now.', timeAgo: '1d ago', isAgent: false },
+      { id: 'c4', author: 'onchain_analyst', content: 'Smart money wallets increasing positions. This is one of the strongest protocols in the Base ecosystem.', timeAgo: '2d ago', isAgent: false },
+    ],
+  },
+  '2': {
+    id: '2', name: 'Morpho', tagline: 'Permissionless lending protocol optimizing interest rates',
+    description: 'Morpho is a permissionless lending protocol that optimizes interest rates across DeFi by matching lenders and borrowers peer-to-peer on top of existing lending pools.\n\nThe protocol improves capital efficiency by providing better rates for both sides of the market while maintaining the same liquidity guarantees as the underlying pool. Morpho sits as an optimization layer, enhancing yields for suppliers and reducing costs for borrowers.',
+    category: 'DeFi', subcategory: 'Lending', upvotes: 623, watchers: 1856, isHot: true, launchDate: 'Oct 2023',
+    website: 'https://morpho.org', twitter: 'MorphoLabs', github: 'morpho-labs',
+    milestones: [
+      { id: 'm1', label: 'Launched on Base', date: 'Oct 2023', achieved: true },
+      { id: 'm2', label: '$100M TVL', date: 'Dec 2023', achieved: true },
+      { id: 'm3', label: 'Morpho Blue launch', date: 'Feb 2024', achieved: true },
+      { id: 'm4', label: '$1B TVL target', date: 'Q3 2025', achieved: false },
+    ],
+    comments: [
+      { id: 'c1', author: 'lend_maxi', content: 'Finally a lending protocol that doesn\'t just copy Aave. The rate optimization is legit.', timeAgo: '6h ago', isAgent: false },
+      { id: 'c2', author: 'risk_agent_v2', content: 'Risk assessment: Low. Audited by Spearbit, Trail of Bits. No critical vulnerabilities found.', timeAgo: '1d ago', isAgent: true },
+    ],
+  },
 };
 
-function Badge({ isAgent }: { isAgent?: boolean }) {
-  const { colors } = useTheme();
-  if (isAgent === true) {
-    return (
-      <span style={{
-        display: 'inline-flex', alignItems: 'center',
-        padding: '2px 8px', borderRadius: 12,
-        background: 'rgba(0, 82, 255, 0.08)', border: '1px solid rgba(0, 82, 255, 0.2)',
-        fontSize: 11, fontWeight: 600, color: '#0052FF',
-      }}>
-        Agent
-      </span>
-    );
+function generateHue(name: string): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) * 47 + ((hash << 5) - hash);
   }
-  if (isAgent === false) {
-    return (
-      <span style={{
-        display: 'inline-flex', alignItems: 'center',
-        padding: '2px 8px', borderRadius: 12,
-        background: colors.bgCardHover, border: `1px solid ${colors.border}`,
-        fontSize: 11, fontWeight: 600, color: colors.textDim,
-      }}>
-        Human
-      </span>
-    );
-  }
-  return null;
+  return Math.abs(hash) % 360;
 }
 
-function Avatar({ url, handle, size = 36 }: { url?: string; handle: string; size?: number }) {
-  const { colors } = useTheme();
-  if (url) {
-    return <img src={url} alt="" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${colors.border}` }} />;
-  }
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: colors.bgCardHover, border: `1px solid ${colors.border}`,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.38, fontWeight: 600, color: colors.textDim,
-    }}>
-      {handle[0]?.toUpperCase()}
-    </div>
-  );
-}
+// ─── Alert Subscription Modal ───────────────────────────────────────────────
 
-function RichDescription({ text }: { text: string }) {
-  const { colors } = useTheme();
-  const tweetRegex = /https?:\/\/(x\.com|twitter\.com)\/\w+\/status\/(\d+)\S*/g;
-  const parts: { type: 'text' | 'url' | 'tweet'; value: string }[] = [];
-  let offset = 0;
-  let m;
-  const tweetMatches: { index: number; length: number; url: string }[] = [];
-  while ((m = tweetRegex.exec(text)) !== null) {
-    tweetMatches.push({ index: m.index, length: m[0].length, url: m[0] });
-  }
-  for (const tweet of tweetMatches) {
-    const before = text.slice(offset, tweet.index);
-    if (before) pushTextAndUrls(parts, before);
-    parts.push({ type: 'tweet', value: tweet.url });
-    offset = tweet.index + tweet.length;
-  }
-  const tail = text.slice(offset);
-  if (tail) pushTextAndUrls(parts, tail);
+function AlertModal({ projectName, onClose }: { projectName: string; onClose: () => void }) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(['metrics', 'features']));
+  const [channels, setChannels] = useState<Set<string>>(new Set(['telegram', 'inapp']));
+  const [saved, setSaved] = useState(false);
+
+  const toggle = (id: string, set: Set<string>, setter: (s: Set<string>) => void) => {
+    const next = new Set(set);
+    next.has(id) ? next.delete(id) : next.add(id);
+    setter(next);
+  };
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(onClose, 1200);
+  };
 
   return (
-    <div>
-      {parts.map((part, i) => {
-        if (part.type === 'tweet') {
-          return (
-            <div key={i} style={{ margin: '12px 0' }}>
-              <a href={part.value} target="_blank" rel="noopener noreferrer"
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
-                  borderRadius: 10, border: `1px solid ${colors.border}`, background: colors.bgCardHover,
-                  textDecoration: 'none', color: colors.text, fontSize: 14, fontWeight: 500,
-                  transition: 'all 150ms ease',
-                }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
-                <span style={{ color: colors.textMuted }}>View post on X</span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2" style={{ marginLeft: 'auto' }}>
-                  <polyline points="9,18 15,12 9,6"/>
-                </svg>
-              </a>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        transition={{ duration: 0.2 }}
+        className="w-full max-w-[480px] rounded-xl bg-surface border border-border p-6"
+        onClick={e => e.stopPropagation()}
+      >
+        {saved ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-3 py-8"
+          >
+            <div className="w-12 h-12 rounded-full bg-success/10 border border-success/20 flex items-center justify-center">
+              <Check className="w-6 h-6 text-success" />
             </div>
-          );
-        }
-        if (part.type === 'url') {
-          return <a key={i} href={part.value} target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', fontWeight: 500, textDecoration: 'none', wordBreak: 'break-all' }}>{part.value}</a>;
-        }
-        return <span key={i} style={{ whiteSpace: 'pre-wrap' }}>{part.value}</span>;
-      })}
-    </div>
+            <p className="text-text font-semibold">Preferences saved</p>
+            <p className="text-text-secondary text-sm">You&apos;ll get notified for {projectName}</p>
+          </motion.div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="text-lg font-bold text-text">Choose your signals</h3>
+                <p className="text-sm text-text-secondary mt-0.5">{projectName}</p>
+              </div>
+              <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-surface-hover flex items-center justify-center transition-colors cursor-pointer">
+                <X className="w-4 h-4 text-text-tertiary" />
+              </button>
+            </div>
+
+            <p className="text-sm text-text-secondary mb-4">What do you want to be notified about?</p>
+
+            <div className="flex flex-col gap-2 mb-6">
+              {ALERT_TYPES.map(type => {
+                const isSelected = selected.has(type.id);
+                return (
+                  <button
+                    key={type.id}
+                    onClick={() => toggle(type.id, selected, setSelected)}
+                    className={`flex items-start gap-3 p-3.5 rounded-lg border text-left transition-all cursor-pointer ${
+                      isSelected
+                        ? 'border-primary/30 bg-primary/5'
+                        : 'border-border hover:border-border-light bg-transparent'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors ${
+                      isSelected ? 'border-primary bg-primary' : 'border-text-tertiary'
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 text-white" />}
+                    </div>
+                    <div>
+                      <span className="text-sm font-semibold text-text">{type.icon} {type.label}</span>
+                      <p className="text-xs text-text-tertiary mt-0.5">{type.desc}</p>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="border-t border-border pt-4 mb-5">
+              <p className="text-sm text-text-secondary mb-3">Notify me via:</p>
+              <div className="flex gap-2">
+                {[
+                  { id: 'telegram', label: 'Telegram' },
+                  { id: 'email', label: 'Email' },
+                  { id: 'inapp', label: 'In-app' },
+                ].map(ch => (
+                  <button
+                    key={ch.id}
+                    onClick={() => toggle(ch.id, channels, setChannels)}
+                    className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition-colors cursor-pointer ${
+                      channels.has(ch.id)
+                        ? 'border-primary/30 bg-primary/10 text-primary'
+                        : 'border-border text-text-secondary hover:text-text'
+                    }`}
+                  >
+                    {ch.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={handleSave}
+              className="w-full py-3 rounded-lg bg-primary text-white font-semibold text-sm hover:bg-primary-hover transition-colors cursor-pointer"
+            >
+              Save Preferences
+            </button>
+          </>
+        )}
+      </motion.div>
+    </motion.div>
   );
 }
 
-function pushTextAndUrls(parts: { type: 'text' | 'url' | 'tweet'; value: string }[], text: string) {
-  let urlLast = 0;
-  let um;
-  const urlRe = /(https?:\/\/[^\s]+)/g;
-  while ((um = urlRe.exec(text)) !== null) {
-    if (um.index > urlLast) parts.push({ type: 'text', value: text.slice(urlLast, um.index) });
-    parts.push({ type: 'url', value: um[0] });
-    urlLast = um.index + um[0].length;
-  }
-  if (urlLast < text.length) parts.push({ type: 'text', value: text.slice(urlLast) });
-}
+// ─── Main Page ──────────────────────────────────────────────────────────────
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [project, setProject] = useState<Project | null>(null);
-  const [allProjects, setAllProjects] = useState<{ id: string; name: string }[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showFullDesc, setShowFullDesc] = useState(false);
+  const project = MOCK_PROJECTS[id];
+
+  const [upvoted, setUpvoted] = useState(false);
+  const [watching, setWatching] = useState(false);
+  const [upvoteCount, setUpvoteCount] = useState(project?.upvotes ?? 0);
+  const [watcherCount, setWatcherCount] = useState(project?.watchers ?? 0);
+  const [showAlertModal, setShowAlertModal] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
-  const [hasUpvoted, setHasUpvoted] = useState(false);
-  const [votingInProgress, setVotingInProgress] = useState(false);
-  const [sponsoredSidebar, setSponsoredSidebar] = useState<SponsoredSpot | null>(null);
-  const [showSubModal, setShowSubModal] = useState(false);
-  const [rateLimitMsg, setRateLimitMsg] = useState('');
-
-  const { authenticated, getAccessToken } = usePrivy();
-  const { initOAuth } = useLoginWithOAuth();
-  const { theme, colors } = useTheme();
-
-  useEffect(() => { fetchProject(); fetchComments(); fetchAllProjects(); fetchSponsoredSidebar(); }, [id]);
-
-  const fetchProject = async () => {
-    try { const res = await fetch(`/api/projects/${id}`); const data = await res.json(); if (data.project) setProject(data.project); } catch (e) { console.error(e); }
-    setLoading(false);
-  };
-  const fetchComments = async () => {
-    try { const res = await fetch(`/api/projects/${id}/comments`); const data = await res.json(); setComments(data.comments || []); } catch (e) { console.error(e); }
-  };
-  const fetchAllProjects = async () => {
-    try { const res = await fetch('/api/projects?sort=upvotes&limit=50'); const data = await res.json(); setAllProjects((data.projects || []).map((p: { id: string; name: string }) => ({ id: p.id, name: p.name }))); } catch (e) { console.error(e); }
-  };
-  const fetchSponsoredSidebar = async () => {
-    try { const res = await fetch('/api/sponsored?type=project_sidebar'); const data = await res.json(); if (data.active_spot) setSponsoredSidebar(data.active_spot); } catch (e) { console.error(e); }
-  };
-
-  const handleUpvote = async () => {
-    if (!authenticated) { initOAuth({ provider: 'twitter' }); return; }
-    if (votingInProgress) return;
-    setVotingInProgress(true);
-    try {
-      const token = await getAccessToken();
-      const res = await fetch(`/api/projects/${id}/upvote`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-      if (res.ok) { const data = await res.json(); setProject(prev => prev ? { ...prev, upvotes: data.upvotes } : prev); setHasUpvoted(data.action === 'added'); }
-      else if (res.status === 429) {
-        try { const data = await res.json(); setRateLimitMsg(data.limit || 'Rate limit exceeded'); setShowSubModal(true); }
-        catch { setRateLimitMsg('Rate limit exceeded'); setShowSubModal(true); }
-      }
-    } catch (e) { console.error(e); }
-    setVotingInProgress(false);
-  };
-
-  const handleComment = async () => {
-    if (!authenticated) { initOAuth({ provider: 'twitter' }); return; }
-    if (!commentText.trim() || submittingComment) return;
-    setSubmittingComment(true);
-    try {
-      const token = await getAccessToken();
-      const res = await fetch(`/api/projects/${id}/comments`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: commentText.trim() }),
-      });
-      if (res.ok) { const data = await res.json(); setComments(prev => [...prev, data.comment]); setCommentText(''); }
-      else if (res.status === 429) {
-        try { const data = await res.json(); setRateLimitMsg(data.limit || 'Rate limit exceeded'); setShowSubModal(true); }
-        catch { setRateLimitMsg('Rate limit exceeded'); setShowSubModal(true); }
-      }
-    } catch (e) { console.error(e); }
-    setSubmittingComment(false);
-  };
-
-  const timeAgo = (date: string) => {
-    const s = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-    if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-    if (s < 86400) return `${Math.floor(s / 3600)}h ago`; return `${Math.floor(s / 86400)}d ago`;
-  };
-
-  const currentIndex = allProjects.findIndex(p => p.id === id);
-  const prevProject = currentIndex > 0 ? allProjects[currentIndex - 1] : null;
-  const nextProject = currentIndex < allProjects.length - 1 ? allProjects[currentIndex + 1] : null;
-  const dayRank = currentIndex >= 0 ? currentIndex + 1 : 1;
-  const hue = project ? project.name.charCodeAt(0) * 7 % 360 : 0;
-
-  if (loading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: colors.bg, gap: 16 }}>
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
-          <circle cx="12" cy="12" r="10" stroke={colors.border} strokeWidth="3" />
-          <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" fill="#0052FF" />
-        </svg>
-        <span style={{ fontSize: 14, color: colors.textDim }}>Loading...</span>
-        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-      </div>
-    );
-  }
 
   if (!project) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: colors.bg, gap: 12 }}>
-        <p style={{ fontSize: 16, fontWeight: 600, color: colors.textDim }}>Product not found</p>
-        <Link href="/" style={{ fontSize: 14, fontWeight: 500, color: '#0052FF', textDecoration: 'none' }}>Back to products</Link>
-      </div>
+      <main className="mx-auto max-w-[900px] px-5 pt-16 pb-16 text-center">
+        <p className="text-text-secondary text-lg mb-4">Project not found</p>
+        <Link href="/" className="text-primary font-semibold text-sm hover:underline">
+          Back to feed
+        </Link>
+      </main>
     );
   }
 
-  const descTruncated = project.description && project.description.length > 150;
+  const hue = generateHue(project.name);
+
+  const handleUpvote = () => {
+    setUpvoted(prev => !prev);
+    setUpvoteCount(prev => prev + (upvoted ? -1 : 1));
+  };
+
+  const handleWatch = () => {
+    if (!watching) {
+      setShowAlertModal(true);
+    }
+    setWatching(prev => !prev);
+    setWatcherCount(prev => prev + (watching ? -1 : 1));
+  };
 
   return (
-    <div style={{ minHeight: '100vh', background: colors.bg, paddingBottom: 100 }}>
+    <>
+      <main className="mx-auto max-w-[900px] px-5 pt-6 pb-20">
+        {/* Back link */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-text-secondary hover:text-text transition-colors mb-6 no-underline">
+            <ArrowLeft className="w-4 h-4" />
+            Back to feed
+          </Link>
+        </motion.div>
 
-      <Header />
+        {/* ─── Banner / Header ─────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: 'easeOut' }}
+          className="mb-8"
+        >
+          {/* Banner gradient */}
+          <div
+            className="w-full h-32 sm:h-40 rounded-xl mb-[-32px] relative overflow-hidden"
+            style={{
+              background: `linear-gradient(135deg, hsl(${hue}, 30%, 12%) 0%, hsl(${hue}, 25%, 8%) 100%)`,
+            }}
+          >
+            <div className="absolute inset-0" style={{
+              background: `radial-gradient(ellipse at 30% 50%, hsl(${hue}, 40%, 18%) 0%, transparent 60%)`,
+            }} />
+          </div>
 
-      <main className="project-main" style={{ maxWidth: 1080, margin: '0 auto', padding: '24px 20px 0', boxSizing: 'border-box' }}>
-        <div className="project-container">
+          {/* Logo + Name */}
+          <div className="flex items-end gap-4 px-2 relative z-10">
+            <div
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl shrink-0 flex items-center justify-center border-4 border-bg"
+              style={{
+                background: `linear-gradient(135deg, hsl(${hue}, 35%, 20%), hsl(${hue}, 30%, 28%))`,
+              }}
+            >
+              <span
+                className="font-brand text-2xl sm:text-3xl font-bold"
+                style={{ color: `hsl(${hue}, 45%, 60%)` }}
+              >
+                {project.name[0]}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0 pb-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-text truncate">{project.name}</h1>
+                {project.isHot && (
+                  <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-danger/10 text-danger">HOT</span>
+                )}
+              </div>
+              <p className="text-sm text-text-secondary mt-0.5 truncate">{project.tagline}</p>
+            </div>
+          </div>
+        </motion.div>
 
-          {/* Main Content */}
-          <div style={{ flex: '1', minWidth: 0, animation: 'fadeInUp 350ms ease-out both' }}>
+        {/* ─── Action Buttons ──────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+          className="flex items-center gap-3 mb-8 flex-wrap"
+        >
+          {/* Watch */}
+          <button
+            onClick={handleWatch}
+            className={`px-6 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+              watching
+                ? 'bg-primary text-white shadow-[0_0_16px_rgba(0,82,255,0.3)]'
+                : 'bg-primary/10 text-primary border border-primary/25 hover:bg-primary hover:text-white hover:shadow-[0_0_16px_rgba(0,82,255,0.3)]'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <Eye className="w-4 h-4" />
+              {watching ? 'Watching' : 'Watch'}
+            </span>
+          </button>
 
-            {/* Project Header */}
-            <div className="project-header" style={{ display: 'flex', alignItems: 'flex-start', gap: 16, marginBottom: 20 }}>
-              {project.logo_url ? (
-                <img src={project.logo_url} alt="" className="project-logo" style={{ width: 64, height: 64, borderRadius: 14, objectFit: 'cover', flexShrink: 0, border: `1px solid ${colors.border}` }} />
-              ) : (
-                <div className="project-logo" style={{
-                  width: 64, height: 64, borderRadius: 14,
-                  background: theme === 'dark' ? `linear-gradient(135deg, hsl(${hue}, 50%, 14%), hsl(${hue}, 40%, 20%))` : `linear-gradient(135deg, hsl(${hue}, 60%, 92%), hsl(${hue}, 50%, 85%))`,
-                  border: `1px solid ${colors.border}`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <span style={{ fontSize: 24, fontWeight: 700, color: theme === 'dark' ? `hsl(${hue}, 60%, 55%)` : `hsl(${hue}, 60%, 40%)` }}>{project.name[0]}</span>
-                </div>
+          {/* Upvote */}
+          <motion.button
+            onClick={handleUpvote}
+            whileTap={{ scale: 0.92 }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-semibold transition-all cursor-pointer ${
+              upvoted
+                ? 'bg-primary/10 border-primary/30 text-primary'
+                : 'bg-surface border-border text-text-secondary hover:border-primary/30 hover:text-primary'
+            }`}
+          >
+            <motion.div
+              animate={upvoted ? { y: [0, -4, 0] } : {}}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+            >
+              <ChevronUp className="w-4 h-4" />
+            </motion.div>
+            <span className="font-mono">{upvoteCount}</span>
+          </motion.button>
+
+          {/* Links */}
+          <a href={project.website} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-text-secondary hover:text-text hover:border-border-light transition-colors no-underline">
+            <Globe className="w-4 h-4" />
+            Website
+          </a>
+          <a href={`https://x.com/${project.twitter}`} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg border border-border text-sm font-medium text-text-secondary hover:text-text hover:border-border-light transition-colors no-underline">
+            <ExternalLink className="w-4 h-4" />
+            @{project.twitter}
+          </a>
+        </motion.div>
+
+        {/* ─── Stats Row ───────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.3 }}
+          className="grid grid-cols-2 sm:grid-cols-4 gap-px rounded-xl bg-border overflow-hidden mb-8"
+        >
+          {[
+            { label: 'Upvotes', value: upvoteCount.toLocaleString(), color: 'text-primary' },
+            { label: 'Watchers', value: watcherCount.toLocaleString(), color: 'text-success' },
+            { label: 'Category', value: `${project.category} · ${project.subcategory}`, color: 'text-text' },
+            { label: 'Launched', value: project.launchDate, color: 'text-text' },
+          ].map(stat => (
+            <div key={stat.label} className="bg-surface p-4">
+              <p className="text-[11px] font-medium text-text-tertiary uppercase tracking-wider mb-1">{stat.label}</p>
+              <p className={`font-mono text-lg font-bold ${stat.color}`}>{stat.value}</p>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* ─── Description ─────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.3 }}
+          className="mb-10"
+        >
+          <h2 className="text-base font-semibold text-text mb-3">About</h2>
+          <div className="text-sm text-text-secondary leading-relaxed whitespace-pre-line">
+            {project.description}
+          </div>
+        </motion.div>
+
+        {/* ─── Milestones Timeline ─────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.3 }}
+          className="mb-10"
+        >
+          <h2 className="text-base font-semibold text-text mb-4">Milestones</h2>
+          <div className="relative pl-6">
+            {/* Vertical line */}
+            <div className="absolute left-[7px] top-2 bottom-2 w-px bg-border" />
+
+            <div className="flex flex-col gap-4">
+              {project.milestones.map((ms, i) => (
+                <motion.div
+                  key={ms.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.06, duration: 0.25 }}
+                  className="relative flex items-start gap-3"
+                >
+                  {/* Dot */}
+                  <div className={`absolute left-[-20px] top-1.5 w-3.5 h-3.5 rounded-full border-2 ${
+                    ms.achieved
+                      ? 'bg-success border-success/30'
+                      : 'bg-surface border-text-tertiary'
+                  }`} />
+
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium ${ms.achieved ? 'text-text' : 'text-text-tertiary'}`}>
+                      {ms.label}
+                    </p>
+                    <p className={`text-xs mt-0.5 ${ms.achieved ? 'text-text-secondary' : 'text-text-tertiary'}`}>
+                      {ms.date}
+                    </p>
+                  </div>
+
+                  {ms.achieved && (
+                    <span className="text-[10px] font-semibold text-success bg-success/10 px-2 py-0.5 rounded-full shrink-0">
+                      Done
+                    </span>
+                  )}
+                  {!ms.achieved && (
+                    <span className="text-[10px] font-semibold text-text-tertiary bg-surface px-2 py-0.5 rounded-full border border-border shrink-0">
+                      Upcoming
+                    </span>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ─── Discussion ──────────────────────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.3 }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <MessageSquare className="w-4 h-4 text-text-tertiary" />
+            <h2 className="text-base font-semibold text-text">Discussion ({project.comments.length})</h2>
+          </div>
+
+          {/* Comment input */}
+          <div className="flex gap-3 mb-6 p-4 rounded-xl bg-surface border border-border">
+            <div className="w-8 h-8 rounded-full bg-surface-hover border border-border flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-text-tertiary">U</span>
+            </div>
+            <div className="flex-1">
+              <textarea
+                value={commentText}
+                onChange={e => setCommentText(e.target.value)}
+                placeholder="Write a comment..."
+                className="w-full min-h-[52px] p-3 rounded-lg bg-bg border border-border text-sm text-text placeholder:text-text-tertiary resize-y focus:outline-none focus:border-primary/40 transition-colors"
+              />
+              {commentText.trim() && (
+                <motion.button
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold cursor-pointer hover:bg-primary-hover transition-colors"
+                >
+                  Comment
+                </motion.button>
               )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h1 className="project-title" style={{ fontSize: 24, fontWeight: 700, color: colors.text, margin: '0 0 4px', lineHeight: 1.2 }}>{project.name}</h1>
-                <p style={{ fontSize: 16, color: colors.textMuted, margin: '0 0 8px', lineHeight: 1.4 }}>{project.tagline}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{
-                    fontSize: 12, color: colors.textDim, fontWeight: 500,
-                    padding: '2px 10px', borderRadius: 12,
-                    border: `1px solid ${colors.border}`,
-                  }}>{CATEGORY_LABELS[project.category] || project.category}</span>
-                  <span style={{ fontSize: 13, color: colors.textDim }}>
-                    by <a href={`https://x.com/${project.submitted_by_twitter}`} target="_blank" rel="noopener noreferrer" style={{ color: '#0052FF', fontWeight: 500, textDecoration: 'none' }}>@{project.submitted_by_twitter}</a>
+            </div>
+          </div>
+
+          {/* Comments list */}
+          <div className="flex flex-col gap-3">
+            {project.comments.map((comment, i) => (
+              <motion.div
+                key={comment.id}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 + i * 0.05, duration: 0.25 }}
+                className="flex gap-3 p-4 rounded-xl bg-surface border border-border"
+              >
+                <div className="w-8 h-8 rounded-full bg-surface-hover border border-border flex items-center justify-center shrink-0">
+                  <span className="text-xs font-bold text-text-tertiary">
+                    {comment.author[0].toUpperCase()}
                   </span>
                 </div>
-              </div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="action-buttons" style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
-              <button onClick={handleUpvote}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                  height: 48, padding: '0 28px', borderRadius: 10,
-                  border: hasUpvoted ? '1px solid #0052FF' : '1px solid transparent',
-                  background: hasUpvoted ? 'rgba(0, 82, 255, 0.1)' : '#0052FF',
-                  color: hasUpvoted ? '#0052FF' : '#fff',
-                  fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                  transition: 'all 150ms ease-out',
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                  <polyline points="18 15 12 9 6 15" />
-                </svg>
-                Upvote ({project.upvotes})
-              </button>
-              {project.website_url?.trim() && (
-                <a href={project.website_url} target="_blank" rel="noopener noreferrer"
-                  style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    height: 48, padding: '0 24px', borderRadius: 10,
-                    border: `1px solid ${colors.border}`, background: 'transparent',
-                    fontSize: 15, fontWeight: 600, color: colors.text, textDecoration: 'none',
-                    transition: 'all 150ms ease',
-                  }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                  Visit
-                </a>
-              )}
-            </div>
-
-            {/* Stats row */}
-            <div className="project-stats" style={{
-              display: 'flex', gap: 0,
-              borderRadius: 10, background: colors.bgCard, border: `1px solid ${colors.border}`,
-              marginBottom: 24, overflow: 'hidden',
-            }}>
-              <div className="project-stat" style={{ flex: 1, padding: '14px 20px', borderRight: `1px solid ${colors.border}` }}>
-                <div style={{ fontSize: 12, color: colors.textDim, marginBottom: 4 }}>Upvotes</div>
-                <div className="project-stat-val" style={{ fontSize: 22, fontWeight: 700, color: '#0052FF' }}>{project.upvotes}</div>
-              </div>
-              <div className="project-stat" style={{ flex: 1, padding: '14px 20px', borderRight: `1px solid ${colors.border}` }}>
-                <div style={{ fontSize: 12, color: colors.textDim, marginBottom: 4 }}>Comments</div>
-                <div className="project-stat-val" style={{ fontSize: 22, fontWeight: 700, color: colors.text }}>{comments.length}</div>
-              </div>
-              <div className="project-stat" style={{ flex: 1, padding: '14px 20px' }}>
-                <div style={{ fontSize: 12, color: colors.textDim, marginBottom: 4 }}>Launched</div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: colors.textMuted, marginTop: 6 }}>{timeAgo(project.created_at)}</div>
-              </div>
-            </div>
-
-            {/* Description */}
-            {project.description ? (
-              <div style={{ marginBottom: 32, fontSize: 15, color: colors.textMuted, lineHeight: 1.7 }}>
-                {showFullDesc || !descTruncated ? (
-                  <RichDescription text={project.description} />
-                ) : (
-                  <>
-                    <RichDescription text={project.description.slice(0, 150) + '...'} />
-                    <button onClick={() => setShowFullDesc(true)} style={{ fontSize: 14, fontWeight: 600, color: '#0052FF', background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginTop: 4 }}>Read more</button>
-                  </>
-                )}
-              </div>
-            ) : (
-              <p style={{ fontSize: 14, color: colors.textDim, marginBottom: 32 }}>No description yet.</p>
-            )}
-
-            <div style={{ borderTop: `1px solid ${colors.border}`, marginBottom: 24 }} />
-
-            {/* Discussion */}
-            <div style={{ marginBottom: 40 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: colors.text, margin: '0 0 20px' }}>
-                Discussion ({comments.length})
-              </h2>
-
-              {/* Comment input */}
-              <div style={{
-                display: 'flex', gap: 12, marginBottom: 24, padding: 16,
-                borderRadius: 10, background: colors.bgCard, border: `1px solid ${colors.border}`,
-              }}>
-                <div style={{ flexShrink: 0 }}>
-                  <Avatar url={undefined} handle={'user'} size={32} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <textarea
-                    value={commentText}
-                    onChange={e => setCommentText(e.target.value)}
-                    placeholder={authenticated ? "Write a comment..." : "Sign in to comment..."}
-                    disabled={!authenticated}
-                    style={{
-                      width: '100%', minHeight: 56, padding: '10px 12px', borderRadius: 8,
-                      border: `1px solid ${colors.border}`, background: colors.bg, fontSize: 14,
-                      resize: 'vertical', outline: 'none',
-                      color: colors.text, boxSizing: 'border-box',
-                      transition: 'border-color 150ms ease',
-                    }}
-                    onFocus={e => {
-                      if (!authenticated) { e.target.blur(); initOAuth({ provider: 'twitter' }); }
-                      else { e.target.style.borderColor = '#0052FF'; }
-                    }}
-                    onBlur={e => { e.target.style.borderColor = colors.border; }}
-                  />
-                  {commentText.trim() && (
-                    <button onClick={handleComment} disabled={submittingComment}
-                      style={{
-                        marginTop: 8, height: 36, padding: '0 20px', borderRadius: 8,
-                        background: '#0052FF', border: 'none', fontSize: 13, fontWeight: 600,
-                        color: '#fff', cursor: submittingComment ? 'not-allowed' : 'pointer',
-                        opacity: submittingComment ? 0.6 : 1,
-                      }}>
-                      {submittingComment ? 'Posting...' : 'Comment'}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {comments.length === 0 ? (
-                <div style={{
-                  textAlign: 'center', padding: '40px 0',
-                  borderRadius: 10, border: `1px dashed ${colors.border}`,
-                }}>
-                  <p style={{ fontSize: 14, color: colors.textDim }}>No comments yet. Be the first to share your thoughts.</p>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {comments.map((c, idx) => (
-                    <div key={c.id} style={{
-                      display: 'flex', gap: 12, padding: '16px',
-                      borderRadius: 10, background: colors.bgCard, border: `1px solid ${colors.border}`,
-                      animation: `fadeInUp 300ms ease-out both`,
-                      animationDelay: `${idx * 40}ms`,
-                    }}>
-                      <div style={{ flexShrink: 0 }}>
-                        <Avatar url={c.avatar_url} handle={c.twitter_handle} size={32} />
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
-                          <a href={`https://x.com/${c.twitter_handle}`} target="_blank" rel="noopener noreferrer"
-                            style={{ fontSize: 14, fontWeight: 600, color: colors.text, textDecoration: 'none' }}>
-                            @{c.twitter_handle}
-                          </a>
-                          <Badge isAgent={c.is_agent} />
-                          <span style={{ fontSize: 12, color: colors.textDim }}>{timeAgo(c.created_at)}</span>
-                        </div>
-                        <p style={{ fontSize: 14, color: colors.textMuted, margin: 0, lineHeight: 1.6 }}>{c.content}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-          </div>
-
-          {/* Sidebar */}
-          <div className="project-sidebar" style={{ animation: 'fadeInUp 350ms ease-out 80ms both' }}>
-            {/* Links */}
-            {(() => {
-              const links: { icon: React.ReactNode; label: string; url: string; sub: string }[] = [];
-              if (project.website_url?.trim()) links.push({
-                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>,
-                label: 'Website', url: project.website_url!, sub: project.website_url!.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''),
-              });
-              if (project.twitter_handle?.trim()) links.push({
-                icon: <svg width="13" height="13" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>,
-                label: 'Twitter', url: `https://x.com/${project.twitter_handle}`, sub: `@${project.twitter_handle}`,
-              });
-              if (project.github_url?.trim()) links.push({
-                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill={colors.textMuted}><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>,
-                label: 'GitHub', url: project.github_url!, sub: project.github_url!.replace(/^https?:\/\/(www\.)?github\.com\//, '').replace(/\/$/, ''),
-              });
-              if (project.demo_url?.trim()) links.push({
-                icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
-                label: 'Demo', url: project.demo_url!, sub: project.demo_url!.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, ''),
-              });
-              if (links.length === 0) return null;
-              return (
-                <div style={{
-                  padding: 16, borderRadius: 10,
-                  background: colors.bgCard, border: `1px solid ${colors.border}`,
-                  marginBottom: 12,
-                }}>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: colors.textDim, margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                    Links
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-                    {links.map((l, i) => (
-                      <a key={i} href={l.url} target="_blank" rel="noopener noreferrer" style={{
-                        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
-                        textDecoration: 'none', transition: 'opacity 150ms',
-                        borderBottom: i < links.length - 1 ? `1px solid ${colors.border}` : 'none',
-                      }}
-                      onMouseEnter={e => (e.currentTarget.style.opacity = '0.7')}
-                      onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-                      >
-                        <div style={{ flexShrink: 0, width: 16, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{l.icon}</div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14, fontWeight: 600, color: colors.text, lineHeight: 1.2 }}>{l.label}</div>
-                          <div style={{ fontSize: 12, color: colors.textDim, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.4 }}>{l.sub}</div>
-                        </div>
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5" style={{ flexShrink: 0, opacity: 0.4 }}>
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
-                      </a>
-                    ))}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="text-sm font-semibold text-text">@{comment.author}</span>
+                    {comment.isAgent && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                        Agent
+                      </span>
+                    )}
+                    <span className="text-xs text-text-tertiary">{comment.timeAgo}</span>
                   </div>
+                  <p className="text-sm text-text-secondary leading-relaxed">{comment.content}</p>
                 </div>
-              );
-            })()}
-
-            {/* Sponsored */}
-            {sponsoredSidebar ? (
-              <div style={{
-                padding: 16, borderRadius: 10,
-                background: colors.bgCard, border: `1px solid ${colors.border}`,
-                position: 'sticky', top: 72,
-              }}>
-                <div style={{ marginBottom: 12, fontSize: 11, fontWeight: 600, color: colors.textDim, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                  Sponsored
-                </div>
-                {sponsoredSidebar.image_url && (
-                  <div style={{ marginBottom: 14 }}>
-                    <img src={sponsoredSidebar.image_url} alt={sponsoredSidebar.title} style={{ width: '100%', height: 140, borderRadius: 8, objectFit: 'cover', border: `1px solid ${colors.border}` }} />
-                  </div>
-                )}
-                <h3 style={{ fontSize: 16, fontWeight: 700, color: colors.text, margin: '0 0 6px' }}>{sponsoredSidebar.title}</h3>
-                {sponsoredSidebar.description && (
-                  <p style={{ fontSize: 14, color: colors.textMuted, margin: '0 0 14px', lineHeight: 1.5 }}>{sponsoredSidebar.description}</p>
-                )}
-                <a href={sponsoredSidebar.url} target="_blank" rel="noopener noreferrer" style={{
-                  display: 'block', textAlign: 'center', padding: '10px 16px', borderRadius: 8,
-                  background: '#0052FF', color: '#fff', fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                }}>
-                  Learn more
-                </a>
-              </div>
-            ) : (
-              <div style={{
-                padding: 16, borderRadius: 10,
-                background: colors.bgCard, border: `1px dashed ${colors.border}`,
-                position: 'sticky', top: 72,
-              }}>
-                <h3 style={{ fontSize: 15, fontWeight: 600, color: colors.text, margin: '0 0 6px' }}>
-                  Promote your product
-                </h3>
-                <p style={{ fontSize: 13, color: colors.textDim, margin: '0 0 14px', lineHeight: 1.5 }}>
-                  This spot is available. Reach builders and curators.
-                </p>
-                <Link href="/docs" style={{
-                  display: 'block', textAlign: 'center', padding: '8px 16px', borderRadius: 8,
-                  border: `1px solid ${colors.border}`, color: colors.text,
-                  fontSize: 13, fontWeight: 600, textDecoration: 'none',
-                }}>
-                  Learn more
-                </Link>
-              </div>
-            )}
+              </motion.div>
+            ))}
           </div>
-
-        </div>
+        </motion.div>
       </main>
 
-      {/* Sticky footer nav */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 40,
-        background: colors.headerBg,
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        borderTop: `1px solid ${colors.border}`,
-        padding: '12px 20px', paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
-      }}>
-        <div style={{ maxWidth: 1080, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 22, fontWeight: 800, color: '#0052FF' }}>#{dayRank}</span>
-              <span style={{ fontSize: 14, fontWeight: 600, color: colors.text }}>{project.upvotes} upvotes</span>
-            </div>
-            <div style={{ display: 'flex', gap: 0, border: `1px solid ${colors.border}`, borderRadius: 8, overflow: 'hidden' }}>
-              {prevProject ? (
-                <Link href={`/project/${prevProject.id}`} style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bgCard, borderRight: `1px solid ${colors.border}`, textDecoration: 'none' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
-                </Link>
-              ) : (
-                <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bgCard, borderRight: `1px solid ${colors.border}`, opacity: 0.3 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
-                </div>
-              )}
-              {nextProject ? (
-                <Link href={`/project/${nextProject.id}`} style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bgCard, textDecoration: 'none' }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textMuted} strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
-                </Link>
-              ) : (
-                <div style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.bgCard, opacity: 0.3 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={colors.textDim} strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <SubscriptionModal isOpen={showSubModal} onClose={() => setShowSubModal(false)} limitMessage={rateLimitMsg} getAccessToken={getAccessToken} />
-
-      <style jsx>{`
-        .project-container {
-          display: flex;
-          gap: 32px;
-          align-items: flex-start;
-        }
-        .project-sidebar {
-          width: 280px;
-          flex-shrink: 0;
-        }
-        @media (max-width: 768px) {
-          .project-container {
-            flex-direction: column;
-            gap: 20px;
-          }
-          .project-sidebar {
-            width: 100%;
-          }
-        }
-        @media (max-width: 640px) {
-          .project-main {
-            padding: 16px 16px 0 !important;
-          }
-          .project-header {
-            gap: 12px !important;
-          }
-          .project-logo {
-            width: 48px !important;
-            height: 48px !important;
-            border-radius: 12px !important;
-          }
-          .project-title {
-            font-size: 20px !important;
-          }
-          .project-stat {
-            padding: 10px 12px !important;
-          }
-          .project-stat-val {
-            font-size: 18px !important;
-          }
-          .action-buttons {
-            flex-direction: column !important;
-          }
-          .action-buttons > * {
-            width: 100%;
-          }
-        }
-      `}</style>
-    </div>
+      {/* Alert Subscription Modal */}
+      <AnimatePresence>
+        {showAlertModal && (
+          <AlertModal
+            projectName={project.name}
+            onClose={() => setShowAlertModal(false)}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 }
